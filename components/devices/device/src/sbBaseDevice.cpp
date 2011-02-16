@@ -92,6 +92,7 @@
 #include <sbIMediaItemDownloadJob.h>
 #include <sbIMediaItemDownloadService.h>
 #include <sbIMediaList.h>
+#include <sbIMediaManagementService.h>
 #include <sbIOrderableMediaList.h>
 #include <sbIPrompter.h>
 #include <sbIPropertyManager.h>
@@ -2229,6 +2230,21 @@ sbBaseDevice::RegenerateMediaURL(sbIMediaItem *aItem,
   NS_ENSURE_ARG_POINTER(_retval);
 
   nsresult rv;
+
+  nsCOMPtr<sbIMediaManagementService> mms =
+    do_GetService(SB_MEDIAMANAGEMENTSERVICE_CONTRACTID, &rv);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  PRBool enable;
+  rv = mms->GetIsEnabled(&enable);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // If the managed media service isn't operational use the download folder
+  if (!enable) {
+    rv = RegenerateFromDownloadFolder(aItem, _retval);
+    NS_ENSURE_SUCCESS(rv, rv);
+    return NS_OK;
+  }
 
   nsCOMPtr<sbIMediaFileManager> fileMan =
     do_CreateInstance(SB_MEDIAFILEMANAGER_CONTRACTID, &rv);

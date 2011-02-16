@@ -32,7 +32,9 @@ include $(DEPTH)/build/autodefs.mk
 DYNAMIC_LIB = sbMediaManager
 
 CPP_SRCS = sbMediaManagerModule.cpp \
+           sbMediaManagementJob.cpp \
            sbMediaFileManager.cpp \
+           sbMediaManagementService.cpp \
            $(NULL)
 
 CPP_EXTRA_INCLUDES = $(DEPTH)/components/mediamanager/public \

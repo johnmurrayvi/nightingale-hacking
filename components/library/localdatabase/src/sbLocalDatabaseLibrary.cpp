@@ -61,6 +61,7 @@
 #include <sbIMediaItem.h>
 #include <sbIMediaList.h>
 #include <sbIMediaListView.h>
+#include <sbIMediaManagementService.h>
 #include <sbISQLBuilder.h>
 #include <nsITimer.h>
 

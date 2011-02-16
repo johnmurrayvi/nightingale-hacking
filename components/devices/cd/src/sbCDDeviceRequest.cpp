@@ -36,6 +36,7 @@
 #include <sbIJobCancelable.h>
 #include <sbIJobProgress.h>
 #include <sbIMediacoreEventTarget.h>
+#include <sbIMediaManagementService.h>
 #include <sbITranscodeAlbumArt.h>
 #include <sbLibraryUtils.h>
 #include <sbPrefBranch.h>
