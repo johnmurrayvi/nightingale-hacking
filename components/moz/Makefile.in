@@ -53,6 +53,7 @@ SUBDIRS = strings \
           shutdownservice \
           system \
           image \
+          proxy \
           $(NULL)
 
 include $(topsrcdir)/build/rules.mk
