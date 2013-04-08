@@ -1,0 +1,8 @@
+http://doxygen.db48x.net/mozilla/html/xpt__struct_8h.html | Mozilla: xpt_struct.h File Reference
+http://doxygen.db48x.net/mozilla/html/classnsISupportsHashKey.html | Mozilla: nsISupportsHashKey Class Reference
+http://doxygen.db48x.net/mozilla/html/classnsCOMPtr_3_01nsISupports_01_4.html | Mozilla: nsCOMPtr< nsISupports > Class Template Reference
+http://doxygen.db48x.net/mozilla/html/nscore_8h.html | Mozilla: nscore.h File Reference
+http://mxr.mozilla.org/firefox/source/xpcom/proxy/src/nsProxyEventPrivate.h | firefox mozilla/xpcom/proxy/src/nsProxyEventPrivate.h
+http://mxr.mozilla.org/firefox/source/xpcom/proxy/src/nsProxyObjectManager.cpp#104 | firefox mozilla/xpcom/proxy/src/nsProxyObjectManager.cpp
+https://www.google.com/webhp?sourceid=chrome-instant&ion=1&ie=UTF-8#hl=en&gs_rn=8&gs_ri=psy-ab&tok=wrQ53UJarCbYWBEfVSICcg&suggest=p&cp=31&gs_id=h&xhr=t&q=GetInterfaceInfoManagerNoAddRef&es_nrs=true&pf=p&safe=off&output=search&sclient=psy-ab&oq=GetInterfaceInfoManagerNoAddRef&gs_l=&pbx=1&bav=on.2,or.r_cp.r_qf.&bvm=bv.44770516,d.eWU&fp=d8833093cc0c919e&biw=0&bih=470&ion=1 | getinterfaceinfomanagernoaddref - Google Search
+http://doxygen.db48x.net/mozilla-full/html/dd/dd8/classxptiInterfaceInfoManager.html | Mozilla: xptiInterfaceInfoManager Class Reference
