@@ -39,9 +39,9 @@
 #ifndef nsProxiedService_h__
 #define nsProxiedService_h__
 
-#include "nsServiceManagerUtils.h"
+#include <nsServiceManagerUtils.h>
 #include "nsIProxyObjectManager.h"
-#include "nsXPCOMCIDInternal.h"
+#include <nsXPCOMCIDInternal.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 // NS_WITH_PROXIED_SERVICE: macro to make using services that need to be proxied

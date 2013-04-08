@@ -61,23 +61,16 @@ static uint32 zero_methods_descriptor;
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 nsProxyEventClass::nsProxyEventClass(REFNSIID aIID, nsIInterfaceInfo* aInfo)
-    : mIID(aIID),
-      mInfo(aInfo),
-      mDescriptors(NULL)
+                              : mIID(aIID), mInfo(aInfo), mDescriptors(NULL)
 {
     uint16 methodCount;
-    if(NS_SUCCEEDED(mInfo->GetMethodCount(&methodCount)))
-    {
-        if(methodCount)
-        {
+    if(NS_SUCCEEDED(mInfo->GetMethodCount(&methodCount))) {
+        if (methodCount) {
             int wordCount = (methodCount/32)+1;
-            if(NULL != (mDescriptors = new uint32[wordCount]))
-            {
+            if (NULL != (mDescriptors = new uint32[wordCount])) {
                 memset(mDescriptors, 0, wordCount * sizeof(uint32));
             }
-        }
-        else
-        {
+        } else {
             mDescriptors = &zero_methods_descriptor;
         }
     }

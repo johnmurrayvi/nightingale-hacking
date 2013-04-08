@@ -51,8 +51,8 @@
  */
 
 #include "nsProxyEventPrivate.h"
-#include "nsProxyRelease.h"
 #include "nsIProxyObjectManager.h"
+#include <nsProxyRelease.h>
 #include <nsCRT.h>
 
 #include <pratom.h>
@@ -218,12 +218,10 @@ nsProxyObjectCallInfo::RefCountInInterfacePointers(PRBool addRef)
 void
 nsProxyObjectCallInfo::CopyStrings(PRBool copy)
 {
-    for (PRUint32 i = 0; i < mParameterCount; i++)
-    {
+    for (PRUint32 i = 0; i < mParameterCount; i++) {
         const nsXPTParamInfo paramInfo = mMethodInfo->params[i];
 
-        if (paramInfo.IsIn())
-        {
+        if (paramInfo.IsIn()) {
             const nsXPTType& type = paramInfo.GetType();
             uint8 type_tag = type.TagPart();
             void *ptr = mParameterList[i].val.p;
@@ -231,10 +229,8 @@ nsProxyObjectCallInfo::CopyStrings(PRBool copy)
             if (!ptr)
                 continue;
 
-            if (copy)
-            {                
-                switch (type_tag) 
-                {
+            if (copy) {                
+                switch (type_tag) {
                     case nsXPTType::T_CHAR_STR:                                
                         mParameterList[i].val.p =
                             PL_strdup((const char *)ptr);
@@ -260,11 +256,8 @@ nsProxyObjectCallInfo::CopyStrings(PRBool copy)
                         // Other types are ignored
                         break;                    
                 }
-            }
-            else
-            {
-                switch (type_tag) 
-                {
+            } else {
+                switch (type_tag) {
                     case nsXPTType::T_CHAR_STR:
                         PL_strfree((char*) ptr);
                         break;
@@ -331,7 +324,7 @@ void
 nsProxyObjectCallInfo::SetCallersTarget(nsIEventTarget* target)
 {
     mCallersTarget = target;
-}   
+}
 
 nsProxyObject::nsProxyObject(nsIEventTarget *target, PRInt32 proxyType,
                              nsISupports *realObject) :

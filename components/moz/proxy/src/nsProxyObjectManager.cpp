@@ -66,34 +66,44 @@
 PRLogModuleInfo *nsProxyObjectManager::sLog = PR_NewLogModule("xpcomproxy");
 #endif
 
-class nsProxyEventKey : public nsStringHashKey
+class nsProxyEventKey : public nsISupportsHashKey
 {
 public:
-    nsProxyEventKey(void* rootObjectKey, void* targetKey, PRInt32 proxyType)
-        : mRootObjectKey(rootObjectKey), mTargetKey(targetKey), mProxyType(proxyType) {
-    }
+//    typedef nsISupports* KeyType;
+//    typedef const nsISupports* KeyTypePointer;
+
+    nsProxyEventKey(KeyTypePointer rootObjectKey, 
+                    KeyTypePointer targetKey, PRInt32 proxyType);
   
     PRUint32 HashCode(void) const {
         return NS_PTR_TO_INT32(mRootObjectKey) ^ 
-            NS_PTR_TO_INT32(mTargetKey) ^ mProxyType;
+               NS_PTR_TO_INT32(mTargetKey) ^ mProxyType;
     }
 
-    PRBool Equals(const nsStringHashKey *aKey) const {
+    PRBool Equals(const KeyTypePointer *aKey) const {
         const nsProxyEventKey* other = (const nsProxyEventKey*)aKey;
         return mRootObjectKey == other->mRootObjectKey
-            && mTargetKey == other->mTargetKey
-            && mProxyType == other->mProxyType;
+                && mTargetKey == other->mTargetKey
+                && mProxyType == other->mProxyType;
     }
 
-    nsStringHashKey *Clone() const {
+    nsISupportsHashKey *Clone() const {
         return new nsProxyEventKey(mRootObjectKey, mTargetKey, mProxyType);
     }
 
 protected:
-    void*       mRootObjectKey;
-    void*       mTargetKey;
-    PRInt32     mProxyType;
+    KeyTypePointer mRootObjectKey;
+    KeyTypePointer mTargetKey;
+    PRInt32        mProxyType;
 };
+
+nsProxyEventKey::nsProxyEventKey(KeyTypePointer rootObjectKey, 
+                                 KeyTypePointer targetKey, 
+                                 PRInt32 proxyType)
+                            : mRootObjectKey(rootObjectKey),
+                              mTargetKey(targetKey),
+                              mProxyType(proxyType)
+{}
 
 /////////////////////////////////////////////////////////////////////////
 // nsProxyObjectManager
@@ -195,7 +205,8 @@ nsProxyObjectManager::GetProxyForObject(nsIEventTarget* aTarget,
     // handle special values
     nsCOMPtr<nsIThread> thread;
     if (aTarget == NS_PROXY_TO_CURRENT_THREAD) {
-      aTarget = do_GetCurrentThread();
+      thread = do_GetCurrentThread();
+      aTarget = thread.get();
     } else if (aTarget == NS_PROXY_TO_MAIN_THREAD) {
       thread = do_GetMainThread();
       aTarget = thread.get();

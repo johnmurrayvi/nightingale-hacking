@@ -305,7 +305,7 @@ private:
 
     static nsProxyObjectManager* mInstance;
     // nsTHashtable  mProxyObjectMap;
-    nsTHashtable <nsStringHashKey> mProxyObjectMap;
+    nsTHashtable <nsISupportsHashKey> mProxyObjectMap;
     nsClassHashtable<nsIDHashKey, nsProxyEventClass> mProxyClassMap;
     PRLock *mProxyCreationLock;
 };
