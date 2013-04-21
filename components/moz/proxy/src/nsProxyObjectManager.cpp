@@ -51,9 +51,11 @@
 
 #include <nsIComponentManager.h>
 #include <nsIServiceManager.h>
+#include <nsServiceManagerUtils.h>
 #include <nsIThread.h>
 #include <nsCOMPtr.h>
 #include <nsThreadUtils.h>
+#include <nsHashKeys.h>
 //#include <xptiprivate.h>
 
 using namespace mozilla;
@@ -62,7 +64,7 @@ using namespace mozilla;
 PRLogModuleInfo *nsProxyObjectManager::sLog = PR_NewLogModule("xpcomproxy");
 #endif
 
-class nsProxyEventKey : public nsHashKey
+class nsProxyEventKey : public nsStringHashKey
 {
 public:
     nsProxyEventKey(void* rootObjectKey, void* targetKey, PRInt32 proxyType)
@@ -74,14 +76,14 @@ public:
             NS_PTR_TO_INT32(mTargetKey) ^ mProxyType;
     }
 
-    PRBool Equals(const nsHashKey *aKey) const {
+    PRBool Equals(const nsStringHashKey *aKey) const {
         const nsProxyEventKey* other = (const nsProxyEventKey*)aKey;
         return mRootObjectKey == other->mRootObjectKey
             && mTargetKey == other->mTargetKey
             && mProxyType == other->mProxyType;
     }
 
-    nsHashKey *Clone() const {
+    nsStringHashKey *Clone() const {
         return new nsProxyEventKey(mRootObjectKey, mTargetKey, mProxyType);
     }
 
@@ -111,12 +113,20 @@ nsProxyObjectManager::Release()
     return 1;
 }
 
+
 nsProxyObjectManager::nsProxyObjectManager()
-    : mProxyObjectMap(256, false)
-    , mProxyCreationLock("nsProxyObjectManager.mProxyCreationLock")
+    : mProxyCreationLock("nsProxyObjectManager.mProxyCreationLock")
 {
+	mProxyObjectMap.Init(256);
     mProxyClassMap.Init(256);
 }
+
+//nsProxyObjectManager::nsProxyObjectManager()
+//    : mProxyObjectMap(256, false)
+//    , mProxyCreationLock("nsProxyObjectManager.mProxyCreationLock")
+//{
+//    mProxyClassMap.Init(256);
+//}
 
 nsProxyObjectManager::~nsProxyObjectManager()
 {
@@ -199,13 +209,13 @@ nsProxyObjectManager::GetProxyForObject(nsIEventTarget* aTarget,
     *aProxyObject = nsnull;
 
     // handle special values
-    nsCOMPtr<nsIThread> **thread;
+    nsCOMPtr<nsIThread> *thread;
     if (aTarget == NS_PROXY_TO_CURRENT_THREAD) {
-    	  aTarget = do_GetCurrentThread();
+    	  NS_GetCurrentThread(thread->StartAssignment());
+    	  aTarget = thread->get();
     } else if (aTarget == NS_PROXY_TO_MAIN_THREAD) {
-      thread = do_GetMainThread();
-      aTarget = (*thread)->get();
-//      aTarget = thread->get();
+    	NS_GetMainThread(thread->StartAssignment());
+    	aTarget = thread->get();
     }
 
     // check to see if the target is on our thread.  If so, just return the
@@ -236,8 +246,8 @@ nsProxyObjectManager::GetProxyForObject(nsIEventTarget* aTarget,
     {
         MutexAutoLock lock(mProxyCreationLock);
         nsProxyLockedRefPtr root =
-//        	  (nsProxyObject*) mProxyObjectMap.GetEntry((nsAString &)&rootKey);
-            (nsProxyObject*) mProxyObjectMap.Get(&rootKey);
+        	  (nsProxyObject*) mProxyObjectMap.GetEntry(&rootKey);
+//            (nsProxyObject*) mProxyObjectMap.Get(&rootKey);
         if (root)
             return root->LockedFind(aIID, aProxyObject);
     }
@@ -251,15 +261,15 @@ nsProxyObjectManager::GetProxyForObject(nsIEventTarget* aTarget,
     {
         MutexAutoLock lock(mProxyCreationLock);
         nsProxyLockedRefPtr root = 
-//            (nsProxyObject*) mProxyObjectMap.GetEntry((nsAString &) &rootKey);
-        	(nsProxyObject*) mProxyObjectMap.Get(&rootKey);
+            (nsProxyObject*) mProxyObjectMap.GetEntry(&rootKey);
+//        	(nsProxyObject*) mProxyObjectMap.Get(&rootKey);
         if (root) {
             delete newRoot;
             return root->LockedFind(aIID, aProxyObject);
         }
 
-//        newRoot = mProxyObjectMap.PutEntry((nsAString &) &rootKey);
-        mProxyObjectMap.Put(&rootKey, newRoot);
+        newRoot = mProxyObjectMap.PutEntry(&rootKey);
+//        mProxyObjectMap.Put(&rootKey, newRoot);
 
         nsProxyLockedRefPtr kungFuDeathGrip(newRoot);
         return newRoot->LockedFind(aIID, aProxyObject);
@@ -273,11 +283,12 @@ nsProxyObjectManager::LockedRemove(nsProxyObject *aProxy)
 
     nsProxyEventKey rootKey(aProxy->GetRealObject(), realEQ, aProxy->GetProxyType());
 
-//    if (!mProxyObjectMap.RemoveEntry((nsAString &) &rootKey)) {
-//        NS_ERROR("nsProxyObject not found in global hash.");
-//    }
-    if (!mProxyObjectMap.Remove(&rootKey))
+    if (!mProxyObjectMap.RemoveEntry(&rootKey))
         NS_ERROR("nsProxyObject not found in global hash.");
+
+//    if (!mProxyObjectMap.Remove(&rootKey)) {
+//        NS_ERROR("nsProxyObject not found in global hash.");
+//	  }
 }
 
 nsresult
@@ -290,6 +301,8 @@ nsProxyObjectManager::GetClass(REFNSIID aIID, nsProxyEventClass **aResult)
             return NS_OK;
         }
     }
+
+    // XXX FIX ME!!
 
     nsIInterfaceInfoManager *iim;
 //    iim->AutoRegisterInterfaces();
@@ -360,8 +373,8 @@ NS_GetProxyForObject(nsIEventTarget *target,
 
     // get the proxy object manager
     //
-    nsCOMPtr<nsIProxyObjectManager> proxyObjMgr = 
-        do_GetService(proxyObjMgrCID, &rv);
+    nsCOMPtr<nsIProxyObjectManager> proxyObjMgr = do_GetService(proxyObjMgrCID, &rv);
+//        do_GetService(proxyObjMgrCID, &rv);
     if (NS_FAILED(rv))
         return rv;
     
