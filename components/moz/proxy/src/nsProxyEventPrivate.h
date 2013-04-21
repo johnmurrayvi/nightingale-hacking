@@ -39,26 +39,21 @@
 #ifndef nsProxyEventPrivate_h__
 #define nsProxyEventPrivate_h__
 
+#include "nsIProxyObjectManager.h"
+
 #include <nsISupports.h>
 #include <nsIFactory.h>
 #include <nsIEventTarget.h>
 #include <nsIInterfaceInfo.h>
-#include <nsIProxyObjectManager.h>
-
 #include <nsXPTCUtils.h>
-
+#include <mozilla/Mutex.h>
 #include <nsAutoPtr.h>
 #include <nsCOMPtr.h>
 #include <nsThreadUtils.h>
-
 #include <nsClassHashtable.h>
-#include <nsStringAPI.h>
-#include <nsTHashtable.h>
-#include <pldhash.h>
-#include <nsHashKeys.h>
-//#include <nsHashtable.h>
+#include <nsHashtable.h>
+//#include <nsTHashtable.h>
 
-#include <prmon.h>
 #include <prlog.h>
 
 class nsProxyEventObject;
@@ -238,7 +233,7 @@ public:
     PRUint32            GetParameterCount() const { return mParameterCount; }
     nsresult            GetResult() const { return mResult; }
     
-    PRBool              GetCompleted();
+    bool                GetCompleted();
     void                SetCompleted();
     void                PostCompleted();
 
@@ -246,7 +241,7 @@ public:
     
     nsIEventTarget*     GetCallersTarget();
     void                SetCallersTarget(nsIEventTarget* target);
-    PRBool              IsSync() const
+    bool                IsSync() const
     {
         return !!(mOwner->GetProxyType() & NS_PROXY_SYNC);
     }
@@ -265,8 +260,8 @@ private:
 
     nsRefPtr<nsProxyEventObject>   mOwner;       /* this is the strong referenced nsProxyObject */
    
-    void RefCountInInterfacePointers(PRBool addRef);
-    void CopyStrings(PRBool copy);
+    void RefCountInInterfacePointers(bool addRef);
+    void CopyStrings(bool copy);
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsProxyObjectCallInfo, NS_PROXYEVENT_IID)
@@ -277,16 +272,18 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsProxyObjectCallInfo, NS_PROXYEVENT_IID)
 
 class nsProxyObjectManager: public nsIProxyObjectManager
 {
+    typedef mozilla::Mutex Mutex;
+
 public:
     NS_DECL_ISUPPORTS
     NS_DECL_NSIPROXYOBJECTMANAGER
         
-    static NS_METHOD Create(nsISupports* outer, const nsIID& aIID, void* *aInstancePtr);
+    static nsresult Create(nsISupports* outer, const nsIID& aIID, void* *aInstancePtr);
     
     nsProxyObjectManager();
     
     static nsProxyObjectManager *GetInstance();
-    static PRBool IsManagerShutdown();
+    static bool IsManagerShutdown();
 
     static void Shutdown();
 
@@ -294,7 +291,7 @@ public:
 
     void LockedRemove(nsProxyObject* aProxy);
 
-    PRLock* GetLock() const { return mProxyCreationLock; }
+    Mutex& GetLock() { return mProxyCreationLock; }
 
 #ifdef PR_LOGGING
     static PRLogModuleInfo *sLog;
@@ -303,11 +300,11 @@ public:
 private:
     ~nsProxyObjectManager();
 
-    static nsProxyObjectManager* mInstance;
-    // nsTHashtable  mProxyObjectMap;
-    nsTHashtable <nsISupportsHashKey> mProxyObjectMap;
+    static nsProxyObjectManager* gInstance;
+//    nsTHashtable<nsStringHashKey> mProxyObjectMap;
+    nsHashtable mProxyObjectMap;
     nsClassHashtable<nsIDHashKey, nsProxyEventClass> mProxyClassMap;
-    PRLock *mProxyCreationLock;
+    Mutex mProxyCreationLock;
 };
 
 #define NS_XPCOMPROXY_CLASSNAME "nsProxyObjectManager"

@@ -51,21 +51,21 @@
  */
 
 #include "nsProxyEventPrivate.h"
+#include "nsProxyRelease.h"
 #include "nsIProxyObjectManager.h"
-#include <nsProxyRelease.h>
-#include <nsCRT.h>
 
+#include <nsCRT.h>
 #include <pratom.h>
 #include <prmem.h>
 #include <xptcall.h>
-
-#include <nsAutoLock.h>
 #include <nsXPCOMCID.h>
 #include <nsServiceManagerUtils.h>
 #include <nsIComponentManager.h>
 #include <nsThreadUtils.h>
 #include <nsEventQueue.h>
 #include <nsMemory.h>
+
+using namespace mozilla;
 
 /**
  * Map the nsAUTF8String, nsUTF8String classes to the nsACString and
@@ -142,16 +142,16 @@ nsProxyObjectCallInfo::nsProxyObjectCallInfo(nsProxyEventObject* owner,
     NS_ASSERTION(owner, "No nsProxyObject!");
     NS_ASSERTION(methodInfo, "No nsXPTMethodInfo!");
 
-    RefCountInInterfacePointers(PR_TRUE);
+    RefCountInInterfacePointers(true);
     if (mOwner->GetProxyType() & NS_PROXY_ASYNC)
-        CopyStrings(PR_TRUE);
+        CopyStrings(true);
 }
 
 nsProxyObjectCallInfo::~nsProxyObjectCallInfo()
 {
-    RefCountInInterfacePointers(PR_FALSE);
+    RefCountInInterfacePointers(false);
     if (mOwner->GetProxyType() & NS_PROXY_ASYNC)
-        CopyStrings(PR_FALSE);
+        CopyStrings(false);
 
     mOwner = nsnull;
     
@@ -188,7 +188,7 @@ nsProxyObjectCallInfo::Run()
 }
 
 void
-nsProxyObjectCallInfo::RefCountInInterfacePointers(PRBool addRef)
+nsProxyObjectCallInfo::RefCountInInterfacePointers(bool addRef)
 {
     for (PRUint32 i = 0; i < mParameterCount; i++)
     {
@@ -216,12 +216,14 @@ nsProxyObjectCallInfo::RefCountInInterfacePointers(PRBool addRef)
 }
 
 void
-nsProxyObjectCallInfo::CopyStrings(PRBool copy)
+nsProxyObjectCallInfo::CopyStrings(bool copy)
 {
-    for (PRUint32 i = 0; i < mParameterCount; i++) {
+    for (PRUint32 i = 0; i < mParameterCount; i++)
+    {
         const nsXPTParamInfo paramInfo = mMethodInfo->params[i];
 
-        if (paramInfo.IsIn()) {
+        if (paramInfo.IsIn())
+        {
             const nsXPTType& type = paramInfo.GetType();
             uint8 type_tag = type.TagPart();
             void *ptr = mParameterList[i].val.p;
@@ -229,8 +231,10 @@ nsProxyObjectCallInfo::CopyStrings(PRBool copy)
             if (!ptr)
                 continue;
 
-            if (copy) {                
-                switch (type_tag) {
+            if (copy)
+            {                
+                switch (type_tag) 
+                {
                     case nsXPTType::T_CHAR_STR:                                
                         mParameterList[i].val.p =
                             PL_strdup((const char *)ptr);
@@ -256,8 +260,11 @@ nsProxyObjectCallInfo::CopyStrings(PRBool copy)
                         // Other types are ignored
                         break;                    
                 }
-            } else {
-                switch (type_tag) {
+            }
+            else
+            {
+                switch (type_tag) 
+                {
                     case nsXPTType::T_CHAR_STR:
                         PL_strfree((char*) ptr);
                         break;
@@ -283,7 +290,7 @@ nsProxyObjectCallInfo::CopyStrings(PRBool copy)
     }
 }
 
-PRBool                
+bool                  
 nsProxyObjectCallInfo::GetCompleted()
 {
     return !!mCompleted;
@@ -293,7 +300,7 @@ void
 nsProxyObjectCallInfo::SetCompleted()
 {
     PROXY_LOG(("PROXY(%p): SetCompleted\n", this));
-    PR_AtomicSet(&mCompleted, 1);
+    PR_ATOMIC_SET(&mCompleted, 1);
 }
 
 void                
@@ -324,7 +331,7 @@ void
 nsProxyObjectCallInfo::SetCallersTarget(nsIEventTarget* target)
 {
     mCallersTarget = target;
-}
+}   
 
 nsProxyObject::nsProxyObject(nsIEventTarget *target, PRInt32 proxyType,
                              nsISupports *realObject) :
@@ -340,10 +347,6 @@ nsProxyObject::nsProxyObject(nsIEventTarget *target, PRInt32 proxyType,
     NS_ASSERTION(target == canonicalTarget,
                  "Non-canonical nsISupports passed to nsProxyObject constructor");
 #endif
-
-    nsProxyObjectManager *pom = nsProxyObjectManager::GetInstance();
-    NS_ASSERTION(pom, "Creating a proxy without a global proxy-object-manager.");
-    pom->AddRef();
 }
 
 nsProxyObject::~nsProxyObject()
@@ -360,14 +363,14 @@ nsProxyObject::~nsProxyObject()
 NS_IMETHODIMP_(nsrefcnt)
 nsProxyObject::AddRef()
 {
-    nsAutoLock lock(nsProxyObjectManager::GetInstance()->GetLock());
+    MutexAutoLock lock(nsProxyObjectManager::GetInstance()->GetLock());
     return LockedAddRef();
 }
 
 NS_IMETHODIMP_(nsrefcnt)
 nsProxyObject::Release()
 {
-    nsAutoLock lock(nsProxyObjectManager::GetInstance()->GetLock());
+    MutexAutoLock lock(nsProxyObjectManager::GetInstance()->GetLock());
     return LockedRelease();
 }
 
@@ -391,9 +394,8 @@ nsProxyObject::LockedRelease()
     nsProxyObjectManager *pom = nsProxyObjectManager::GetInstance();
     pom->LockedRemove(this);
 
-    nsAutoUnlock unlock(pom->GetLock());
+    MutexAutoUnlock unlock(pom->GetLock());
     delete this;
-    pom->Release();
 
     return 0;
 }
@@ -416,7 +418,7 @@ nsProxyObject::QueryInterface(REFNSIID aIID, void **aResult)
     nsProxyObjectManager *pom = nsProxyObjectManager::GetInstance();
     NS_ASSERTION(pom, "Deleting a proxy without a global proxy-object-manager.");
 
-    nsAutoLock lock(pom->GetLock());
+    MutexAutoLock lock(pom->GetLock());
     return LockedFind(aIID, aResult);
 }
 
@@ -424,7 +426,9 @@ nsresult
 nsProxyObject::LockedFind(REFNSIID aIID, void **aResult)
 {
     // This method is only called when the global lock is held.
-    // XXX assert this
+#ifdef DEBUG
+    nsProxyObjectManager::GetInstance()->GetLock().AssertCurrentThreadOwns();
+#endif
 
     nsProxyEventObject *peo;
 
@@ -439,9 +443,9 @@ nsProxyObject::LockedFind(REFNSIID aIID, void **aResult)
     nsProxyEventObject *newpeo;
 
     // Both GetClass and QueryInterface call out to XPCOM, so we unlock for them
+    nsProxyObjectManager* pom = nsProxyObjectManager::GetInstance();
     {
-        nsProxyObjectManager* pom = nsProxyObjectManager::GetInstance();
-        nsAutoUnlock unlock(pom->GetLock());
+        MutexAutoUnlock unlock(pom->GetLock());
 
         nsProxyEventClass *pec;
         nsresult rv = pom->GetClass(aIID, &pec);
@@ -470,9 +474,17 @@ nsProxyObject::LockedFind(REFNSIID aIID, void **aResult)
     // linked-list check.
     for (peo = mFirst; peo; peo = peo->mNext) {
         if (peo->GetClass()->GetProxiedIID().Equals(aIID)) {
-            delete newpeo;
-            *aResult = static_cast<nsISupports*>(peo->mXPTCStub);
+            // Best to AddRef for our caller before unlocking.
             peo->LockedAddRef();
+
+            {
+                // Deleting an nsProxyEventObject can call Release on an
+                // nsProxyObject, which can only happen when not holding
+                // the lock.
+                MutexAutoUnlock unlock(pom->GetLock());
+                delete newpeo;
+            }
+            *aResult = static_cast<nsISupports*>(peo->mXPTCStub);
             return NS_OK;
         }
     }

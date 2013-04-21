@@ -28,7 +28,7 @@
  * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
  * in which case the provisions of the GPL or the LGPL are applicable instead
  * of those above. If you wish to allow use of your version of this file only
- * under the terms of either the GPL or the LGPL, and not to allow others to
+ * under the terms of either the GPL or the LGPL, and not to allow others to`
  * use your version of this file under the terms of the MPL, indicate your
  * decision by deleting the provisions above and replace them with the notice
  * and other provisions required by the GPL or the LGPL. If you do not delete
@@ -36,23 +36,25 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
+ 
+#include "nsProxyEventPrivate.h"
+#include "nsProxyError.h"
+
+//hack below
+//#include "nsIThreadInternal.h"
+/*nasty freaking hack atop this proxy 
+in and of itself is an even nastier hack...chicken and egg here*/
 
 #include <prprf.h>
 #include <prmem.h>
-
 #include <nscore.h>
-#include "nsProxyEventPrivate.h"
-#include <nsIThreadInternal.h>
-
 #include <nsServiceManagerUtils.h>
-
+#include <nsIThreadInternal.h>
 #include <nsTHashtable.h>
-// #include <nsHashtable.h>
-
 #include <nsIInterfaceInfoManager.h>
 #include <xptcall.h>
 
-#include <nsAutoLock.h>
+using namespace mozilla;
 
 nsProxyEventObject::nsProxyEventObject(nsProxyObject *aParent,
                             nsProxyEventClass* aClass,
@@ -84,7 +86,7 @@ nsProxyEventObject::~nsProxyEventObject()
 NS_IMETHODIMP_(nsrefcnt)
 nsProxyEventObject::AddRef()
 {
-    nsAutoLock lock(nsProxyObjectManager::GetInstance()->GetLock());
+    MutexAutoLock lock(nsProxyObjectManager::GetInstance()->GetLock());
     return LockedAddRef();
 }
 
@@ -100,7 +102,7 @@ NS_IMETHODIMP_(nsrefcnt)
 nsProxyEventObject::Release(void)
 {
     {
-        nsAutoLock lock(nsProxyObjectManager::GetInstance()->GetLock());
+        MutexAutoLock lock(nsProxyObjectManager::GetInstance()->GetLock());
         NS_PRECONDITION(0 != mRefCnt, "dup release");
 
         --mRefCnt;
@@ -114,7 +116,7 @@ nsProxyEventObject::Release(void)
 
     // call the destructor outside of the lock so that we aren't holding the
     // lock when we release the object
-    NS_DELETEXPCOM(this);
+    delete this;
     return 0;
 }
 
@@ -174,6 +176,7 @@ class nsProxyThreadFilter : public nsIThreadEventFilter
 public:
     NS_DECL_ISUPPORTS
     NS_DECL_NSITHREADEVENTFILTER
+//    NS_IMETHOD_(PRBool) AcceptEvent(nsIRunnable *event);
 };
 
 NS_IMPL_THREADSAFE_ISUPPORTS1(nsProxyThreadFilter, nsIThreadEventFilter)
@@ -214,9 +217,9 @@ nsProxyEventObject::CallMethod(PRUint16 methodIndex,
     if (NS_FAILED(rv))
         return rv;
 
-    PRBool callDirectly = PR_FALSE;
-    if (GetProxyType() & NS_PROXY_SYNC &&
-        NS_SUCCEEDED(GetTarget()->IsOnCurrentThread(&callDirectly)) &&
+    bool callDirectly = false;
+    if ((GetProxyType() & NS_PROXY_SYNC) &&
+        NS_SUCCEEDED(GetTarget()->IsOnCurrentThread((int *) &callDirectly)) &&
         callDirectly) {
 
         // invoke directly using xptc
@@ -243,6 +246,7 @@ nsProxyEventObject::CallMethod(PRUint16 methodIndex,
 
     nsIThread *thread;
     NS_GetCurrentThread(&thread);
+    
     nsCOMPtr<nsIThreadInternal> threadInt = do_QueryInterface(thread);
     NS_ENSURE_STATE(threadInt);
 

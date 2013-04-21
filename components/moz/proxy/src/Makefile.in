@@ -42,25 +42,17 @@ VPATH = @srcdir@
 
 include $(DEPTH)/build/autodefs.mk
 
-#MOZILLA_INTERNAL_API = 1
-
 CPP_SRCS		= \
-        nsProxyEvent.cpp \
-        nsProxyEventClass.cpp \
-        nsProxyEventObject.cpp \
-        nsProxyObjectManager.cpp \
-        $(NULL)
+		nsProxyEvent.cpp \
+		nsProxyEventClass.cpp \
+		nsProxyEventObject.cpp \
+		nsProxyObjectManager.cpp \
+		$(NULL)
 
 CPP_EXTRA_INCLUDES = \
-        $(DEPTH)/components/moz/proxy/public \
-        $(NULL)
+		$(DEPTH)/components/moz/proxy/public \
+		$(NULL)
 
 STATIC_LIB = nsProxyObject
-
-# No shared lib; Force creation of static lib
-FORCE_STATIC_LIB = 1
-
-# Force use of PIC
-FORCE_USE_PIC   = 1
 
 include $(topsrcdir)/build/rules.mk
