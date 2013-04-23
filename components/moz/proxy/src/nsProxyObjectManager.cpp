@@ -64,34 +64,6 @@ using namespace mozilla;
 PRLogModuleInfo *nsProxyObjectManager::sLog = PR_NewLogModule("xpcomproxy");
 #endif
 
-class nsProxyEventKey : public nsStringHashKey
-{
-public:
-    nsProxyEventKey(void* rootObjectKey, void* targetKey, PRInt32 proxyType)
-        : mRootObjectKey(rootObjectKey), mTargetKey(targetKey), mProxyType(proxyType) {
-    }
-  
-    PRUint32 HashCode(void) const {
-        return NS_PTR_TO_INT32(mRootObjectKey) ^ 
-            NS_PTR_TO_INT32(mTargetKey) ^ mProxyType;
-    }
-
-    PRBool Equals(const nsStringHashKey *aKey) const {
-        const nsProxyEventKey* other = (const nsProxyEventKey*)aKey;
-        return mRootObjectKey == other->mRootObjectKey
-            && mTargetKey == other->mTargetKey
-            && mProxyType == other->mProxyType;
-    }
-
-    nsStringHashKey *Clone() const {
-        return new nsProxyEventKey(mRootObjectKey, mTargetKey, mProxyType);
-    }
-
-protected:
-    void*       mRootObjectKey;
-    void*       mTargetKey;
-    PRInt32     mProxyType;
-};
 
 /////////////////////////////////////////////////////////////////////////
 // nsProxyObjectManager
@@ -135,7 +107,7 @@ nsProxyObjectManager::~nsProxyObjectManager()
     nsProxyObjectManager::gInstance = nsnull;
 }
 
-bool
+PRBool
 nsProxyObjectManager::IsManagerShutdown()
 {
     return gInstance == nsnull;

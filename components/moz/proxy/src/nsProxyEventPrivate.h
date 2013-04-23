@@ -266,6 +266,44 @@ private:
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsProxyObjectCallInfo, NS_PROXYEVENT_IID)
 
+
+class nsProxyEventKey : public nsISupportsHashKey
+{
+public:
+
+    nsProxyEventKey(void* rootObjectKey, void* targetKey, PRInt32 proxyType)
+        : mRootObjectKey(rootObjectKey), mTargetKey(targetKey), mProxyType(proxyType) {
+    }
+
+    PRUint32 HashCode(void) const {
+        return NS_PTR_TO_INT32(mRootObjectKey) ^
+            NS_PTR_TO_INT32(mTargetKey) ^ mProxyType;
+    }
+
+    PRBool Equals(const nsStringHashKey *aKey) const {
+        const nsProxyEventKey* other = (const nsProxyEventKey*)aKey;
+        return mRootObjectKey == other->mRootObjectKey
+            && mTargetKey == other->mTargetKey
+            && mProxyType == other->mProxyType;
+    }
+
+    nsProxyEventKey *Clone() const {
+        return new nsProxyEventKey(mRootObjectKey, mTargetKey, mProxyType);
+    }
+
+    nsISupports* operator&(nsProxyEventKey rhs) {
+    	return (nsISupports*) mTargetKey;
+    }
+
+    friend class nsProxyObject;
+
+protected:
+    void*       mRootObjectKey;
+    void*       mTargetKey;
+    PRInt32     mProxyType;
+};
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // nsProxyObjectManager
 ////////////////////////////////////////////////////////////////////////////////
@@ -283,7 +321,7 @@ public:
     nsProxyObjectManager();
     
     static nsProxyObjectManager *GetInstance();
-    static bool IsManagerShutdown();
+    static PRBool IsManagerShutdown();
 
     static void Shutdown();
 
@@ -301,7 +339,10 @@ private:
     ~nsProxyObjectManager();
 
     static nsProxyObjectManager* gInstance;
-    nsTHashtable<nsStringHashKey> mProxyObjectMap;
+    nsClassHashtable <nsProxyEventKey, nsProxyObject> mProxyObjectMap;
+//    nsTHashtable<nsISupportsKey> mProxyObjectMap;
+//    nsTHashtable<nsVoidPtrHashKey> mProxyObjectMap;
+//    nsTHashtable<nsStringHashKey> mProxyObjectMap;
 //    nsHashtable mProxyObjectMap;
     nsClassHashtable<nsIDHashKey, nsProxyEventClass> mProxyClassMap;
     Mutex mProxyCreationLock;
