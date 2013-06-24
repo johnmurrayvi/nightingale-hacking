@@ -1589,12 +1589,14 @@ sbPlaybackHistoryService::UpdateTrackingDataFromEvent(sbIMediacoreEvent *aEvent)
   LOG("BEFORE setting data");
   LOG("** mCurrentStartTime (unsigned) = %lu", mCurrentStartTime);
 
+  nsAutoMonitor mon(mMonitor)
   mCurrentItem = item;
   mCurrentlyTracking = PR_TRUE;
 
   mCurrentStartTime = 0;
   mCurrentDelta = 0;
 
+  mon.Notify();
   LOG("AFTER setting data");
   LOG("** mCurrentStartTime (unsigned) = %lu", mCurrentStartTime);
   LOG("***** LEAVING *****");
@@ -1744,7 +1746,7 @@ sbPlaybackHistoryService::VerifyDataAndCreateNewEntry()
 #endif
   */
 
-  LOG("sbPlaybackHistoryServie: LEAVING VerifyDataAndCreateNewEntry");
+  LOG("sbPlaybackHistoryService: LEAVING VerifyDataAndCreateNewEntry");
   return NS_OK;
 }
 
@@ -1969,7 +1971,6 @@ sbPlaybackHistoryService::Observe(nsISupports* aSubject,
 NS_IMETHODIMP
 sbPlaybackHistoryService::OnMediacoreEvent(sbIMediacoreEvent *aEvent)
 {
-  LOG("OnMediacoreEvent");
   NS_ENSURE_ARG_POINTER(aEvent);
 
   PRUint32 eventType = 0;
@@ -1978,10 +1979,133 @@ sbPlaybackHistoryService::OnMediacoreEvent(sbIMediacoreEvent *aEvent)
 
   nsAutoMonitor mon(mMonitor);
 
-//  LOG("+++++ sbIMediacoreEvent: eventType = %u", eventType);
+/*
+   switch(eventType) {
+    case sbIMediacoreEvent::UNINTIALIZED: { // 0U
+      LOG("+++ eventType = UNINTIALIZED");
+    }
+    break;
+    case sbIMediacoreEvent::METADATA_CHANGE: { // 4096U
+      LOG("+++ eventType = METADATA_CHANGE");
+    }
+    break;
+    case sbIMediacoreEvent::URI_CHANGE: { // 4097U
+      LOG("+++ eventType = URI_CHANGE");
+    }
+    break;
+    case sbIMediacoreEvent::DURATION_CHANGE: { // 4098U
+      LOG("+++ eventType = DURATION_CHANGE");
+    }
+    break;
+    case sbIMediacoreEvent::VOLUME_CHANGE: { // 4099U
+      LOG("+++ eventType = VOLUME_CHANGE");
+    }
+    break;
+    case sbIMediacoreEvent::MUTE_CHANGE: { // 4100U
+      LOG("+++ eventType = MUTE_CHANGE");
+    }
+    break;
+    case sbIMediacoreEvent::BEFORE_TRACK_CHANGE: { // 5376U
+      LOG("+++ eventType = BEFORE_TRACK_CHANGE");
+    }
+    break;
+    case sbIMediacoreEvent::TRACK_CHANGE: { // 5377U
+      LOG("+++ eventType = TRACK_CHANGE");
+    }
+    break;
+    case sbIMediacoreEvent::TRACK_INDEX_CHANGE: { // 5378U
+      LOG("+++ eventType = TRACK_INDEX_CHANGE");
+    }
+    break;
+    case sbIMediacoreEvent::BEFORE_VIEW_CHANGE: { // 5379U
+      LOG("+++ eventType = BEFORE_VIEW_CHANGE");
+    }
+    break;
+    case sbIMediacoreEvent::VIEW_CHANGE: { // 5380U
+      LOG("+++ eventType = VIEW_CHANGE");
+    }
+    break;
+    case sbIMediacoreEvent::SEQUENCE_CHANGE: { // 5381U
+      LOG("+++ eventType = SEQUENCE_CHANGE");
+    }
+    break;
+    case sbIMediacoreEvent::SEQUENCE_END: { // 5383U
+      LOG("+++ eventType = SEQUENCE_END");
+    }
+    break;
+    case sbIMediacoreEvent::EXPLICIT_TRACK_CHANGE: { // 5384U
+      LOG("+++ eventType = EXPLICIT_TRACK_CHANGE");
+    }
+    break;
+    case sbIMediacoreEvent::STREAM_FOUND: { // 8192U
+      LOG("+++ eventType = STREAM_FOUND");
+    }
+    break;
+    case sbIMediacoreEvent::STREAM_HAS_VIDEO: { // 8193U
+      LOG("+++ eventType = STREAM_HAS_VIDEO");
+    }
+    break;
+    case sbIMediacoreEvent::BUFFERING: { // 12288U
+      LOG("+++ eventType = BUFFERING");
+    }
+    break;
+    case sbIMediacoreEvent::BUFFER_UNDERRUN: { // 12289U
+      LOG("+++ eventType = BUFFER_UNDERRUN");
+    }
+    break;
+    case sbIMediacoreEvent::STREAM_BEFORE_START: { // 16384U
+      LOG("+++ eventType = STREAM_BEFORE_START");
+    }
+    break;
+    case sbIMediacoreEvent::STREAM_START: { // 16385U
+      LOG("+++ eventType = STREAM_START");
+    }
+    break;
+    case sbIMediacoreEvent::STREAM_BEFORE_PAUSE: { // 16386U
+      LOG("+++ eventType = STREAM_BEFORE_PAUSE");
+    }
+    break;
+    case sbIMediacoreEvent::STREAM_PAUSE: { // 16387U
+      LOG("+++ eventType = STREAM_PAUSE");
+    }
+    break;
+    case sbIMediacoreEvent::STREAM_END: { // 16388U
+      LOG("+++ eventType = STREAM_END");
+    }
+    break;
+    case sbIMediacoreEvent::STREAM_BEFORE_STOP: { // 16389U
+      LOG("+++ eventType = STREAM_BEFORE_STOP");
+    }
+    break;
+    case sbIMediacoreEvent::STREAM_STOP: { // 16390U
+      LOG("+++ eventType = STREAM_STOP");
+    }
+    break;
+    case sbIMediacoreEvent::EXPLICIT_STOP: { // 16391U
+      LOG("+++ eventType = EXPLICIT_STOP");
+    }
+    break;
+    case sbIMediacoreEvent::VIDEO_SIZE_CHANGED: { // 20480U
+      LOG("+++ eventType = VIDEO_SIZE_CHANGED");
+    }
+    break;
+    case sbIMediacoreEvent::PLUGIN_MISSING: { // 32768U
+      LOG("+++ eventType = PLUGIN_MISSING");
+    }
+    break;
+    case sbIMediacoreEvent::CUSTOM_EVENT_BASE: { // 1073741824U
+      LOG("+++ eventType = CUSTOM_EVENT_BASE");
+    }
+    break;
+    case sbIMediacoreEvent::ERROR_EVENT: { // 2147483648U
+      LOG("+++ eventType = ERROR_EVENT");
+    }
+    break;
+  }
+*/
+
   switch(eventType) {
     case sbIMediacoreEvent::STREAM_START: {
-      LOG("+++ CASE: STREAM_START");
       if(mCurrentlyTracking && !mCurrentStartTime) {
         LOG("***** SETTING mCurrentStartTime to PR_Now()");
         mCurrentStartTime = PR_Now();
@@ -2015,12 +2139,10 @@ sbPlaybackHistoryService::OnMediacoreEvent(sbIMediacoreEvent *aEvent)
     break;
 
     case sbIMediacoreEvent::TRACK_CHANGE: {
-      LOG("CASE: TRACK_CHANGE");
       // already tracking, check to see if we should add an entry for the 
       // current item before starting to track the next one.
       if(mCurrentlyTracking) {
         rv = VerifyDataAndCreateNewEntry();
-        mCurrentStartTime = 0;
         if(NS_FAILED(rv)) {
           rv = ResetTrackingData();
           NS_ENSURE_SUCCESS(rv, rv);
