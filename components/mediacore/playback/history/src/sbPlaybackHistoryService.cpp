@@ -99,6 +99,13 @@
 #define OBJ_COLUMN            "obj"
 #define OBJ_SORTABLE          "obj_sortable"
 
+
+/**
+ * To log this module, set the following environment variable:
+ *   NSPR_LOG_MODULES=sbPlaybackHistoryService:5
+ */
+
+
 //------------------------------------------------------------------------------
 // Support Functions
 //------------------------------------------------------------------------------
@@ -140,6 +147,10 @@ sbPlaybackHistoryService::sbPlaybackHistoryService()
 , mCurrentDelta(0)
 {
   MOZ_COUNT_CTOR(sbPlaybackHistoryService);
+
+  SB_PRLOG_SETUP(sbPlaybackHistoryService);
+
+  TRACE("sbPlaybackHistoryService[0x%x] - Created", this);
 }
 
 sbPlaybackHistoryService::~sbPlaybackHistoryService()
@@ -195,6 +206,8 @@ sbPlaybackHistoryService::AddListenersToCOMArrayCallback(nsISupportsHashKey::Key
 NS_METHOD 
 sbPlaybackHistoryService::Init()
 {
+  LOG("sbPlaybackHistoryService[0x%x] - Init", this);
+
   nsresult rv = NS_ERROR_UNEXPECTED;
   nsCOMPtr<nsIObserverService> observerService = 
     do_GetService("@mozilla.org/observer-service;1", &rv);
@@ -1557,6 +1570,8 @@ sbPlaybackHistoryService::DoEntriesClearedCallback()
 nsresult
 sbPlaybackHistoryService::UpdateTrackingDataFromEvent(sbIMediacoreEvent *aEvent)
 {
+  LOG("sbPlaybackHistoryService[0x%x] - UpdateTrackingDataFromEvent", this);
+
   NS_ENSURE_ARG_POINTER(aEvent);
 
   nsCOMPtr<nsIVariant> variant;
@@ -1570,12 +1585,19 @@ sbPlaybackHistoryService::UpdateTrackingDataFromEvent(sbIMediacoreEvent *aEvent)
   nsCOMPtr<sbIMediaItem> item = do_QueryInterface(supports, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
+
+  LOG("BEFORE setting data");
+  LOG("** mCurrentStartTime (unsigned) = %lu", mCurrentStartTime);
+
   mCurrentItem = item;
   mCurrentlyTracking = PR_TRUE;
 
   mCurrentStartTime = 0;
   mCurrentDelta = 0;
 
+  LOG("AFTER setting data");
+  LOG("** mCurrentStartTime (unsigned) = %lu", mCurrentStartTime);
+  LOG("***** LEAVING *****");
   return NS_OK;
 }
 
@@ -1603,7 +1625,14 @@ sbPlaybackHistoryService::UpdateCurrentViewFromEvent(sbIMediacoreEvent *aEvent)
 nsresult
 sbPlaybackHistoryService::VerifyDataAndCreateNewEntry()
 {
+  LOG("sbPlaybackHistoryService[0x%x] - VerifyDataAndCreateNewEntry", this);
   nsAutoMonitor mon(mMonitor);
+
+  if (mCurrentlyTracking == PR_TRUE)
+    LOG("** mCurrentlyTracking = true");
+  else
+    LOG("** mCurrentlyTracking = false");
+  LOG("** mCurrentStartTime (unsigned) = %lu", mCurrentStartTime);
 
   NS_ENSURE_STATE(mCurrentlyTracking);
   NS_ENSURE_STATE(mCurrentItem);
@@ -1715,19 +1744,27 @@ sbPlaybackHistoryService::VerifyDataAndCreateNewEntry()
 #endif
   */
 
+  LOG("sbPlaybackHistoryServie: LEAVING VerifyDataAndCreateNewEntry");
   return NS_OK;
 }
 
 nsresult 
 sbPlaybackHistoryService::ResetTrackingData()
 {
+  LOG("sbPlaybackHistoryService[0x%x] - ResetTrackingData", this);
   nsAutoMonitor mon(mMonitor);
+
+  LOG("BEFORE resetting data");
+  LOG("** mCurrentStartTime (unsigned) = %lu", mCurrentStartTime);
 
   mCurrentlyTracking = PR_FALSE;
   mCurrentStartTime = 0;
   mCurrentPauseTime = 0;
   mCurrentDelta = 0;
   mCurrentItem = nsnull;
+
+  LOG("AFTER resetting data");
+  LOG("** mCurrentStartTime (unsigned) = %lu", mCurrentStartTime);
 
   return NS_OK;
 }
@@ -1932,6 +1969,7 @@ sbPlaybackHistoryService::Observe(nsISupports* aSubject,
 NS_IMETHODIMP
 sbPlaybackHistoryService::OnMediacoreEvent(sbIMediacoreEvent *aEvent)
 {
+  LOG("OnMediacoreEvent");
   NS_ENSURE_ARG_POINTER(aEvent);
 
   PRUint32 eventType = 0;
@@ -1940,10 +1978,14 @@ sbPlaybackHistoryService::OnMediacoreEvent(sbIMediacoreEvent *aEvent)
 
   nsAutoMonitor mon(mMonitor);
 
+//  LOG("+++++ sbIMediacoreEvent: eventType = %u", eventType);
   switch(eventType) {
     case sbIMediacoreEvent::STREAM_START: {
+      LOG("+++ CASE: STREAM_START");
       if(mCurrentlyTracking && !mCurrentStartTime) {
+        LOG("***** SETTING mCurrentStartTime to PR_Now()");
         mCurrentStartTime = PR_Now();
+        LOG("** mCurrentStartTime (unsigned) = %lu", mCurrentStartTime);
       }
 
       if(mCurrentlyTracking && mCurrentStartTime && mCurrentPauseTime) {
@@ -1973,10 +2015,12 @@ sbPlaybackHistoryService::OnMediacoreEvent(sbIMediacoreEvent *aEvent)
     break;
 
     case sbIMediacoreEvent::TRACK_CHANGE: {
+      LOG("CASE: TRACK_CHANGE");
       // already tracking, check to see if we should add an entry for the 
       // current item before starting to track the next one.
       if(mCurrentlyTracking) {
         rv = VerifyDataAndCreateNewEntry();
+        mCurrentStartTime = 0;
         if(NS_FAILED(rv)) {
           rv = ResetTrackingData();
           NS_ENSURE_SUCCESS(rv, rv);
