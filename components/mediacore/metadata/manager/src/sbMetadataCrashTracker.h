@@ -112,7 +112,7 @@ public:
    * suspected of causing a crash on a previous run.
    */
   nsresult IsURLBlacklisted(const nsACString& aURL,
-                            PRBool* aIsBlackListed);
+                            bool* aIsBlackListed);
 
   /**
    * Adds a URL to the blacklist
@@ -145,7 +145,7 @@ private:
    */                 
   static PLDHashOperator PR_CALLBACK
   WriteBlacklistURLToFile(nsCStringHashKey::KeyType aKey,
-                          PRBool aEntry,
+                          bool aEntry,
                           void* aUserData);
 
   /**
@@ -166,7 +166,7 @@ private:
 
 
   nsCOMPtr<nsIFile>                           mBlacklistFile;
-  nsDataHashtable<nsCStringHashKey, PRBool>   mURLBlacklist;
+  nsDataHashtable<nsCStringHashKey, bool>   mURLBlacklist;
 
   // Rather than log the URL for both begin and complete we
   // assign each URL a number.  This cuts the log file size in half.

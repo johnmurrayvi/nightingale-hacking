@@ -162,7 +162,7 @@ public:
    * \param aJobItem The job item to be processed
    * \return NS_ERROR_NOT_AVAILABLE if there are no more items in the queue
    */
-  nsresult GetQueuedItem(PRBool aMainThreadOnly, sbMetadataJobItem** aJobItem);
+  nsresult GetQueuedItem(bool aMainThreadOnly, sbMetadataJobItem** aJobItem);
   
   /**
    * Give back a job item after processing has been attempted.
@@ -184,7 +184,7 @@ public:
    *
    * \param aBlocked Job blocked status.
    */
-  nsresult SetBlocked(PRBool aBlocked);
+  nsresult SetBlocked(bool aBlocked);
   
   
 private:
@@ -233,7 +233,7 @@ private:
    * *** MAIN THREAD ONLY ***
    */
   nsresult CopyPropertiesToMediaItem(sbMetadataJobItem* aJobItem,
-                                     PRBool* aWillRetry);
+                                     bool* aWillRetry);
   
   /**
    * Trigger an album art scan for the given job item.
@@ -253,8 +253,8 @@ private:
    *                   never be null if aShouldRetry is true!
    */
   nsresult HandleFailedItem(sbMetadataJobItem* aJobItem, 
-                            PRBool aShouldRetry = PR_FALSE, 
-                            PRBool *aWillRetry = nsnull);
+                            bool aShouldRetry = PR_FALSE, 
+                            bool *aWillRetry = nsnull);
 
   /**
    * Empty mProcessedBackgroundThreadItems in a library batch.  
@@ -313,7 +313,7 @@ private:
   
   // sbIJobProgress variables
   PRUint16                                 mStatus;
-  PRBool                                   mBlocked;
+  bool                                   mBlocked;
   PRUint32                                 mCompletedItemCount;
   PRUint32                                 mTotalItemCount;
   nsTArray<nsString>                       mErrorMessages;
@@ -354,7 +354,7 @@ private:
   
   // Indicates that we've started a library batch, and need
   // to close it before we complete
-  PRBool                                   mInLibraryBatch;
+  bool                                   mInLibraryBatch;
 
   // Cached art fetcher instance
   nsCOMPtr<sbIAlbumArtFetcherSet>          mArtFetcher;

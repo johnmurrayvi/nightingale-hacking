@@ -215,7 +215,7 @@ class sbDownloadDevice : public nsIObserver,
 
     nsresult RunTransferQueue();
 
-    PRBool GetNextTransferItem(
+    bool GetNextTransferItem(
         sbIMediaItem                **appMediaItem);
 
     nsresult ResumeTransfers();
@@ -332,7 +332,7 @@ class sbDownloadSession : public nsIWebProgressListener, nsITimerCallback
 
     void Shutdown();
 
-    PRBool IsSuspended();
+    bool IsSuspended();
 
 
     /* *************************************************************************
@@ -385,8 +385,8 @@ class sbDownloadSession : public nsIWebProgressListener, nsITimerCallback
     nsCOMPtr<nsIURI>            mpDstURI;
     nsCOMPtr<sbIMediaItem>      mpStatusTarget;
     nsCString                   mEntityID;
-    PRBool                      mShutdown;
-    PRBool                      mSuspended;
+    bool                      mShutdown;
+    bool                      mSuspended;
     PRTime                      mLastUpdate;
     PRInt64                     mInitialProgressBytes;
     PRUint64                    mLastProgressBytes;
@@ -511,7 +511,7 @@ class sbAutoDownloadButtonPropertyValue
 public:
   sbAutoDownloadButtonPropertyValue(sbIMediaItem* aMediaItem,
                                     sbIMediaItem* aStatusTarget = nsnull,
-                                    PRBool aReadOnly = PR_FALSE);
+                                    bool aReadOnly = PR_FALSE);
   ~sbAutoDownloadButtonPropertyValue();
 
   nsAutoPtr<sbDownloadButtonPropertyValue> value;
@@ -519,7 +519,7 @@ public:
 private:
   nsCOMPtr<sbIMediaItem> mMediaItem;
   nsCOMPtr<sbIMediaItem> mStatusTarget;
-  PRBool mReadOnly;
+  bool mReadOnly;
 };
 
 class sbDownloadSessionMoveHandler : public nsIRunnable

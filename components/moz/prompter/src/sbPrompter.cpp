@@ -332,7 +332,7 @@ sbPrompter::SetParentWindowType(const nsAString& aParentWindowType)
  */
 
 NS_IMETHODIMP
-sbPrompter::GetWaitForWindow(PRBool* aWaitForWindow)
+sbPrompter::GetWaitForWindow(bool* aWaitForWindow)
 {
   NS_ENSURE_ARG_POINTER(aWaitForWindow);
   mozilla::MutexAutoLock autoLock(mPrompterLock);
@@ -341,7 +341,7 @@ sbPrompter::GetWaitForWindow(PRBool* aWaitForWindow)
 }
 
 NS_IMETHODIMP
-sbPrompter::SetWaitForWindow(PRBool aWaitForWindow)
+sbPrompter::SetWaitForWindow(bool aWaitForWindow)
 {
   mozilla::MutexAutoLock autoLock(mPrompterLock);
   mWaitForWindow = aWaitForWindow;
@@ -354,7 +354,7 @@ sbPrompter::SetWaitForWindow(PRBool aWaitForWindow)
  */
 
 NS_IMETHODIMP
-sbPrompter::GetRenderHTML(PRBool* aRenderHTML)
+sbPrompter::GetRenderHTML(bool* aRenderHTML)
 {
   NS_ENSURE_ARG_POINTER(aRenderHTML);
   mozilla::MutexAutoLock autoLock(mPrompterLock);
@@ -363,7 +363,7 @@ sbPrompter::GetRenderHTML(PRBool* aRenderHTML)
 }
 
 NS_IMETHODIMP
-sbPrompter::SetRenderHTML(PRBool aRenderHTML)
+sbPrompter::SetRenderHTML(bool aRenderHTML)
 {
   mozilla::MutexAutoLock autoLock(mPrompterLock);
   mRenderHTML = aRenderHTML;
@@ -468,7 +468,7 @@ sbPrompter::AlertCheck(nsIDOMWindow*    aParent,
                        const PRUnichar* aDialogTitle,
                        const PRUnichar* aText,
                        const PRUnichar* aCheckMsg,
-                       PRBool*          aCheckState)
+                       bool*          aCheckState)
 {
   return AlertCheckImpl(aParent,aDialogTitle,aText,aCheckMsg,aCheckState);
 }
@@ -478,7 +478,7 @@ sbPrompter::AlertCheckImpl(nsIDOMWindow*    aParent,
                        const PRUnichar* aDialogTitle,
                        const PRUnichar* aText,
                        const PRUnichar* aCheckMsg,
-                       PRBool*          aCheckState)
+                       bool*          aCheckState)
 {
   nsresult rv;
 
@@ -490,7 +490,7 @@ sbPrompter::AlertCheckImpl(nsIDOMWindow*    aParent,
     nsRefPtr<sbRunnable_<nsresult>> job =
       new sbRunnableMethod5_<nsresult,sbPrompter,
         nsIDOMWindow*,const PRUnichar*,const PRUnichar*,
-        const PRUnichar*,PRBool*>(
+        const PRUnichar*,bool*>(
           *this,&sbPrompter::AlertCheckImpl,
           aParent,aDialogTitle,aText,aCheckMsg,aCheckState);
     // Call proxied prompter until a window is available.
@@ -563,7 +563,7 @@ NS_IMETHODIMP
 sbPrompter::Confirm(nsIDOMWindow*    aParent,
                     const PRUnichar* aDialogTitle,
                     const PRUnichar* aText,
-                    PRBool*          _retval)
+                    bool*          _retval)
 {
   return ConfirmImpl(aParent,aDialogTitle,aText,_retval);
 }
@@ -572,7 +572,7 @@ nsresult
 sbPrompter::ConfirmImpl(nsIDOMWindow*    aParent,
                     const PRUnichar* aDialogTitle,
                     const PRUnichar* aText,
-                    PRBool*          _retval)
+                    bool*          _retval)
 {
   nsresult rv;
 
@@ -583,7 +583,7 @@ sbPrompter::ConfirmImpl(nsIDOMWindow*    aParent,
   if (!NS_IsMainThread()) {
     nsRefPtr<sbRunnable_<nsresult>> job =
       new sbRunnableMethod4_<nsresult,sbPrompter,
-        nsIDOMWindow*,const PRUnichar*,const PRUnichar*,PRBool*>(
+        nsIDOMWindow*,const PRUnichar*,const PRUnichar*,bool*>(
           *this,&sbPrompter::ConfirmImpl,aParent,aDialogTitle,aText,_retval);
     // Call proxied prompter until a window is available.
     while (1) {
@@ -654,8 +654,8 @@ sbPrompter::ConfirmCheck(nsIDOMWindow*    aParent,
                          const PRUnichar* aDialogTitle,
                          const PRUnichar* aText,
                          const PRUnichar* aCheckMsg,
-                         PRBool*          aCheckState,
-                         PRBool*          _retval)
+                         bool*          aCheckState,
+                         bool*          _retval)
 {
   return ConfirmCheckImpl(aParent,aDialogTitle,aText,aCheckMsg,aCheckState,_retval);
 }
@@ -665,8 +665,8 @@ sbPrompter::ConfirmCheckImpl(nsIDOMWindow*    aParent,
                          const PRUnichar* aDialogTitle,
                          const PRUnichar* aText,
                          const PRUnichar* aCheckMsg,
-                         PRBool*          aCheckState,
-                         PRBool*          _retval)
+                         bool*          aCheckState,
+                         bool*          _retval)
 {
   nsresult rv;
 
@@ -679,7 +679,7 @@ sbPrompter::ConfirmCheckImpl(nsIDOMWindow*    aParent,
     nsRefPtr<sbRunnable_<nsresult>> job =
       new sbRunnableMethod6_<nsresult,sbPrompter,
         nsIDOMWindow*,const PRUnichar*,const PRUnichar*,const PRUnichar*,
-        PRBool*,PRBool*>(
+        bool*,bool*>(
           *this,&sbPrompter::ConfirmCheckImpl,
           aParent,aDialogTitle,aText,aCheckMsg,aCheckState,_retval);
     // Call proxied prompter until a window is available.
@@ -764,7 +764,7 @@ sbPrompter::ConfirmEx(nsIDOMWindow*    aParent,
                       const PRUnichar* aButton1Title,
                       const PRUnichar* aButton2Title,
                       const PRUnichar* aCheckMsg,
-                      PRBool*          aCheckState,
+                      bool*          aCheckState,
                       PRInt32*         _retval)
 {
   return ConfirmExImpl(aParent,aDialogTitle,aText,aButtonFlags,
@@ -781,7 +781,7 @@ sbPrompter::ConfirmExImpl(nsIDOMWindow*    aParent,
                       const PRUnichar* aButton1Title,
                       const PRUnichar* aButton2Title,
                       const PRUnichar* aCheckMsg,
-                      PRBool*          aCheckState,
+                      bool*          aCheckState,
                       PRInt32*         _retval)
 {
   nsresult rv;
@@ -792,7 +792,7 @@ sbPrompter::ConfirmExImpl(nsIDOMWindow*    aParent,
       new sbRunnableMethod10_<nsresult,sbPrompter,
         nsIDOMWindow*,const PRUnichar*,const PRUnichar*,PRUint32,
         const PRUnichar*,const PRUnichar*,const PRUnichar*,const PRUnichar*,
-        PRBool*,PRInt32*>(
+        bool*,PRInt32*>(
           *this,&sbPrompter::ConfirmExImpl,aParent,aDialogTitle,aText,
           aButtonFlags,aButton0Title,aButton1Title,aButton2Title,
           aCheckMsg,aCheckState,_retval);
@@ -856,8 +856,8 @@ sbPrompter::Prompt(nsIDOMWindow*    aParent,
                    const PRUnichar* aText,
                    PRUnichar**      aValue,
                    const PRUnichar* aCheckMsg,
-                   PRBool*          aCheckState,
-                   PRBool*          _retval)
+                   bool*          aCheckState,
+                   bool*          _retval)
 {
   return PromptImpl(aParent,aDialogTitle,aText,aValue,aCheckMsg,aCheckState,_retval);
 }
@@ -868,8 +868,8 @@ sbPrompter::PromptImpl(nsIDOMWindow*    aParent,
                    const PRUnichar* aText,
                    PRUnichar**      aValue,
                    const PRUnichar* aCheckMsg,
-                   PRBool*          aCheckState,
-                   PRBool*          _retval)
+                   bool*          aCheckState,
+                   bool*          _retval)
 {
   nsresult rv;
 
@@ -878,7 +878,7 @@ sbPrompter::PromptImpl(nsIDOMWindow*    aParent,
     nsRefPtr<sbRunnable_<nsresult>> job =
       new sbRunnableMethod7_<nsresult,sbPrompter,
         nsIDOMWindow*,const PRUnichar*,const PRUnichar*,PRUnichar**,
-        const PRUnichar*,PRBool*,PRBool*>(
+        const PRUnichar*,bool*,bool*>(
           *this,&sbPrompter::PromptImpl,aParent,aDialogTitle,aText,
           aValue,aCheckMsg,aCheckState,_retval);
     // Call proxied prompter until a window is available.
@@ -939,8 +939,8 @@ sbPrompter::PromptUsernameAndPassword(nsIDOMWindow*    aParent,
                                       PRUnichar**      aUsername,
                                       PRUnichar**      aPassword,
                                       const PRUnichar* aCheckMsg,
-                                      PRBool*          aCheckState,
-                                      PRBool*          _retval)
+                                      bool*          aCheckState,
+                                      bool*          _retval)
 {
   return PromptUsernameAndPasswordImpl(aParent,aDialogTitle,aText,
             aUsername,aPassword,aCheckMsg,aCheckState,_retval);
@@ -953,8 +953,8 @@ sbPrompter::PromptUsernameAndPasswordImpl(nsIDOMWindow*    aParent,
                                       PRUnichar**      aUsername,
                                       PRUnichar**      aPassword,
                                       const PRUnichar* aCheckMsg,
-                                      PRBool*          aCheckState,
-                                      PRBool*          _retval)
+                                      bool*          aCheckState,
+                                      bool*          _retval)
 {
   nsresult rv;
 
@@ -964,7 +964,7 @@ sbPrompter::PromptUsernameAndPasswordImpl(nsIDOMWindow*    aParent,
       new sbRunnableMethod8_<nsresult,sbPrompter,
         nsIDOMWindow*,const PRUnichar*,const PRUnichar*,
         PRUnichar**,PRUnichar**,
-        const PRUnichar*,PRBool*,PRBool*>(
+        const PRUnichar*,bool*,bool*>(
           *this,&sbPrompter::PromptUsernameAndPasswordImpl,
           aParent,aDialogTitle,aText,
           aUsername,aPassword,aCheckMsg,aCheckState,_retval);
@@ -1026,8 +1026,8 @@ sbPrompter::PromptPassword(nsIDOMWindow*    aParent,
                            const PRUnichar* aText,
                            PRUnichar**      aPassword,
                            const PRUnichar* aCheckMsg,
-                           PRBool*          aCheckState,
-                           PRBool*          _retval)
+                           bool*          aCheckState,
+                           bool*          _retval)
 {
   return PromptPasswordImpl(
       aParent,aDialogTitle,aText,aPassword,aCheckMsg,aCheckState,_retval);
@@ -1039,8 +1039,8 @@ sbPrompter::PromptPasswordImpl(nsIDOMWindow*    aParent,
                            const PRUnichar* aText,
                            PRUnichar**      aPassword,
                            const PRUnichar* aCheckMsg,
-                           PRBool*          aCheckState,
-                           PRBool*          _retval)
+                           bool*          aCheckState,
+                           bool*          _retval)
 {
   nsresult rv;
 
@@ -1049,7 +1049,7 @@ sbPrompter::PromptPasswordImpl(nsIDOMWindow*    aParent,
     nsRefPtr<sbRunnable_<nsresult>> job =
       new sbRunnableMethod7_<nsresult,sbPrompter,
         nsIDOMWindow*,const PRUnichar*,const PRUnichar*,PRUnichar**,
-        const PRUnichar*,PRBool*,PRBool*>(
+        const PRUnichar*,bool*,bool*>(
           *this,&sbPrompter::PromptPasswordImpl,
           aParent,aDialogTitle,aText,
           aPassword,aCheckMsg,aCheckState,_retval);
@@ -1112,7 +1112,7 @@ sbPrompter::Select(nsIDOMWindow*     aParent,
                    PRUint32          aCount,
                    const PRUnichar** aSelectList,
                    PRInt32*          aOutSelection,
-                   PRBool*           _retval)
+                   bool*           _retval)
 {
   return SelectImpl(aParent,aDialogTitle,aText,
       aCount,aSelectList,aOutSelection,_retval);
@@ -1125,7 +1125,7 @@ sbPrompter::SelectImpl(nsIDOMWindow*     aParent,
                    PRUint32          aCount,
                    const PRUnichar** aSelectList,
                    PRInt32*          aOutSelection,
-                   PRBool*           _retval)
+                   bool*           _retval)
 {
 nsresult rv;
 
@@ -1134,7 +1134,7 @@ nsresult rv;
     nsRefPtr<sbRunnable_<nsresult>> job =
       new sbRunnableMethod7_<nsresult,sbPrompter,
         nsIDOMWindow*,const PRUnichar*,const PRUnichar*,PRUint32,
-        const PRUnichar**,PRInt32*,PRBool*>(
+        const PRUnichar**,PRInt32*,bool*>(
           *this,&sbPrompter::SelectImpl,
           aParent,aDialogTitle,aText,aCount,
           aSelectList,aOutSelection,_retval);
@@ -1336,7 +1336,7 @@ sbPrompter::GetParent(nsIDOMWindow** aParent)
 
   // If the Songbird window watcher is shutting down, don't wait for a window.
   {
-    PRBool isShuttingDown;
+    bool isShuttingDown;
     rv = mSBWindowWatcher->GetIsShuttingDown(&isShuttingDown);
     NS_ENSURE_SUCCESS(rv, rv);
     if (isShuttingDown)

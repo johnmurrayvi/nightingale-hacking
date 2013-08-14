@@ -113,7 +113,7 @@ static PRLogModuleInfo* gMediacoreSequencerLog = nsnull;
 inline nsresult
 EmitMillisecondsToTimeString(PRUint64 aValue,
                              nsAString &aString,
-                             PRBool aRemainingTime = PR_FALSE)
+                             bool aRemainingTime = PR_FALSE)
 {
   PRUint64 seconds = aValue / 1000;
   PRUint64 minutes = seconds / 60;
@@ -247,7 +247,7 @@ sbMediacoreSequencer::Init()
   mShuffleGenerator = do_QueryInterface(generator, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool shuffle = PR_FALSE;
+  bool shuffle = PR_FALSE;
   rv = mDataRemotePlaylistShuffle->GetBoolValue(&shuffle);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -264,7 +264,7 @@ sbMediacoreSequencer::Init()
 
   nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
-  PRBool doResume;
+  bool doResume;
   rv = prefs->GetBoolPref("songbird.mediacore.resumePlaybackPosition",
                           &doResume);
   if (NS_SUCCEEDED(rv)) {
@@ -807,8 +807,8 @@ sbMediacoreSequencer::UpdatePlayStateDataRemotes()
 
   mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
-  PRBool paused = PR_FALSE;
-  PRBool playing = PR_FALSE;
+  bool paused = PR_FALSE;
+  bool playing = PR_FALSE;
 
   if(mStatus == sbIMediacoreStatus::STATUS_BUFFERING ||
      mStatus == sbIMediacoreStatus::STATUS_PLAYING) {
@@ -859,7 +859,7 @@ sbMediacoreSequencer::UpdateDurationDataRemotes(PRUint64 aDuration)
   NS_ENSURE_SUCCESS(rv, rv);
 
   // show remaining time only affects the text based data remote!
-  PRBool showRemainingTime = PR_FALSE;
+  bool showRemainingTime = PR_FALSE;
   rv = mDataRemoteFaceplateRemainingTime->GetBoolValue(&showRemainingTime);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -911,7 +911,7 @@ nsresult
 sbMediacoreSequencer::UpdateShuffleDataRemote(PRUint32 aMode)
 {
 
-  PRBool shuffle = PR_FALSE;
+  bool shuffle = PR_FALSE;
   if(aMode == sbIMediacoreSequencer::MODE_SHUFFLE) {
     shuffle = PR_TRUE;
   }
@@ -940,7 +940,7 @@ nsresult
 sbMediacoreSequencer::ResetPlayingVideoDataRemote()
 {
 
-  PRBool isPlayingVideo;
+  bool isPlayingVideo;
   nsresult rv = mDataRemoteFaceplatePlayingVideo->GetBoolValue(&isPlayingVideo);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -999,7 +999,7 @@ sbMediacoreSequencer::HandleMuteChangeEvent(sbIMediacoreEvent *aEvent)
   nsresult rv = aEvent->GetData(getter_AddRefs(variant));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool muted = PR_FALSE;
+  bool muted = PR_FALSE;
   rv = variant->GetAsBool(&muted);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1010,7 +1010,7 @@ sbMediacoreSequencer::HandleMuteChangeEvent(sbIMediacoreEvent *aEvent)
 }
 
 nsresult
-sbMediacoreSequencer::UpdateMuteDataRemote(PRBool aMuted)
+sbMediacoreSequencer::UpdateMuteDataRemote(bool aMuted)
 {
 
   mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
@@ -1124,7 +1124,7 @@ sbMediacoreSequencer::SetMetadataDataRemote(const nsAString &aId,
   return NS_OK;
 }
 
-PRBool
+bool
 sbMediacoreSequencer::IsPropertyInPropertyArray(sbIPropertyArray *aPropArray,
                                                 const nsAString &aPropName)
 {
@@ -1729,7 +1729,7 @@ sbMediacoreSequencer::Setup(nsIURI *aURI /*= nsnull*/)
   rv = voting->VoteWithURI(uri, getter_AddRefs(votingChain));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool validChain = PR_FALSE;
+  bool validChain = PR_FALSE;
   rv = votingChain->GetValid(&validChain);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1978,7 +1978,7 @@ sbMediacoreSequencer::CoreHandleNextSetup()
   return NS_OK;
 }
 
-PRBool
+bool
 sbMediacoreSequencer::HandleAbort()
 {
   {
@@ -2321,7 +2321,7 @@ sbMediacoreSequencer::UpdateItemUIDIndex()
 
 nsresult
 sbMediacoreSequencer::DispatchMediacoreEvent(sbIMediacoreEvent *aEvent,
-                                             PRBool aAsync /*= PR_FALSE*/)
+                                             bool aAsync /*= PR_FALSE*/)
 {
   NS_ENSURE_ARG_POINTER(aEvent);
 
@@ -2330,7 +2330,7 @@ sbMediacoreSequencer::DispatchMediacoreEvent(sbIMediacoreEvent *aEvent,
     do_QueryReferent(mMediacoreManager, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool dispatched = PR_FALSE;
+  bool dispatched = PR_FALSE;
   rv = target->DispatchEvent(aEvent, aAsync, &dispatched);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -2376,7 +2376,7 @@ sbMediacoreSequencer::StartPlayback()
     // Dispatch the event
     nsCOMPtr<sbIMediacoreEventTarget> target = do_QueryInterface(mCore, &rv);
     NS_ENSURE_SUCCESS(rv, rv);
-    PRBool dispatched;
+    bool dispatched;
     rv = target->DispatchEvent(event, PR_TRUE, &dispatched);
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -2399,7 +2399,7 @@ sbMediacoreSequencer::UpdateLastPositionProperty(sbIMediaItem* aItem,
 
   nsresult rv;
 
-  PRBool hasVideo;
+  bool hasVideo;
   rv = mDataRemoteFaceplatePlayingVideo->GetBoolValue(&hasVideo);
   if (NS_FAILED(rv) || !hasVideo) {
     // we only track last position for video
@@ -2504,10 +2504,10 @@ sbMediacoreSequencer::SetMode(PRUint32 aMode)
 {
   nsresult rv;
 
-  PRBool validMode = PR_FALSE;
+  bool validMode = PR_FALSE;
   switch(aMode) {
     case sbIMediacoreSequencer::MODE_SHUFFLE:
-      PRBool disableShuffle;
+      bool disableShuffle;
       rv = mDataRemotePlaylistShuffleDisabled->GetBoolValue(&disableShuffle);
       NS_ENSURE_SUCCESS(rv, rv);
       if (disableShuffle) {
@@ -2553,11 +2553,11 @@ sbMediacoreSequencer::SetRepeatMode(PRUint32 aRepeatMode)
 {
   nsresult rv;
 
-  PRBool validMode = PR_FALSE;
+  bool validMode = PR_FALSE;
   switch(aRepeatMode) {
     case sbIMediacoreSequencer::MODE_REPEAT_ONE:
     case sbIMediacoreSequencer::MODE_REPEAT_ALL:
-      PRBool disableRepeat;
+      bool disableRepeat;
       rv = mDataRemotePlaylistRepeatDisabled->GetBoolValue(&disableRepeat);
       NS_ENSURE_SUCCESS(rv, rv);
       if (disableRepeat) {
@@ -2736,14 +2736,14 @@ sbMediacoreSequencer::SetSequencePosition(PRUint32 aSequencePosition)
 NS_IMETHODIMP
 sbMediacoreSequencer::PlayView(sbIMediaListView *aView,
                                PRInt64 aItemIndex,
-                               PRBool aNotFromUserAction)
+                               bool aNotFromUserAction)
 {
   NS_ENSURE_ARG_POINTER(aView);
 
   nsresult rv = SetViewWithViewPosition(aView, &aItemIndex);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool proceed;
+  bool proceed;
   rv = ValidateMediaItemControllerPlayback(!aNotFromUserAction,
                                            ONHOLD_PLAYVIEW,
                                            &proceed);
@@ -2892,7 +2892,7 @@ sbMediacoreSequencer::Play()
 }
 
 NS_IMETHODIMP
-sbMediacoreSequencer::Stop(PRBool aNotFromUserAction) {
+sbMediacoreSequencer::Stop(bool aNotFromUserAction) {
 
   mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
@@ -3017,9 +3017,9 @@ sbMediacoreSequencer::OnValidatePlaybackComplete(sbIMediaItem *aItem,
 }
 
 nsresult
-sbMediacoreSequencer::ValidateMediaItemControllerPlayback(PRBool aFromUserAction,
+sbMediacoreSequencer::ValidateMediaItemControllerPlayback(bool aFromUserAction,
                                                           PRInt32 aOnHoldStatus,
-                                                          PRBool *_proceed)
+                                                          bool *_proceed)
 {
   NS_ENSURE_TRUE(NS_IsMainThread(), NS_ERROR_UNEXPECTED);
   NS_ENSURE_ARG_POINTER(_proceed);
@@ -3063,12 +3063,12 @@ sbMediacoreSequencer::ValidateMediaItemControllerPlayback(PRBool aFromUserAction
 }
 
 NS_IMETHODIMP
-sbMediacoreSequencer::Next(PRBool aNotFromUserAction)
+sbMediacoreSequencer::Next(bool aNotFromUserAction)
 {
 
   nsresult rv = NS_ERROR_UNEXPECTED;
 
-  PRBool disableNext;
+  bool disableNext;
   rv = mDataRemotePlaylistNextDisabled->GetBoolValue(&disableNext);
   NS_ENSURE_SUCCESS(rv, rv);
   if (disableNext) {
@@ -3083,7 +3083,7 @@ sbMediacoreSequencer::Next(PRBool aNotFromUserAction)
       return NS_OK;
     }
 
-    PRBool hasNext = PR_FALSE;
+    bool hasNext = PR_FALSE;
     PRUint32 length = mSequence.size();
 
     if((mRepeatMode == sbIMediacoreSequencer::MODE_REPEAT_ONE) &&
@@ -3181,7 +3181,7 @@ sbMediacoreSequencer::Next(PRBool aNotFromUserAction)
       return NS_OK;
     }
 
-    PRBool proceed;
+    bool proceed;
     rv = ValidateMediaItemControllerPlayback(!aNotFromUserAction, ONHOLD_NEXT, &proceed);
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -3216,12 +3216,12 @@ sbMediacoreSequencer::Next(PRBool aNotFromUserAction)
 }
 
 NS_IMETHODIMP
-sbMediacoreSequencer::Previous(PRBool aNotFromUserAction)
+sbMediacoreSequencer::Previous(bool aNotFromUserAction)
 {
 
   nsresult rv = NS_ERROR_UNEXPECTED;
 
-  PRBool disablePrevious;
+  bool disablePrevious;
   rv = mDataRemotePlaylistPreviousDisabled->GetBoolValue(&disablePrevious);
   NS_ENSURE_SUCCESS(rv, rv);
   if (disablePrevious) {
@@ -3236,7 +3236,7 @@ sbMediacoreSequencer::Previous(PRBool aNotFromUserAction)
       return NS_OK;
     }
 
-    PRBool hasNext = PR_FALSE;
+    bool hasNext = PR_FALSE;
     PRUint32 length = mSequence.size();
     PRInt64 position = mPosition;
 
@@ -3317,7 +3317,7 @@ sbMediacoreSequencer::Previous(PRBool aNotFromUserAction)
       return NS_OK;
     }
 
-    PRBool proceed;
+    bool proceed;
     rv = ValidateMediaItemControllerPlayback(!aNotFromUserAction, ONHOLD_PREVIOUS, &proceed);
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -3406,7 +3406,7 @@ sbMediacoreSequencer::RequestHandleNextItem(sbIMediacore *aMediacore)
   rv = voting->VoteWithURI(uri, getter_AddRefs(votingChain));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool validChain = PR_FALSE;
+  bool validChain = PR_FALSE;
   rv = votingChain->GetValid(&validChain);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -3513,7 +3513,7 @@ sbMediacoreSequencer::OnMediacoreEvent(sbIMediacoreEvent *aEvent)
         do_QueryReferent(mMediacoreManager, &rv);
       NS_ENSURE_SUCCESS(rv, rv);
 
-      PRBool dispatched;
+      bool dispatched;
       rv = target->DispatchEvent(aEvent, PR_TRUE, &dispatched);
       NS_ENSURE_SUCCESS(rv, rv);
     }
@@ -3710,7 +3710,7 @@ sbMediacoreSequencer::OnMediacoreEvent(sbIMediacoreEvent *aEvent)
     break;
 
     case sbIMediacoreEvent::BUFFERING: {
-      PRBool buffering = PR_FALSE;
+      bool buffering = PR_FALSE;
 
       rv = mDataRemoteFaceplateBuffering->GetBoolValue(&buffering);
       NS_ENSURE_SUCCESS(rv, rv);
@@ -3812,7 +3812,7 @@ NS_IMETHODIMP
 sbMediacoreSequencer::OnItemAdded(sbIMediaList *aMediaList,
                                   sbIMediaItem *aMediaItem,
                                   PRUint32 aIndex,
-                                  PRBool *_retval)
+                                  bool *_retval)
 {
   NS_ENSURE_ARG_POINTER(aMediaList);
 
@@ -3850,7 +3850,7 @@ NS_IMETHODIMP
 sbMediacoreSequencer::OnBeforeItemRemoved(sbIMediaList *aMediaList,
                                           sbIMediaItem *aMediaItem,
                                           PRUint32 aIndex,
-                                          PRBool *_retval)
+                                          bool *_retval)
 {
   *_retval = PR_TRUE;
   return NS_OK;
@@ -3860,18 +3860,18 @@ NS_IMETHODIMP
 sbMediacoreSequencer::OnAfterItemRemoved(sbIMediaList *aMediaList,
                                          sbIMediaItem *aMediaItem,
                                          PRUint32 aIndex,
-                                         PRBool *_retval)
+                                         bool *_retval)
 {
   NS_ENSURE_ARG_POINTER(aMediaList);
 
   mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
-  PRBool listEvent = (aMediaList == mViewList);
+  bool listEvent = (aMediaList == mViewList);
 
   nsresult rv = NS_ERROR_UNEXPECTED;
   nsCOMPtr<sbILibrary> library = do_QueryInterface(aMediaList, &rv);
 
-  PRBool libraryEvent = PR_FALSE;
+  bool libraryEvent = PR_FALSE;
   if(!mViewIsLibrary && NS_SUCCEEDED(rv)) {
     libraryEvent = PR_TRUE;
   }
@@ -3946,7 +3946,7 @@ NS_IMETHODIMP
 sbMediacoreSequencer::OnItemUpdated(sbIMediaList *aMediaList,
                                     sbIMediaItem *aMediaItem,
                                     sbIPropertyArray *aProperties,
-                                    PRBool *_retval)
+                                    bool *_retval)
 {
   NS_ENSURE_ARG_POINTER(aMediaList);
 
@@ -3994,7 +3994,7 @@ NS_IMETHODIMP
 sbMediacoreSequencer::OnItemMoved(sbIMediaList *aMediaList,
                                   PRUint32 aFromIndex,
                                   PRUint32 aToIndex,
-                                  PRBool *_retval)
+                                  bool *_retval)
 {
   NS_ENSURE_ARG_POINTER(aMediaList);
 
@@ -4020,8 +4020,8 @@ sbMediacoreSequencer::OnItemMoved(sbIMediaList *aMediaList,
 
 NS_IMETHODIMP
 sbMediacoreSequencer::OnBeforeListCleared(sbIMediaList* aMediaList,
-                                          PRBool aExcludeLists,
-                                          PRBool* aNoMoreForBatch)
+                                          bool aExcludeLists,
+                                          bool* aNoMoreForBatch)
 {
   NS_ENSURE_ARG_POINTER(aMediaList);
   NS_ENSURE_ARG_POINTER(aNoMoreForBatch);
@@ -4033,8 +4033,8 @@ sbMediacoreSequencer::OnBeforeListCleared(sbIMediaList* aMediaList,
 
 NS_IMETHODIMP
 sbMediacoreSequencer::OnListCleared(sbIMediaList *aMediaList,
-                                    PRBool aExcludeLists,
-                                    PRBool *_retval)
+                                    bool aExcludeLists,
+                                    bool *_retval)
 {
   NS_ENSURE_ARG_POINTER(aMediaList);
 
@@ -4116,7 +4116,7 @@ sbMediacoreSequencer::OnBatchEnd(sbIMediaList *aMediaList)
   return NS_OK;
 }
 
-PRBool
+bool
 sbMediacoreSequencer::CheckPropertiesInfluenceView(sbIPropertyArray *aProperties)
 {
   PRUint32 propertyCount = 0;
@@ -4181,7 +4181,7 @@ sbMediacoreSequencer::CheckPropertiesInfluenceView(sbIPropertyArray *aProperties
         rv = constraint->GetGroup(groupIndex, getter_AddRefs(group));
         NS_ENSURE_SUCCESS(rv, rv);
 
-        PRBool hasProperty;
+        bool hasProperty;
         rv = group->HasProperty(id, &hasProperty);
         NS_ENSURE_SUCCESS(rv, rv);
 

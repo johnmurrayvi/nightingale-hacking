@@ -102,7 +102,7 @@ NS_IMPL_THREADSAFE_ISUPPORTS1(sbServiceManager, sbIServiceManager)
 
 NS_IMETHODIMP
 sbServiceManager::IsServiceReady(const char* aServiceContractID,
-                                 PRBool*     retval)
+                                 bool*     retval)
 {
   // Validate state and arguments.
   NS_ENSURE_STATE(mInitialized);
@@ -124,7 +124,7 @@ sbServiceManager::IsServiceReady(const char* aServiceContractID,
 
 NS_IMETHODIMP
 sbServiceManager::SetServiceReady(const char* aServiceContractID,
-                                  PRBool      aServiceReady)
+                                  bool      aServiceReady)
 {
   TRACE(("%s[%.8x] %s %d",
          __FUNCTION__, this, aServiceContractID, aServiceReady));
@@ -133,12 +133,12 @@ sbServiceManager::SetServiceReady(const char* aServiceContractID,
   NS_ENSURE_STATE(mInitialized);
 
   // Function variables.
-  PRBool   serviceReady = !!aServiceReady;
-  PRBool   success;
+  bool   serviceReady = !!aServiceReady;
+  bool   success;
   nsresult rv;
 
   // Get the current service ready state.
-  PRBool currentServiceReady;
+  bool currentServiceReady;
   rv = IsServiceReady(aServiceContractID, &currentServiceReady);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -234,7 +234,7 @@ sbServiceManager::Initialize()
     return NS_OK;
 
   // Initialize the table of ready services.
-  PRBool success = mReadyServiceTable.Init();
+  bool success = mReadyServiceTable.Init();
   NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
   // Get a proxied observer service.

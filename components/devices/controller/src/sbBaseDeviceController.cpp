@@ -89,7 +89,7 @@ PLDHashOperator sbBaseDeviceController::EnumerateDisconnectAll(const nsID& aKey,
 sbBaseDeviceController::sbBaseDeviceController()
   : mMonitor("mMonitor")
 {
-  PRBool SB_UNUSED_IN_RELEASE(succeeded) = mDevices.Init();
+  bool SB_UNUSED_IN_RELEASE(succeeded) = mDevices.Init();
   NS_ASSERTION(succeeded, "Failed to initialize hashtable");
 }
 
@@ -157,7 +157,7 @@ sbBaseDeviceController::AddDeviceInternal(sbIDevice *aDevice)
   NS_ENSURE_SUCCESS(rv, rv);
   NS_ENSURE_ARG_POINTER(id);
 
-  PRBool succeeded;
+  bool succeeded;
 
   {
     mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
@@ -197,7 +197,7 @@ sbBaseDeviceController::GetDeviceInternal(const nsID * aID,
   NS_ENSURE_ARG_POINTER(aID);
   NS_ENSURE_ARG_POINTER(aDevice);
 
-  PRBool succeeded;
+  bool succeeded;
 
   {
     mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
@@ -239,7 +239,7 @@ sbBaseDeviceController::GetDevicesInternal(nsIArray* *aDevices)
 
 nsresult 
 sbBaseDeviceController::ControlsDeviceInternal(sbIDevice *aDevice, 
-                                               PRBool *_retval)
+                                               bool *_retval)
 {
   NS_ENSURE_ARG_POINTER(aDevice);
   NS_ENSURE_ARG_POINTER(_retval);

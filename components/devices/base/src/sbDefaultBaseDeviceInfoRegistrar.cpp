@@ -136,7 +136,7 @@ sbDefaultBaseDeviceInfoRegistrar::
 
     // Add capabilities from the device info element.
     if (deviceInfoElement) {
-      PRBool addedCapabilities;
+      bool addedCapabilities;
       rv = sbDeviceXMLCapabilities::AddCapabilities(aCapabilities,
                                                     deviceInfoElement,
                                                     &addedCapabilities,
@@ -276,7 +276,7 @@ sbDefaultBaseDeviceInfoRegistrar::GetExcludedFolders(sbIDevice * aDevice,
 NS_IMETHODIMP
 sbDefaultBaseDeviceInfoRegistrar::GetDoesDeviceSupportReformat(
     sbIDevice *aDevice,
-    PRBool *aOutSupportsReformat)
+    bool *aOutSupportsReformat)
 {
   NS_ENSURE_ARG_POINTER(aDevice);
   NS_ENSURE_ARG_POINTER(aOutSupportsReformat);
@@ -297,7 +297,7 @@ sbDefaultBaseDeviceInfoRegistrar::GetDoesDeviceSupportReformat(
 NS_IMETHODIMP
 sbDefaultBaseDeviceInfoRegistrar::GetOnlyMountMediaFolders
                                     (sbIDevice *aDevice,
-                                     PRBool    *aOnlyMountMediaFolders)
+                                     bool    *aOnlyMountMediaFolders)
 {
   TRACE(("%s", __FUNCTION__));
 
@@ -377,7 +377,7 @@ sbDefaultBaseDeviceInfoRegistrar::GetDeviceIcon(sbIDevice* aDevice,
 
 NS_IMETHODIMP
 sbDefaultBaseDeviceInfoRegistrar::InterestedInDevice(sbIDevice *aDevice,
-                                                     PRBool *retval)
+                                                     bool *retval)
 {
   NS_ENSURE_ARG_POINTER(aDevice);
   NS_ENSURE_ARG_POINTER(retval);
@@ -403,7 +403,7 @@ sbDefaultBaseDeviceInfoRegistrar::InterestedInDevice(sbIDevice *aDevice,
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Check if the device XML info is present.
-  PRBool infoPresent = PR_FALSE;
+  bool infoPresent = PR_FALSE;
   rv = xmlInfo->GetDeviceInfoPresent(&infoPresent);
   NS_ENSURE_SUCCESS(rv, rv);
 

@@ -741,11 +741,11 @@ public:
    * Returns true if Run() completes before the timeout lapses,
    * or false otherwise.
    */
-  PRBool Wait(PRIntervalTime aTimeout);
+  bool Wait(PRIntervalTime aTimeout);
 
 private:
   mozilla::ReentrantMonitor mMonitor;
-  PRBool            mDone;
+  bool            mDone;
 };
 
 
@@ -794,7 +794,7 @@ public:
    * or false otherwise.  If true, returns the result of OnRun()
    * in aResult.
    */
-  PRBool
+  bool
   Wait(PRIntervalTime aTimeout, ResultType & aResult)
   {
     if (!Wait(aTimeout)) {
@@ -1970,7 +1970,7 @@ nsresult sbInvokeOnThread2Async(T & aObject,
  *
  * \return PR_TRUE              Current thread is main thread.
  */
-PRBool SB_IsMainThread(nsIThreadManager* aThreadManager = nsnull);
+bool SB_IsMainThread(nsIThreadManager* aThreadManager = nsnull);
 
 
 #endif // __SB_THREAD_UTILS_H__

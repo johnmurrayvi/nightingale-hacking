@@ -159,7 +159,7 @@ sbDeviceProgressListener::New
 // IsComplete
 //
 
-PRBool
+bool
 sbDeviceProgressListener::IsComplete()
 {
   return mIsComplete;

@@ -105,7 +105,7 @@ sbDeviceTranscoding::SelectTranscodeProfile(PRUint32 transcodeType,
 {
   nsresult rv;
 
-  PRBool hasProfilePref = PR_FALSE;
+  bool hasProfilePref = PR_FALSE;
   // See if we have a preference for the transcoding profile.
   nsCOMPtr<nsIVariant> profileIdVariant;
   nsString prefProfileId;
@@ -266,7 +266,7 @@ sbDeviceTranscoding::PrepareBatchForTranscoding(Batch & aBatch)
     // First, ensure that the item isn't DRM protected before looking for
     // transcode profiles.
     if (sbDeviceUtils::IsItemDRMProtected(request->item)) {
-      PRBool isSupported = PR_FALSE;
+      bool isSupported = PR_FALSE;
       rv = mBaseDevice->SupportsMediaItemDRM(
           request->item,
           PR_TRUE,  // report errors
@@ -750,7 +750,7 @@ sbDeviceTranscoding::TranscodeMediaItem(
   // Wait until the transcode job is complete.
   //XXXeps should check for abort.  To do this, the job will have to be
   //       canceled.
-  PRBool isComplete = PR_FALSE;
+  bool isComplete = PR_FALSE;
   while (!isComplete) {
     // Operate within the request wait monitor.
     PR_EnterMonitor(stopMonitor);
@@ -813,7 +813,7 @@ sbDeviceTranscoding::TranscodeMediaItem(
 
     // Log each error.
     if (NS_SUCCEEDED(rv)) {
-      PRBool hasMore;
+      bool hasMore;
       rv = errorMessageEnum->HasMore(&hasMore);
       if (NS_FAILED(rv))
         hasMore = PR_FALSE;

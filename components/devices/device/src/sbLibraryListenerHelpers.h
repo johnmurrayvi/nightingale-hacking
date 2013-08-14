@@ -51,7 +51,7 @@ public:
   /**
    * Ignores all items. This obviously will supersede item specific ignores
    */
-  nsresult SetIgnoreListener(PRBool aIgnoreListener);
+  nsresult SetIgnoreListener(bool aIgnoreListener);
   /**
    * Sets an ignore for a given item. Returns PR_FALSE if the item is already
    * being ignored
@@ -65,7 +65,7 @@ protected:
   /**
    * Returns PR_TRUE if the item is currently being ignored
    */
-  PRBool MediaItemIgnored(sbIMediaItem * aItem);
+  bool MediaItemIgnored(sbIMediaItem * aItem);
   /**
    * Initializes the lock and ignore listener count
    */

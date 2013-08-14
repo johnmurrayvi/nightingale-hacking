@@ -89,7 +89,7 @@ public:
    */
   static bool CompareItems(sbIMediaItem * aLeft, sbIMediaItem * aRight)
   {
-    PRBool same = PR_FALSE;
+    bool same = PR_FALSE;
     // They're the same if neither is specified or both are and they are "equal"
     return (!aLeft && !aRight) ||
            (aLeft && aRight && NS_SUCCEEDED(aLeft->Equals(aRight, &same)) &&
@@ -322,7 +322,7 @@ sbDeviceRequestThreadQueue::IsDuplicateRequest(sbRequestItem * aQueueRequest,
 
   // reverse search through the queue for a comparable request
   bool isDuplicate = PR_FALSE;
-  PRBool continueChecking =
+  bool continueChecking =
            sbBaseDeviceRequestDupeCheck::DupeCheck(queueRequest,
                                                    request,
                                                    isDuplicate);

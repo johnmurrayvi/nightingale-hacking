@@ -59,7 +59,7 @@ protected:
 
   sbIDevice*                 mDevice;
   nsAutoPtr<sbDeviceXMLInfo> mDeviceXMLInfo;
-  PRBool                     mDeviceXMLInfoPresent;
+  bool                     mDeviceXMLInfoPresent;
 
   /**
    * Return in aDeviceXMLInfo the device XML info for the device specified by

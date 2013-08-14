@@ -205,7 +205,7 @@ private:
   nsresult ClearLibraryStatistics(sbIDeviceLibrary* aLibrary);
 
   nsresult UpdateForItem(sbIMediaItem* aMediaItem,
-                         PRBool        aItemAdded);
+                         bool        aItemAdded);
 
 
   // Prevent derivation.

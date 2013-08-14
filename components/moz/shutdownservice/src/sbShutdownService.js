@@ -86,7 +86,7 @@ sbShutdownJobService.prototype =
 
       if (this._mTasks.length > 0) {
         // There are tasks to run, hault shutdown for now.
-        var stopShutdown = aSubject.QueryInterface(Ci.nsISupportsPRBool);
+        var stopShutdown = aSubject.QueryInterface(Ci.nsISupportsbool);
         stopShutdown.data = true;
 
         // If the |aData| flag indicates that this is going to be a restart,

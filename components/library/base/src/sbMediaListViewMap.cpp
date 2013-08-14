@@ -204,7 +204,7 @@ sbMediaListViewMap::SetView(nsISupports *aParentKey,
   NS_ENSURE_ARG_POINTER( aView );
 
   nsresult rv;
-  PRBool success;
+  bool success;
   sbViewMapInner *innerMap = nsnull;
 
   // If our inner map does not yet exist, create and stash it

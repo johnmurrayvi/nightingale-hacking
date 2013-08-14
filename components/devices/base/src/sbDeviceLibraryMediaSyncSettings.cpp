@@ -42,7 +42,7 @@
 NS_IMPL_ISUPPORTS1(sbDeviceLibraryMediaSyncSettings, sbIDeviceLibraryMediaSyncSettings);
 
 PLDHashOperator ArrayBuilder(nsISupports * aKey,
-                             PRBool aData,
+                             bool aData,
                              void* userArg)
 {
   NS_ASSERTION(userArg, "ArrayBuilder passed a null arg");
@@ -55,7 +55,7 @@ PLDHashOperator ArrayBuilder(nsISupports * aKey,
 }
 
 PLDHashOperator ResetSelection(nsISupports * aKey,
-                               PRBool & aData,
+                               bool & aData,
                                void* userArg)
 {
   aData = PR_FALSE;
@@ -95,7 +95,7 @@ struct PlaylistHashtableTraits
 {
   typedef sbDeviceLibraryMediaSyncSettings::PlaylistSelection Hashtable;
   typedef nsISupports * KeyType;
-  typedef PRBool DataType;
+  typedef bool DataType;
 };
 
 nsresult
@@ -201,7 +201,7 @@ sbDeviceLibraryMediaSyncSettings::SetMgmtType(PRUint32 aSyncMgmtType)
 }
 
 NS_IMETHODIMP
-sbDeviceLibraryMediaSyncSettings::GetImport(PRBool *aImport)
+sbDeviceLibraryMediaSyncSettings::GetImport(bool *aImport)
 {
   NS_ENSURE_ARG_POINTER(aImport);
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
@@ -211,7 +211,7 @@ sbDeviceLibraryMediaSyncSettings::GetImport(PRBool *aImport)
 }
 
 NS_IMETHODIMP
-sbDeviceLibraryMediaSyncSettings::SetImport(PRBool aImport)
+sbDeviceLibraryMediaSyncSettings::SetImport(bool aImport)
 {
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
 
@@ -289,7 +289,7 @@ sbDeviceLibraryMediaSyncSettings::SetSelectedPlaylists(
 
 NS_IMETHODIMP
 sbDeviceLibraryMediaSyncSettings::SetPlaylistSelected(sbIMediaList *aPlaylist,
-                                                      PRBool aSelected)
+                                                      bool aSelected)
 {
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
 
@@ -304,13 +304,13 @@ sbDeviceLibraryMediaSyncSettings::SetPlaylistSelected(sbIMediaList *aPlaylist,
 
 NS_IMETHODIMP
 sbDeviceLibraryMediaSyncSettings::GetPlaylistSelected(sbIMediaList *aPlaylist,
-                                                      PRBool * aSelected)
+                                                      bool * aSelected)
 {
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
   sbSimpleAutoLock lock(mLock);
 
   nsCOMPtr<nsISupports> supports = do_QueryInterface(aPlaylist);
-  PRBool exists = mPlaylistsSelection.Get(supports, aSelected);
+  bool exists = mPlaylistsSelection.Get(supports, aSelected);
   if (!exists) {
     *aSelected = PR_FALSE;
   }
@@ -369,7 +369,7 @@ sbDeviceLibraryMediaSyncSettings::GetSyncFromFolder(nsIFile ** aSyncFromFolder)
       do_GetService("@mozilla.org/file/directory_service;1", &rv);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    PRBool hasProperty;
+    bool hasProperty;
     rv = directorySvc->Has("Pics", &hasProperty);
     NS_ENSURE_SUCCESS(rv, rv);
     if (!hasProperty)

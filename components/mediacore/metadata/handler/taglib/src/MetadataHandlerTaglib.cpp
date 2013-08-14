@@ -267,7 +267,7 @@ NS_IMETHODIMP sbMetadataHandlerTaglib::Vote(
 }
 
 NS_IMETHODIMP
-sbMetadataHandlerTaglib::GetRequiresMainThread(PRBool *_retval)
+sbMetadataHandlerTaglib::GetRequiresMainThread(bool *_retval)
 {
   NS_ENSURE_ARG_POINTER(_retval);
   NS_ENSURE_STATE(mpChannel);
@@ -277,7 +277,7 @@ sbMetadataHandlerTaglib::GetRequiresMainThread(PRBool *_retval)
   rv = mpChannel->GetURI(getter_AddRefs(uri));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool isFileURI = PR_FALSE;
+  bool isFileURI = PR_FALSE;
   rv = uri->SchemeIs( "file" , &isFileURI );
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -369,7 +369,7 @@ nsresult sbMetadataHandlerTaglib::ReadInternal(
         /* Get the metadata local file path. */
         if (NS_SUCCEEDED(result))
         {
-            PRBool useSpec = PR_TRUE;
+            bool useSpec = PR_TRUE;
             #if XP_UNIX && !XP_MACOSX
             if (StringBeginsWith(urlSpec, NS_LITERAL_CSTRING("file://"))) {
                 nsCString path(Substring(urlSpec, NS_ARRAY_LENGTH("file://") - 1));
@@ -402,7 +402,7 @@ nsresult sbMetadataHandlerTaglib::ReadInternal(
                         LOG(("file path is %s\n", path.get()));
                       }
                     #endif
-                    PRBool fileExists = PR_FALSE;
+                    bool fileExists = PR_FALSE;
                     result = localFile->Exists(&fileExists);
                     if (NS_FAILED(result) || !fileExists) {
                         LOG(("file does not exist, falling back"));
@@ -996,10 +996,10 @@ nsresult sbMetadataHandlerTaglib::GetImageDataInternal(
   nsCString                   urlSpec;
   nsCString                   urlScheme;
   nsCString                   fileExt;
-  PRBool                      isMP3;
-  PRBool                      isM4A;
-  PRBool                      isOGG;
-  PRBool					  isFLAC;
+  bool                      isMP3;
+  bool                      isM4A;
+  bool                      isOGG;
+  bool					  isFLAC;
   nsresult                    result = NS_OK;
 
   /* Get the channel URL info. */
@@ -1121,9 +1121,9 @@ nsresult sbMetadataHandlerTaglib::SetImageDataInternal(
   nsCString                   urlScheme;
   nsCString                   fileExt;
   nsresult                    result = NS_OK;
-  PRBool                      isMP3;
-  PRBool                      isOGG;
-  PRBool                      isMP4;
+  bool                      isMP3;
+  bool                      isOGG;
+  bool                      isMP4;
 
   NS_ENSURE_STATE(mpURL);
 
@@ -1302,7 +1302,7 @@ nsresult sbMetadataHandlerTaglib::ReadImageFile(const nsAString &imageSpec,
   nsresult rv;
   nsCOMPtr<nsIFile> imageFile;
   nsCOMPtr<nsIURI> imageURI;
-  PRBool isResource;
+  bool isResource;
   nsCString cImageSpec = NS_LossyConvertUTF16toASCII(imageSpec);
 
   { // Scope for unlock
@@ -1801,7 +1801,7 @@ NS_IMETHODIMP sbMetadataHandlerTaglib::SetProps(
 }
 
 NS_IMETHODIMP sbMetadataHandlerTaglib::GetCompleted(
-    PRBool                      *pCompleted)
+    bool                      *pCompleted)
 {
     NS_ENSURE_ARG_POINTER(pCompleted);
     *pCompleted = mCompleted;
@@ -1857,7 +1857,7 @@ NS_IMETHODIMP sbMetadataHandlerTaglib::SetChannel(
 NS_IMETHODIMP sbMetadataHandlerTaglib::OnChannelDataAvailable(
     sbISeekableChannel          *pChannel)
 {
-    PRBool                      channelCompleted;
+    bool                      channelCompleted;
     nsresult                    result = NS_OK;
 
     /* Do nothing if the metadata reading is complete. */
@@ -2185,7 +2185,7 @@ void sbMetadataHandlerTaglib::ReadXiphTags(
 
   // If this is a local file, cache common album art in order to speed
   // up any subsequent calls to GetImageData.
-  PRBool isFileURI;
+  bool isFileURI;
   result = mpURL->SchemeIs("file", &isFileURI);
   NS_ENSURE_SUCCESS(result, /* void */);
   if (isFileURI) {
@@ -2268,8 +2268,8 @@ void sbMetadataHandlerTaglib::ReadXiphTags(
 nsresult sbMetadataHandlerTaglib::ReadMetadata()
 {
     nsCString                   fileExt;
-    PRBool                      isValid = PR_FALSE;
-    PRBool                      decodedFileExt = PR_FALSE;
+    bool                      isValid = PR_FALSE;
+    bool                      decodedFileExt = PR_FALSE;
     nsresult                    result = NS_OK;
 
     /* Get the metadata file extension. */
@@ -2412,7 +2412,7 @@ nsresult sbMetadataHandlerTaglib::AddSeparatedNumbers(
  * pTagFile.
  */
 
-PRBool sbMetadataHandlerTaglib::ReadFile(
+bool sbMetadataHandlerTaglib::ReadFile(
     TagLib::File                *pTagFile,
     const char                  *aCharset)
 {
@@ -2510,7 +2510,7 @@ nsresult sbMetadataHandlerTaglib::RunCharsetDetector(
 
     rv = aDetector->Init(observer);
     if (NS_SUCCEEDED(rv)) {
-        PRBool isDone;
+        bool isDone;
         // artificially inflate the buffer by repeating it a lot; this does
         // in fact help with the detection
         const PRUint32 chunkSize = aContent.size();
@@ -2634,10 +2634,10 @@ void sbMetadataHandlerTaglib::ConvertCharset(
  * specified by mMetadataPath.
  */
 
-PRBool sbMetadataHandlerTaglib::ReadFLACFile()
+bool sbMetadataHandlerTaglib::ReadFLACFile()
 {
     nsAutoPtr<TagLib::FLAC::File>   pTagFile;
-    PRBool                          isValid = PR_TRUE;
+    bool                          isValid = PR_TRUE;
     nsresult                        result = NS_OK;
     
     /* Get the file path in the proper format for the platform. */
@@ -2667,7 +2667,7 @@ PRBool sbMetadataHandlerTaglib::ReadFLACFile()
     /* FLAC has an additional album cover handler */
     // If this is a local file, cache common album art in order to speed
     // up any subsequent calls to GetImageData.
-    PRBool isFileURI;
+    bool isFileURI;
     result = mpURL->SchemeIs("file", &isFileURI);
     NS_ENSURE_SUCCESS(result, PR_FALSE);
     if (isFileURI) {
@@ -2714,10 +2714,10 @@ PRBool sbMetadataHandlerTaglib::ReadFLACFile()
  * by mMetadataPath.
  */
 
-PRBool sbMetadataHandlerTaglib::ReadMPCFile()
+bool sbMetadataHandlerTaglib::ReadMPCFile()
 {
     nsAutoPtr<TagLib::MPC::File>    pTagFile;
-    PRBool                          isValid = PR_TRUE;
+    bool                          isValid = PR_TRUE;
     nsresult                        result = NS_OK;
     
     /* Get the file path in the proper format for the platform. */
@@ -2759,10 +2759,10 @@ PRBool sbMetadataHandlerTaglib::ReadMPCFile()
  * specified by mMetadataPath.
  */
 
-PRBool sbMetadataHandlerTaglib::ReadMPEGFile()
+bool sbMetadataHandlerTaglib::ReadMPEGFile()
 {
     nsAutoPtr<TagLib::MPEG::File>   pTagFile;
-    PRBool                          isValid = PR_TRUE;
+    bool                          isValid = PR_TRUE;
     nsresult                        result = NS_OK;
 
     /* Get the file path in the proper format for the platform. */
@@ -2815,10 +2815,10 @@ PRBool sbMetadataHandlerTaglib::ReadMPEGFile()
  * specified by mMetadataPath.
  */
 
-PRBool sbMetadataHandlerTaglib::ReadASFFile()
+bool sbMetadataHandlerTaglib::ReadASFFile()
 {
     nsAutoPtr<TagLib::ASF::File>    pTagFile;
-    PRBool                          isValid = PR_TRUE;
+    bool                          isValid = PR_TRUE;
     nsresult                        result = NS_OK;
 
     /* Get the file path in the proper format for the platform. */
@@ -2855,10 +2855,10 @@ PRBool sbMetadataHandlerTaglib::ReadASFFile()
  * by mMetadataPath.
  */
 
-PRBool sbMetadataHandlerTaglib::ReadMP4File()
+bool sbMetadataHandlerTaglib::ReadMP4File()
 {
     nsAutoPtr<TagLib::MP4::File>    pTagFile;
-    PRBool                          isValid = PR_TRUE;
+    bool                          isValid = PR_TRUE;
     nsresult                        result = NS_OK;
 
     /* Get the file path in the proper format for the platform. */
@@ -2883,7 +2883,7 @@ PRBool sbMetadataHandlerTaglib::ReadMP4File()
     if (NS_SUCCEEDED(result) && isValid) {
       // If this is a local file, cache common album art in order to speed
       // up any subsequent calls to GetImageData.
-      PRBool isFileURI;
+      bool isFileURI;
       result = mpURL->SchemeIs("file", &isFileURI);
       NS_ENSURE_SUCCESS(result, PR_FALSE);
       if (isFileURI) {
@@ -2994,10 +2994,10 @@ PRBool sbMetadataHandlerTaglib::ReadMP4File()
  * by mMetadataPath.
  */
 
-PRBool sbMetadataHandlerTaglib::ReadOGGFile()
+bool sbMetadataHandlerTaglib::ReadOGGFile()
 {
     nsAutoPtr<TagLib::Vorbis::File> pTagFile;
-    PRBool                          isValid = PR_TRUE;
+    bool                          isValid = PR_TRUE;
     nsresult                        result = NS_OK;
 
     /* Get the file path in the proper format for the platform. */
@@ -3038,10 +3038,10 @@ PRBool sbMetadataHandlerTaglib::ReadOGGFile()
  * by mMetadataPath, and is special-cased to try ogg vorbis/ogg flac.
  */
 
-PRBool sbMetadataHandlerTaglib::ReadOGAFile()
+bool sbMetadataHandlerTaglib::ReadOGAFile()
 {
     nsAutoPtr<TagLib::Ogg::FLAC::File> pTagFile;
-    PRBool                          isValid = PR_TRUE;
+    bool                          isValid = PR_TRUE;
     nsresult                        result = NS_OK;
 
     /* Get the file path in the proper format for the platform. */

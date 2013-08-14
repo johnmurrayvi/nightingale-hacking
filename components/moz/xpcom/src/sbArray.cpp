@@ -49,7 +49,7 @@ struct findIndexOfClosure
     PRUint32 resultIndex;
 };
 
-PR_STATIC_CALLBACK(PRBool) FindElementCallback(void* aElement, void* aClosure);
+PR_STATIC_CALLBACK(bool) FindElementCallback(void* aElement, void* aClosure);
 
 NS_INTERFACE_MAP_BEGIN(sbArray)
   NS_INTERFACE_MAP_ENTRY(nsIArray)
@@ -113,7 +113,7 @@ sbArray::IndexOf(PRUint32 aStartIndex, nsISupports* aElement,
     }
 
     findIndexOfClosure closure = { aElement, aStartIndex, 0 };
-    PRBool notFound = mArray.EnumerateForwards(FindElementCallback, &closure);
+    bool notFound = mArray.EnumerateForwards(FindElementCallback, &closure);
     if (notFound)
         return NS_ERROR_FAILURE;
 
@@ -130,9 +130,9 @@ sbArray::Enumerate(nsISimpleEnumerator **aResult)
 // nsIMutableArray implementation
 
 NS_IMETHODIMP
-sbArray::AppendElement(nsISupports* aElement, PRBool aWeak)
+sbArray::AppendElement(nsISupports* aElement, bool aWeak)
 {
-    PRBool result;
+    bool result;
     if (aWeak) {
         nsCOMPtr<nsISupports> elementRef =
             getter_AddRefs(static_cast<nsISupports*>
@@ -158,12 +158,12 @@ NS_IMETHODIMP
 sbArray::RemoveElementAt(PRUint32 aIndex)
 {
     mozilla::MutexAutoLock lock(mLock);
-    PRBool result = mArray.RemoveObjectAt(aIndex);
+    bool result = mArray.RemoveObjectAt(aIndex);
     return result ? NS_OK : NS_ERROR_FAILURE;
 }
 
 NS_IMETHODIMP
-sbArray::InsertElementAt(nsISupports* aElement, PRUint32 aIndex, PRBool aWeak)
+sbArray::InsertElementAt(nsISupports* aElement, PRUint32 aIndex, bool aWeak)
 {
     nsCOMPtr<nsISupports> elementRef;
     if (aWeak) {
@@ -178,13 +178,13 @@ sbArray::InsertElementAt(nsISupports* aElement, PRUint32 aIndex, PRBool aWeak)
     }
     { /* scope */
         mozilla::MutexAutoLock lock(mLock);
-        PRBool result = mArray.InsertObjectAt(elementRef, aIndex);
+        bool result = mArray.InsertObjectAt(elementRef, aIndex);
         return result ? NS_OK : NS_ERROR_FAILURE;
     }
 }
 
 NS_IMETHODIMP
-sbArray::ReplaceElementAt(nsISupports* aElement, PRUint32 aIndex, PRBool aWeak)
+sbArray::ReplaceElementAt(nsISupports* aElement, PRUint32 aIndex, bool aWeak)
 {
     nsCOMPtr<nsISupports> elementRef;
     if (aWeak) {
@@ -199,7 +199,7 @@ sbArray::ReplaceElementAt(nsISupports* aElement, PRUint32 aIndex, PRBool aWeak)
     }
     { /* scope */
         mozilla::MutexAutoLock lock(mLock);
-        PRBool result = mArray.ReplaceObjectAt(elementRef, aIndex);
+        bool result = mArray.ReplaceObjectAt(elementRef, aIndex);
         return result ? NS_OK : NS_ERROR_FAILURE;
     }
 }
@@ -215,7 +215,7 @@ sbArray::Clear()
 //
 // static helper routines
 //
-PRBool
+bool
 FindElementCallback(void *aElement, void* aClosure)
 {
     findIndexOfClosure* closure =

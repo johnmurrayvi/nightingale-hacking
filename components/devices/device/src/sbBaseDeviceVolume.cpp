@@ -110,7 +110,7 @@ sbBaseDeviceVolume::SetGUID(const nsAString& aGUID)
 
 
 nsresult
-sbBaseDeviceVolume::GetIsMounted(PRBool* aIsMounted)
+sbBaseDeviceVolume::GetIsMounted(bool* aIsMounted)
 {
   NS_ENSURE_ARG_POINTER(aIsMounted);
   mozilla::MutexAutoLock autoVolumeLock(mVolumeLock);
@@ -119,7 +119,7 @@ sbBaseDeviceVolume::GetIsMounted(PRBool* aIsMounted)
 }
 
 nsresult
-sbBaseDeviceVolume::SetIsMounted(PRBool aIsMounted)
+sbBaseDeviceVolume::SetIsMounted(bool aIsMounted)
 {
   mozilla::MutexAutoLock autoVolumeLock(mVolumeLock);
   mIsMounted = aIsMounted;

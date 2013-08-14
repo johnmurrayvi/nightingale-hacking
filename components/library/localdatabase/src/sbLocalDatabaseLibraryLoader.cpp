@@ -174,7 +174,7 @@ sbLocalDatabaseLibraryLoader::Init()
 
   sbAutoFreeXPCOMArray<char**> autoFree(libraryKeysCount, libraryKeys);
 
-  PRBool success =
+  bool success =
     mLibraryInfoTable.Init(PR_MAX(MINIMUM_LIBRARY_COUNT,
                                   libraryKeysCount / LOADERINFO_VALUE_COUNT));
   NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
@@ -227,7 +227,7 @@ sbLocalDatabaseLibraryLoader::EnsureDefaultLibraries()
 {
   TRACE("sbLocalDatabaseLibraryLoader[0x%x] - EnsureDefaultLibraries", this);
 
-  PRBool databasesOkay = PR_TRUE;
+  bool databasesOkay = PR_TRUE;
   nsresult retval = NS_OK;
   
   nsresult rv =
@@ -842,7 +842,7 @@ sbLocalDatabaseLibraryLoader::OnRegisterStartupLibraries(sbILibraryManager* aLib
 
 NS_IMETHODIMP
 sbLocalDatabaseLibraryLoader::OnLibraryStartupModified(sbILibrary* aLibrary,
-                                                       PRBool aLoadAtStartup)
+                                                       bool aLoadAtStartup)
 {
   NS_ENSURE_ARG_POINTER(aLibrary);
 
@@ -934,11 +934,11 @@ sbLocalDatabaseLibraryLoader::Observe(nsISupports *aSubject,
                            getter_AddRefs(prefFile));
       NS_ENSURE_SUCCESS(rv, rv);
       
-      PRBool prefExists;
+      bool prefExists;
       /* if the pref file is missing we go through the normal first-run process
        * and therefore don't need to care about this
        */
-      PRBool prefWritable = PR_TRUE;
+      bool prefWritable = PR_TRUE;
       rv = prefFile->Exists(&prefExists);
       if (NS_SUCCEEDED(rv) && prefExists) {
         rv = prefFile->IsWritable(&prefWritable);
@@ -980,7 +980,7 @@ sbLocalDatabaseLibraryLoader::Observe(nsISupports *aSubject,
 
       nsString metricsdb = NS_LITERAL_STRING("metrics.db");
 
-      PRBool hasMore;
+      bool hasMore;
       dirEnumerator->HasMoreElements(&hasMore);
       while (hasMore && NS_SUCCEEDED(rv)) {
         nsCOMPtr<nsISupports> aSupport;
@@ -1053,7 +1053,7 @@ sbLibraryLoaderInfo::Init(const nsACString& aPrefKey)
   mResourceGUIDKey.Assign(PREF_RESOURCE_GUID);
 
   // Now ensure that the key exists.
-  PRBool exists;
+  bool exists;
   rv = mPrefBranch->PrefHasUserValue(mStartupKey.get(), &exists);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1152,7 +1152,7 @@ sbLibraryLoaderInfo::GetDatabaseLocation()
 }
 
 nsresult
-sbLibraryLoaderInfo::SetLoadAtStartup(PRBool aLoadAtStartup)
+sbLibraryLoaderInfo::SetLoadAtStartup(bool aLoadAtStartup)
 {
   TRACE("sbLibraryLoaderInfo[0x%x] - SetLoadAtStartup", this);
 
@@ -1162,12 +1162,12 @@ sbLibraryLoaderInfo::SetLoadAtStartup(PRBool aLoadAtStartup)
   return NS_OK;
 }
 
-PRBool
+bool
 sbLibraryLoaderInfo::GetLoadAtStartup()
 {
   TRACE("sbLibraryLoaderInfo[0x%x] - GetLoadAtStartup", this);
 
-  PRBool loadAtStartup;
+  bool loadAtStartup;
   nsresult rv = mPrefBranch->GetBoolPref(mStartupKey.get(), &loadAtStartup);
   NS_ENSURE_SUCCESS(rv, PR_FALSE);
 

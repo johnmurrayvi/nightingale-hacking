@@ -160,7 +160,7 @@ private:
   // mInitialized               True if initialized.
   //
 
-  PRBool                        mInitialized;
+  bool                        mInitialized;
 };
 
 

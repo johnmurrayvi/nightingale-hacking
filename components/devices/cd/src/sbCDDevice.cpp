@@ -495,7 +495,7 @@ sbCDDevice::DeviceSpecificDisconnect()
 
 /* readonly attribute boolean connected; */
 NS_IMETHODIMP
-sbCDDevice::GetConnected(PRBool *aConnected)
+sbCDDevice::GetConnected(bool *aConnected)
 {
   NS_ENSURE_ARG_POINTER(aConnected);
   sbAutoReadLock autoConnectLock(mConnectLock);
@@ -505,7 +505,7 @@ sbCDDevice::GetConnected(PRBool *aConnected)
 
 /* readonly attribute boolean threaded; */
 NS_IMETHODIMP
-sbCDDevice::GetThreaded(PRBool *aThreaded)
+sbCDDevice::GetThreaded(bool *aThreaded)
 {
   NS_ENSURE_ARG_POINTER(aThreaded);
   *aThreaded = PR_TRUE;
@@ -628,21 +628,21 @@ sbCDDevice::GetProperties(sbIDeviceProperties * *aProperties)
 
 /* readonly attribute boolean isDirectTranscoding; */
 NS_IMETHODIMP
-sbCDDevice::GetIsDirectTranscoding(PRBool* aIsDirect)
+sbCDDevice::GetIsDirectTranscoding(bool* aIsDirect)
 {
   return sbBaseDevice::GetIsDirectTranscoding(aIsDirect);
 }
 
 /* readonly attribute boolean isBusy; */
 NS_IMETHODIMP
-sbCDDevice::GetIsBusy(PRBool *aIsBusy)
+sbCDDevice::GetIsBusy(bool *aIsBusy)
 {
   return sbBaseDevice::GetIsBusy(aIsBusy);
 }
 
 /* readonly attribute boolean canDisconnect; */
 NS_IMETHODIMP
-sbCDDevice::GetCanDisconnect(PRBool *aCanDisconnect)
+sbCDDevice::GetCanDisconnect(bool *aCanDisconnect)
 {
   return sbBaseDevice::GetCanDisconnect(aCanDisconnect);
 }
@@ -657,7 +657,7 @@ sbCDDevice::GetCurrentStatus(sbIDeviceStatus * *aCurrentStatus)
 
 /* readonly attribute boolean supportsReformat; */
 NS_IMETHODIMP
-sbCDDevice::GetSupportsReformat(PRBool *aSupportsReformat)
+sbCDDevice::GetSupportsReformat(bool *aSupportsReformat)
 {
   NS_ENSURE_ARG_POINTER(aSupportsReformat);
   *aSupportsReformat = PR_FALSE;
@@ -709,7 +709,7 @@ sbCDDevice::CancelRequests()
   rv = status->GetCurrentState(&currentState);
   NS_ENSURE_SUCCESS(rv, rv);
   if (currentState == sbIDevice::STATE_TRANSCODE) {
-    PRBool abortRip;
+    bool abortRip;
     rv = sbDeviceUtils::QueryUserAbortRip(&abortRip);
     NS_ENSURE_SUCCESS(rv, rv);
     if (!abortRip) {
@@ -761,7 +761,7 @@ sbCDDevice::Format()
 /* void setWarningDialogEnabled (in AString aWarning, in boolean aEnabled); */
 NS_IMETHODIMP
 sbCDDevice::SetWarningDialogEnabled(const nsAString & aWarning,
-                                    PRBool aEnabled)
+                                    bool aEnabled)
 {
   return sbBaseDevice::SetWarningDialogEnabled(aWarning, aEnabled);
 }
@@ -769,7 +769,7 @@ sbCDDevice::SetWarningDialogEnabled(const nsAString & aWarning,
 /* boolean getWarningDialogEnabled (in AString aWarning); */
 NS_IMETHODIMP
 sbCDDevice::GetWarningDialogEnabled(const nsAString & aWarning,
-                                    PRBool *_retval)
+                                    bool *_retval)
 {
   return sbBaseDevice::GetWarningDialogEnabled(aWarning, _retval);
 }
@@ -816,7 +816,7 @@ sbCDDevice::Mount(sbBaseDeviceVolume* aVolume)
   NS_ENSURE_TRUE(mConnected, NS_ERROR_NOT_AVAILABLE);
 
   // Do nothing if volume has already been mounted.
-  PRBool isMounted;
+  bool isMounted;
   rv = aVolume->GetIsMounted(&isMounted);
   NS_ENSURE_SUCCESS(rv, rv);
   if (isMounted)
@@ -967,14 +967,14 @@ sbCDDevice::Unmount(sbBaseDeviceVolume* aVolume)
   return NS_OK;
 }
 
-PRBool
+bool
 sbCDDevice::IsRequestAborted()
 {
-  PRBool aborted = sbBaseDevice::IsRequestAborted();
+  bool aborted = sbBaseDevice::IsRequestAborted();
 
   // Abort requests if disc is not inserted.
   if (!aborted) {
-    PRBool isDiscInserted;
+    bool isDiscInserted;
     nsresult rv = mCDDevice->GetIsDiscInserted(&isDiscInserted);
     aborted = NS_SUCCEEDED(rv) && !isDiscInserted ? PR_TRUE : PR_FALSE;
   }
@@ -1047,7 +1047,7 @@ sbCDDevice::ProxyHandleRipEnd()
       do_GetService("@songbirdnest.com/device/error-monitor-service;1", &rv);
   NS_ENSURE_SUCCESS(rv, /* void */);
 
-  PRBool hasErrors;
+  bool hasErrors;
   rv = errMonitor->DeviceHasErrors(this, EmptyString(), 0, &hasErrors);
   NS_ENSURE_SUCCESS(rv, /* void */);
 

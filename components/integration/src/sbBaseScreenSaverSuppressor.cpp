@@ -110,12 +110,12 @@ sbBaseScreenSaverSuppressor::Init()
 //-----------------------------------------------------------------------------
 
 NS_IMETHODIMP
-sbBaseScreenSaverSuppressor::Suppress(PRBool aSuppress, PRInt32 *aSuppressionCount)
+sbBaseScreenSaverSuppressor::Suppress(bool aSuppress, PRInt32 *aSuppressionCount)
 {
   TRACE(("[sbBaseScreenSaverSuppressor] - Suppress"));
 
   nsresult rv = NS_ERROR_UNEXPECTED;
-  PRBool shouldCallOnSuppress = PR_FALSE;
+  bool shouldCallOnSuppress = PR_FALSE;
 
   if(aSuppress) {
     if(mSuppress == 0) {

@@ -94,7 +94,7 @@ sbMetadataManager::sbMetadataManager()
   if (rv != NS_OK)
     return;
 
-  PRBool moreAvailable = PR_FALSE;
+  bool moreAvailable = PR_FALSE;
   while(simpleEnumerator->HasMoreElements(&moreAvailable) == NS_OK && moreAvailable)
   {
     nsCOMPtr<nsISupportsCString> contractString;

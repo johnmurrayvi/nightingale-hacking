@@ -221,7 +221,7 @@ sbLibraryUtils::FindItemsWithSameURL(sbIMediaItem * aMediaItem,
   NS_ENSURE_ARG_POINTER(aMediaList);
 
   nsresult rv;
-  PRBool foundOne = PR_FALSE;
+  bool foundOne = PR_FALSE;
   nsString url;
 
   rv = aMediaItem->GetProperty(NS_LITERAL_STRING(SB_PROPERTY_ORIGINURL),
@@ -520,12 +520,12 @@ nsresult sbLibraryUtils::GetContentURI(nsIURI*  aURI,
   nsCOMPtr<nsIURI> uri = aURI;
 
   // Applies only to Windows and Mac
-  PRBool compatible = PR_TRUE;
+  bool compatible = PR_TRUE;
 #if XP_UNIX && !XP_MACOSX
   compatible = PR_FALSE;
 #endif
 
-  PRBool isFileScheme;
+  bool isFileScheme;
   rv = uri->SchemeIs("file", &isFileScheme);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -671,7 +671,7 @@ NS_IMETHODIMP MediaItemArrayCreator::OnEnumeratedItem(sbIMediaList*,
   NS_ENSURE_ARG_POINTER(aItem);
   NS_ENSURE_ARG_POINTER(_retval);
 
-  PRBool const added = mMediaItems.AppendObject(aItem);
+  bool const added = mMediaItems.AppendObject(aItem);
   NS_ENSURE_TRUE(added, NS_ERROR_OUT_OF_MEMORY);
 
   *_retval = sbIMediaListEnumerationListener::CONTINUE;
@@ -919,8 +919,8 @@ sbLibraryUtils::LinkCopy(sbIMediaItem * aOriginal, sbIMediaItem * aCopy)
   rv = aCopy->GetLibrary(getter_AddRefs(newLibrary));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  const PRBool originalIsMain = sbIsMainLibrary(originalLibrary);
-  const PRBool copyIsMain = sbIsMainLibrary(newLibrary);
+  const bool originalIsMain = sbIsMainLibrary(originalLibrary);
+  const bool copyIsMain = sbIsMainLibrary(newLibrary);
 
   // If we're copying from the main library or between two non-main libraries
   // set the link up normally. DL is device library or other non-main library.
@@ -985,7 +985,7 @@ sbLibraryUtils::LinkCopy(sbIMediaItem * aOriginal, sbIMediaItem * aCopy)
     rv = GetMainLibrary(getter_AddRefs(mainLib));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    PRBool isMainLib;
+    bool isMainLib;
     rv = originalLib->Equals(mainLib, &isMainLib);
     NS_ENSURE_SUCCESS(rv, rv);
     if (isMainLib) {

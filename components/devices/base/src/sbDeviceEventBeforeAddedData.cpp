@@ -78,7 +78,7 @@ sbDeviceEventBeforeAddedData::CreateEventBeforeAddedData(
 }
 
 NS_IMETHODIMP
-sbDeviceEventBeforeAddedData::GetContinueAddingDevice(PRBool *aContinueAddingDevice)
+sbDeviceEventBeforeAddedData::GetContinueAddingDevice(bool *aContinueAddingDevice)
 {
   NS_ENSURE_ARG_POINTER(aContinueAddingDevice);
 
@@ -89,7 +89,7 @@ sbDeviceEventBeforeAddedData::GetContinueAddingDevice(PRBool *aContinueAddingDev
 }
 
 NS_IMETHODIMP
-sbDeviceEventBeforeAddedData::SetContinueAddingDevice(PRBool aContinueAddingDevice)
+sbDeviceEventBeforeAddedData::SetContinueAddingDevice(bool aContinueAddingDevice)
 {
   mozilla::MutexAutoLock lock(mLock);
   mContinueAddingDevice = aContinueAddingDevice;

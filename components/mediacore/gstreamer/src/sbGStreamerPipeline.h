@@ -73,7 +73,7 @@ public:
   virtual ~sbGStreamerPipeline();
 
   virtual void HandleMessage(GstMessage *message);
-  virtual PRBool HandleSynchronousMessage(GstMessage *message);
+  virtual bool HandleSynchronousMessage(GstMessage *message);
 
   nsresult InitGStreamer();
 

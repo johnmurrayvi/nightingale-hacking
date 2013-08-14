@@ -48,7 +48,7 @@ public:
   NS_DECL_SBIMEDIAEXPORTAGENTSERVICE
 
 protected:
-  nsresult RunAgent(PRBool aShouldUnregister);
+  nsresult RunAgent(bool aShouldUnregister);
 };
 
 #endif  // sbMediaExportITunesAgentService_h_

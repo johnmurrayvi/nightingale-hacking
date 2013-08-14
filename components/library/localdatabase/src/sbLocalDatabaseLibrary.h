@@ -83,14 +83,14 @@ typedef nsInterfaceHashtableMT<nsStringHashKey, nsIWeakReference>
 #define SB_DECL_MEDIALISTBASE_OVERRIDES                                             \
   NS_IMETHOD GetType(nsAString& aType);                                             \
   NS_IMETHOD GetItemByGuid(const nsAString& aGuid, sbIMediaItem** _retval);         \
-  NS_IMETHOD Contains(sbIMediaItem* aMediaItem, PRBool* _retval);                   \
+  NS_IMETHOD Contains(sbIMediaItem* aMediaItem, bool* _retval);                   \
   NS_IMETHOD Add(sbIMediaItem* aMediaItem);                                         \
   NS_IMETHOD AddItem(sbIMediaItem* aMediaItem, sbIMediaItem ** aNewMediaItem);      \
   NS_IMETHOD AddAll(sbIMediaList* aMediaList);                                      \
   NS_IMETHOD AddSome(nsISimpleEnumerator* aMediaItems);                             \
   NS_IMETHOD AddMediaItems(nsISimpleEnumerator *aMediaItems,                        \
                            sbIAddMediaItemsListener *aListener,                     \
-                           PRBool aAsync);                                          \
+                           bool aAsync);                                          \
   NS_IMETHOD Remove(sbIMediaItem* aMediaItem);                                      \
   NS_IMETHOD RemoveByIndex(PRUint32 aIndex);                                        \
   NS_IMETHOD RemoveSome(nsISimpleEnumerator* aMediaItems);                          \
@@ -104,7 +104,7 @@ typedef nsInterfaceHashtableMT<nsStringHashKey, nsIWeakReference>
 
 #define SB_FORWARD_SBIMEDIAITEM(_to) \
   NS_IMETHOD GetLibrary(sbILibrary * *aLibrary) { return _to GetLibrary(aLibrary); } \
-  NS_IMETHOD GetIsMutable(PRBool *aIsMutable) { return _to GetIsMutable(aIsMutable); } \
+  NS_IMETHOD GetIsMutable(bool *aIsMutable) { return _to GetIsMutable(aIsMutable); } \
   NS_IMETHOD GetItemController(sbIMediaItemController **aMediaItemController) { return _to GetItemController(aMediaItemController); } \
   NS_IMETHOD GetMediaCreated(PRInt64 *aMediaCreated) { return _to GetMediaCreated(aMediaCreated); } \
   NS_IMETHOD SetMediaCreated(PRInt64 aMediaCreated) { return _to SetMediaCreated(aMediaCreated); } \
@@ -125,8 +125,8 @@ typedef nsInterfaceHashtableMT<nsStringHashKey, nsIWeakReference>
   NS_IMETHOD GetName(nsAString & aName) { return _to GetName(aName); } \
   NS_IMETHOD SetName(const nsAString & aName) { return _to SetName(aName); } \
   NS_IMETHOD GetLength(PRUint32 *aLength) { return _to GetLength(aLength); } \
-  NS_IMETHOD GetIsEmpty(PRBool *aIsEmpty) { return _to GetIsEmpty(aIsEmpty); } \
-  NS_IMETHOD GetUserEditableContent(PRBool *aUserEditableContent) { return _to GetUserEditableContent(aUserEditableContent); } \
+  NS_IMETHOD GetIsEmpty(bool *aIsEmpty) { return _to GetIsEmpty(aIsEmpty); } \
+  NS_IMETHOD GetUserEditableContent(bool *aUserEditableContent) { return _to GetUserEditableContent(aUserEditableContent); } \
   NS_IMETHOD GetItemByIndex(PRUint32 aIndex, sbIMediaItem **_retval) { return _to GetItemByIndex(aIndex, _retval); } \
   NS_IMETHOD GetListContentType(PRUint16 *_retval) { return _to GetListContentType(_retval); } \
   NS_IMETHOD EnumerateAllItems(sbIMediaListEnumerationListener *aEnumerationListener, PRUint16 aEnumerationType) { return _to EnumerateAllItems(aEnumerationListener, aEnumerationType); } \
@@ -137,7 +137,7 @@ typedef nsInterfaceHashtableMT<nsStringHashKey, nsIWeakReference>
   NS_IMETHOD GetItemsByProperties(sbIPropertyArray *aProperties, nsIArray **_retval) { return _to GetItemsByProperties(aProperties, _retval); } \
   NS_IMETHOD IndexOf(sbIMediaItem *aMediaItem, PRUint32 aStartFrom, PRUint32 *_retval) { return _to IndexOf(aMediaItem, aStartFrom, _retval); } \
   NS_IMETHOD LastIndexOf(sbIMediaItem *aMediaItem, PRUint32 aStartFrom, PRUint32 *_retval) { return _to LastIndexOf(aMediaItem, aStartFrom, _retval); } \
-  NS_IMETHOD AddListener(sbIMediaListListener *aListener, PRBool aOwnsWeak, PRUint32 aFlags, sbIPropertyArray *aPropertyFilter) { return _to AddListener(aListener, aOwnsWeak, aFlags, aPropertyFilter); } \
+  NS_IMETHOD AddListener(sbIMediaListListener *aListener, bool aOwnsWeak, PRUint32 aFlags, sbIPropertyArray *aPropertyFilter) { return _to AddListener(aListener, aOwnsWeak, aFlags, aPropertyFilter); } \
   NS_IMETHOD RemoveListener(sbIMediaListListener *aListener) { return _to RemoveListener(aListener); } \
   NS_IMETHOD RunInBatchMode(sbIMediaListBatchCallback *aCallback, nsISupports *aUserData) { return _to RunInBatchMode(aCallback, aUserData); } \
   NS_IMETHOD GetDistinctValuesForProperty(const nsAString & aPropertyID, nsIStringEnumerator **_retval) { return _to GetDistinctValuesForProperty(aPropertyID, _retval); }
@@ -266,7 +266,7 @@ private:
   nsresult CreateQueries();
 
   inline nsresult MakeStandardQuery(sbIDatabaseQuery** _retval,
-                                    PRBool aRunAsync = PR_FALSE);
+                                    bool aRunAsync = PR_FALSE);
 
   nsresult AddNewItemQuery(sbIDatabaseQuery* aQuery,
                            const PRUint32 aMediaItemTypeID,
@@ -350,7 +350,7 @@ private:
   nsresult ConvertURIsToStrings(nsIArray* aURIs, nsTArray<nsString>** aStringArray);
 
   nsresult ContainsCopy(sbIMediaItem* aMediaItem,
-                        PRBool*       aContainsCopy);
+                        bool*       aContainsCopy);
 
   nsresult FilterExistingItems(nsTArray<nsString>* aURIs,
                                nsIArray* aPropertyArrayArray,
@@ -366,28 +366,28 @@ private:
      See sbILibrary::CreateMediaItem.*/
   nsresult CreateMediaItemInternal(nsIURI* aUri,
                                    sbIPropertyArray* aProperties,
-                                   PRBool aAllowDuplicates,
-                                   PRBool* aWasCreated,
+                                   bool aAllowDuplicates,
+                                   bool* aWasCreated,
                                    sbIMediaItem** _retval);
 
   nsresult BatchCreateMediaItemsInternal(nsIArray* aURIArray,
                                          nsIArray* aPropertyArrayArray,
-                                         PRBool aAllowDuplicates,
+                                         bool aAllowDuplicates,
                                          nsIArray** aMediaItemCreatedArray,
                                          sbIBatchCreateMediaItemsListener* aListener,
                                          nsIArray** _retval);
 
-  nsresult ClearInternal(PRBool aExcludeLists = PR_FALSE,
+  nsresult ClearInternal(bool aExcludeLists = PR_FALSE,
                          const nsAString &aContentType = EmptyString());
 
   /* Migration related methods */
-  nsresult NeedsMigration(PRBool *aNeedsMigration,
+  nsresult NeedsMigration(bool *aNeedsMigration,
                           PRUint32 *aFromVersion,
                           PRUint32 *aToVersion);
 
   nsresult MigrateLibrary(PRUint32 aFromVersion, PRUint32 aToVersion);
 
-  nsresult NeedsReindexCollations(PRBool *aNeedsReindexCollations);
+  nsresult NeedsReindexCollations(bool *aNeedsReindexCollations);
 
   nsresult ReindexCollations();
 
@@ -429,7 +429,7 @@ private:
 
   PRUint32 mAnalyzeCountLimit;
 
-  PRBool mPreventAddedNotification;
+  bool mPreventAddedNotification;
 
   // This monitor protects calls to GetMediaItem.
   mozilla::ReentrantMonitor mMonitor;
@@ -472,7 +472,7 @@ public:
 
 private:
   sbLocalDatabaseLibrary* mFriendLibrary;
-  PRBool mShouldInvalidate;
+  bool mShouldInvalidate;
 
   sbMediaItemArray mNotificationList;
 
@@ -529,7 +529,7 @@ public:
 
   nsresult SetQueryCount(PRUint32 aQueryCount);
 
-  nsresult NotifyInternal(PRBool* _retval);
+  nsresult NotifyInternal(bool* _retval);
 
   sbBatchCreateHelper* BatchHelper();
 
