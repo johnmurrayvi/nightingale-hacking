@@ -42,17 +42,18 @@
 #include <nsCOMPtr.h>
 #include <prlog.h>
 #include <prprf.h>
+#include <nsIClassInfo.h>
+#include <nsIClassInfoImpl.h>
+#include <mozilla/ReentrantMonitor.h>
 
 // Required to crack open the DOM XUL Element and get a native window handle.
 #include <nsIBaseWindow.h>
 #include <nsIBoxObject.h>
 #include <nsIDocument.h>
-#include <nsIDOMAbstractView.h>
 #include <nsIDOMEvent.h>
 #include <nsIDocShellTreeItem.h>
 #include <nsIDocShellTreeOwner.h>
 #include <nsIDOMDocument.h>
-#include <nsIDOMDocumentView.h>
 #include <nsIDOMEventTarget.h>
 #include <nsIDOMXULElement.h>
 #include <nsIScriptGlobalObject.h>
@@ -131,6 +132,9 @@ static PRLogModuleInfo* gGStreamerMediacore =
 
 #endif /* PR_LOGGING */
 
+// CID for sbGStreamerMediacore ?
+NS_IMPL_CLASSINFO(sbGStreamerMediacore, NULL, nsIClassInfo::THREADSAFE, SBGSTREAMERSERVICE_CID);
+
 NS_IMPL_THREADSAFE_ADDREF(sbGStreamerMediacore)
 NS_IMPL_THREADSAFE_RELEASE(sbGStreamerMediacore)
 
@@ -157,11 +161,11 @@ NS_IMPL_CI_INTERFACE_GETTER8(sbGStreamerMediacore,
                              sbIGStreamerMediacore,
                              sbIMediacoreEventTarget)
 
-NS_DECL_CLASSINFO(sbGStreamerMediacore)
+
 NS_IMPL_THREADSAFE_CI(sbGStreamerMediacore)
 
 sbGStreamerMediacore::sbGStreamerMediacore() :
-    mMonitor(nsnull),
+    mMonitor("sbGStreamerMediacore::mMonitor"),
     mIsVideoSupported(PR_FALSE),
     mPipeline(nsnull),
     mPlatformInterface(nsnull),
@@ -211,17 +215,12 @@ sbGStreamerMediacore::~sbGStreamerMediacore()
   for ( ; it < mAudioFilters.end(); ++it)
     gst_object_unref (*it);
 
-  if (mMonitor)
-    nsAutoMonitor::DestroyMonitor(mMonitor);
 }
 
 nsresult
 sbGStreamerMediacore::Init()
 {
   nsresult rv;
-
-  mMonitor = nsAutoMonitor::NewMonitor("sbGStreamerMediacore::mMonitor");
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_OUT_OF_MEMORY);
 
   rv = sbBaseMediacore::InitBaseMediacore();
   NS_ENSURE_SUCCESS(rv, rv);
@@ -453,7 +452,7 @@ sbGStreamerMediacore::GetFileSize(nsIURI *aURI, PRInt64 *aFileSize)
 GstElement *
 sbGStreamerMediacore::CreateVideoSink()
 {
-  nsAutoMonitor lock(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   GstElement *videosink = CreateSinkFromPrefs(mVideoSinkDescription.get());
 
@@ -466,7 +465,7 @@ sbGStreamerMediacore::CreateVideoSink()
 GstElement *
 sbGStreamerMediacore::CreateAudioSink()
 {
-  nsAutoMonitor lock(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   GstElement *sinkbin = gst_bin_new ("audiosink-bin");
   GstElement *audiosink = CreateSinkFromPrefs(mAudioSinkDescription.get());
@@ -627,10 +626,12 @@ nsresult
 sbGStreamerMediacore::DestroyPipeline()
 {
   GstElement *pipeline = NULL;
-  nsAutoMonitor lock(mMonitor);
-  if (mPipeline)
-    pipeline = (GstElement *)g_object_ref (mPipeline);
-  lock.Exit();
+
+  {
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);;
+    if (mPipeline)
+      pipeline = (GstElement *)g_object_ref (mPipeline);
+  }
 
   /* Do state-change with the lock dropped */
   if (pipeline) {
@@ -638,7 +639,7 @@ sbGStreamerMediacore::DestroyPipeline()
     gst_object_unref (pipeline);
   }
 
-  lock.Enter();
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   if (mPipeline) {
     /* If we put any filters in the pipeline, remove them now, so that we can
      * re-add them later to a different pipeline
@@ -768,7 +769,7 @@ sbGStreamerMediacore::CreatePlaybackPipeline()
   rv = DestroyPipeline();
   NS_ENSURE_SUCCESS (rv, rv);
 
-  nsAutoMonitor lock(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   mPipeline = gst_element_factory_make ("playbin2", "player");
 
   if (!mPipeline)
@@ -884,17 +885,20 @@ void sbGStreamerMediacore::HandleAboutToFinishSignal()
 {
   LOG(("Handling about-to-finish signal"));
 
-  nsAutoMonitor mon(mMonitor);
+  nsCOMPtr<sbIMediacoreSequencer> sequencer;
 
-  // Never try to handle the next file if we've seen an error, or if gapless
-  // is disabled for this resource
-  if (mMediacoreError || mGaplessDisabled) {
-    LOG(("Ignoring about-to-finish signal"));
-    return;
+  {
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
+
+    // Never try to handle the next file if we've seen an error, or if gapless
+    // is disabled for this resource
+    if (mMediacoreError || mGaplessDisabled) {
+      LOG(("Ignoring about-to-finish signal"));
+      return;
+    }
+
+    sequencer = mSequencer;
   }
-
-  nsCOMPtr<sbIMediacoreSequencer> sequencer = mSequencer;
-  mon.Exit();
 
   if(!sequencer) {
     return;
@@ -914,7 +918,7 @@ void sbGStreamerMediacore::HandleAboutToFinishSignal()
     rv = sequencer->RequestHandleNextItem(this);
     NS_ENSURE_SUCCESS(rv, /*void*/ );
 
-    mon.Enter();
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
     // Clear old tags so we don't merge them with the new ones
     if (mTags) {
@@ -1031,7 +1035,7 @@ void sbGStreamerMediacore::HandleStateChangedMessage(GstMessage *message)
 
 void sbGStreamerMediacore::HandleBufferingMessage (GstMessage *message)
 {
-  nsAutoMonitor lock(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   gint percent = 0;
   gint maxpercent;
@@ -1174,7 +1178,7 @@ void sbGStreamerMediacore::HandleMissingPluginMessage(GstMessage *message)
   if (!mMediacoreError) {
     nsCOMPtr<sbIMediacoreSequencer> sequencer;
     {
-      nsAutoMonitor mon(mMonitor);
+      mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
       sequencer = mSequencer;
     }
 
@@ -1191,7 +1195,7 @@ void sbGStreamerMediacore::HandleMissingPluginMessage(GstMessage *message)
           nsAutoString stripped (trackNameProp);
           CompressWhitespace(stripped);
           if (!stripped.IsEmpty()) {
-            NS_NEWXPCOM(error, sbMediacoreError);
+            error = new sbMediacoreError;
             if (NS_SUCCEEDED(rv)) {
               params.InsertElementAt(0, trackNameProp);
               errorMessage = bundle.Format(stringName, params);
@@ -1224,7 +1228,7 @@ void sbGStreamerMediacore::HandleMissingPluginMessage(GstMessage *message)
           rv = file->GetPath(path);
 
           if (NS_SUCCEEDED(rv)) {
-            NS_NEWXPCOM(error, sbMediacoreError);
+            error = new sbMediacoreError;
             if (NS_SUCCEEDED(rv)) {
               params.InsertElementAt(0, path);
               errorMessage = bundle.Format(stringName, params);
@@ -1246,7 +1250,7 @@ void sbGStreamerMediacore::HandleMissingPluginMessage(GstMessage *message)
         else
           spec = NS_ConvertUTF8toUTF16(mCurrentUri);
 
-        NS_NEWXPCOM(error, sbMediacoreError);
+        error = new sbMediacoreError;
         if (NS_SUCCEEDED(rv)) {
           params.InsertElementAt(0, spec);
           errorMessage = bundle.Format(stringName, params);
@@ -1269,10 +1273,12 @@ void sbGStreamerMediacore::HandleMissingPluginMessage(GstMessage *message)
   // Then, shut down the pipeline, which will cause
   // a STREAM_END event to be fired. Immediately before firing that, we'll
   // send our error message.
-  nsAutoMonitor lock(mMonitor);
-  mTargetState = GST_STATE_NULL;
-  GstElement *pipeline = (GstElement *)g_object_ref (mPipeline);
-  lock.Exit();
+  GstElement *pipeline;
+  {
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
+    mTargetState = GST_STATE_NULL;
+    pipeline = (GstElement *)g_object_ref (mPipeline);
+  }
 
   gst_element_set_state (pipeline, GST_STATE_NULL);
   g_object_unref (pipeline);
@@ -1283,10 +1289,12 @@ void sbGStreamerMediacore::HandleMissingPluginMessage(GstMessage *message)
 
 void sbGStreamerMediacore::HandleEOSMessage(GstMessage *message)
 {
-  nsAutoMonitor lock(mMonitor);
-  GstElement *pipeline = (GstElement *)g_object_ref (mPipeline);
-  mTargetState = GST_STATE_NULL;
-  lock.Exit();
+  GstElement *pipeline;
+  {
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
+    pipeline = (GstElement *)g_object_ref (mPipeline);
+    mTargetState = GST_STATE_NULL;
+  }
 
   // Shut down the pipeline. This will cause us to send a STREAM_END
   // event when we get the state-changed message to GST_STATE_NULL
@@ -1312,7 +1320,7 @@ void sbGStreamerMediacore::HandleErrorMessage(GstMessage *message)
     // Try and fetch track name from sequencer information.
     nsCOMPtr<sbIMediacoreSequencer> sequencer;
     {
-      nsAutoMonitor mon(mMonitor);
+      mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
       sequencer = mSequencer;
     }
 
@@ -1408,10 +1416,12 @@ void sbGStreamerMediacore::HandleErrorMessage(GstMessage *message)
   // Then, shut down the pipeline, which will cause
   // a STREAM_END event to be fired. Immediately before firing that, we'll
   // send our error message.
-  nsAutoMonitor lock(mMonitor);
-  mTargetState = GST_STATE_NULL;
-  GstElement *pipeline = (GstElement *)g_object_ref (mPipeline);
-  lock.Exit();
+  GstElement *pipeline;
+  {
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
+    mTargetState = GST_STATE_NULL;
+    pipeline = (GstElement *)g_object_ref (mPipeline);
+  }
 
   gst_element_set_state (pipeline, GST_STATE_NULL);
   g_object_unref (pipeline);
@@ -1576,9 +1586,7 @@ sbGStreamerMediacore::OnVideoCapsSet(GstCaps *caps)
   if (mPlayingGaplessly) {
     // Ignore all messages while we're aborting playback
     mAbortingPlayback = PR_TRUE;
-    nsCOMPtr<nsIRunnable> abort =
-        NS_NEW_RUNNABLE_METHOD(sbGStreamerMediacore, this,
-                AbortAndRestartPlayback);
+    nsCOMPtr<nsIRunnable> abort = new nsRunnableMethod_AbortAndRestartPlayback(this);
     NS_DispatchToMainThread(abort);
   }
 
@@ -1586,7 +1594,7 @@ sbGStreamerMediacore::OnVideoCapsSet(GstCaps *caps)
 
   // Send VIDEO_SIZE_CHANGED event
   nsRefPtr<sbVideoBox> videoBox;
-  NS_NEWXPCOM(videoBox, sbVideoBox);
+  videoBox = new sbVideoBox;
   NS_ENSURE_TRUE(videoBox, /*void*/);
 
   nsresult rv = videoBox->Init(videoWidth,
@@ -1610,9 +1618,7 @@ sbGStreamerMediacore::OnAudioCapsSet(GstCaps *caps)
   {
     // Ignore all messages while we're aborting playback
     mAbortingPlayback = PR_TRUE;
-    nsCOMPtr<nsIRunnable> abort =
-        NS_NEW_RUNNABLE_METHOD(sbGStreamerMediacore, this,
-                AbortAndRestartPlayback);
+    nsCOMPtr<nsIRunnable> abort = new nsRunnableMethod_AbortAndRestartPlayback(this);
     NS_DispatchToMainThread(abort);
   }
 
@@ -1672,7 +1678,7 @@ sbGStreamerMediacore::OnGetCapabilities()
 /*virtual*/ nsresult
 sbGStreamerMediacore::OnShutdown()
 {
-  nsAutoMonitor lock(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   if (mPipeline) {
     LOG (("Destroying pipeline on shutdown"));
@@ -1739,7 +1745,7 @@ sbGStreamerMediacore::OnSetEqEnabled(bool aEqEnabled)
     char band[8] = {0};
     double bandGain = 0;
 
-    nsAutoMonitor lock(mMonitor);
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
     for(PRUint32 i = 0; i < EQUALIZER_DEFAULT_BAND_COUNT; ++i) {
       PR_snprintf (band, 8, "band%i", i);
@@ -1817,7 +1823,7 @@ sbGStreamerMediacore::OnSetBand(sbIMediacoreEqualizerBand *aBand)
   char band[8] = {0};
   PR_snprintf(band, 8, "band%i", bandIndex);
 
-  nsAutoMonitor lock(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   g_object_set (G_OBJECT (mEqualizerElement), band, bandGain, NULL);
 
   return NS_OK;
@@ -1843,7 +1849,7 @@ sbGStreamerMediacore::OnSetUri(nsIURI *aURI)
   rv = CreatePlaybackPipeline();
   NS_ENSURE_SUCCESS (rv,rv);
 
-  nsAutoMonitor lock(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   rv = aURI->GetSpec(spec);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -1872,7 +1878,7 @@ sbGStreamerMediacore::OnGetDuration(PRUint64 *aDuration)
   GstQuery *query;
   gboolean res;
   nsresult rv;
-  nsAutoMonitor lock(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   if (!mPipeline)
     return NS_ERROR_NOT_AVAILABLE;
@@ -1910,7 +1916,7 @@ sbGStreamerMediacore::OnGetPosition(PRUint64 *aPosition)
   GstQuery *query;
   gboolean res;
   nsresult rv;
-  nsAutoMonitor lock(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   if (!mPipeline)
     return NS_ERROR_NOT_AVAILABLE;
@@ -1957,7 +1963,7 @@ sbGStreamerMediacore::OnSeek(PRUint64 aPosition, PRUint32 aFlags)
   gboolean ret;
   GstSeekFlags flags;
 
-  nsAutoMonitor lock(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   // Incoming position is in milliseconds, convert to GstClockTime (nanoseconds)
   position = aPosition * GST_MSECOND;
@@ -2034,7 +2040,7 @@ sbGStreamerMediacore::OnPlay()
   GstStateChangeReturn ret;
   GstState curstate;
 
-  nsAutoMonitor lock(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   NS_ENSURE_STATE(mPipeline);
 
   gst_element_get_state (mPipeline, &curstate, NULL, 0);
@@ -2076,7 +2082,7 @@ sbGStreamerMediacore::OnPlay()
 nsresult
 sbGStreamerMediacore::SendInitialBufferingEvent()
 {
-  nsAutoMonitor lock(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   // If we're starting an HTTP stream, send an immediate buffering event,
   // since GStreamer won't do that until it's connected to the server.
@@ -2098,7 +2104,7 @@ sbGStreamerMediacore::OnPause()
 {
   GstStateChangeReturn ret;
 
-  nsAutoMonitor lock(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   NS_ENSURE_STATE(mPipeline);
 
@@ -2113,19 +2119,21 @@ sbGStreamerMediacore::OnPause()
 /*virtual*/ nsresult
 sbGStreamerMediacore::OnStop()
 {
-  nsAutoMonitor lock(mMonitor);
-  mTargetState = GST_STATE_NULL;
-  mStopped = PR_TRUE;
-  // If we get stopped without ever starting, that's ok...
-  if (!mPipeline)
-    return NS_OK;
+  GstElement *pipeline;
 
-  GstElement *pipeline = (GstElement *)g_object_ref (mPipeline);
-  lock.Exit();
+  {
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
+    mTargetState = GST_STATE_NULL;
+    mStopped = PR_TRUE;
+    // If we get stopped without ever starting, that's ok...
+    if (!mPipeline)
+      return NS_OK;
+
+    pipeline = (GstElement *)g_object_ref (mPipeline);
+  }
 
   gst_element_set_state (pipeline, GST_STATE_NULL);
   g_object_unref (pipeline);
-
 
   return NS_OK;
 }
@@ -2146,12 +2154,12 @@ sbGStreamerMediacore::OnInitBaseMediacoreVolumeControl()
 /*virtual*/ nsresult
 sbGStreamerMediacore::OnSetMute(bool aMute)
 {
-  nsAutoMonitor lock(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter lock(mMonitor);
 
   NS_ENSURE_STATE(mPipeline);
 
   if(!aMute && mMute) {
-    nsAutoMonitor mon(sbBaseMediacoreVolumeControl::mMonitor);
+    mozilla::ReentrantMonitorAutoEnter mon(sbBaseMediacoreVolumeControl::mMonitor);
 
     /* Well, this is nice and easy! */
     g_object_set(mPipeline, "volume", mVolume, NULL);
@@ -2168,7 +2176,7 @@ sbGStreamerMediacore::OnSetMute(bool aMute)
 /*virtual*/ nsresult
 sbGStreamerMediacore::OnSetVolume(double aVolume)
 {
-  nsAutoMonitor lock(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   NS_ENSURE_STATE(mPipeline);
 
@@ -2239,7 +2247,7 @@ sbGStreamerMediacore::SetFullscreen(bool aFullscreen)
 NS_IMETHODIMP
 sbGStreamerMediacore::GetVideoWindow(nsIDOMXULElement **aVideoWindow)
 {
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   NS_IF_ADDREF(*aVideoWindow = mVideoWindow);
 
   return NS_OK;
@@ -2250,7 +2258,7 @@ sbGStreamerMediacore::SetVideoWindow(nsIDOMXULElement *aVideoWindow)
 {
   NS_ENSURE_ARG_POINTER(aVideoWindow);
 
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   // Get the box object representing the actual display area for the video.
   nsCOMPtr<nsIBoxObject> boxObject;
@@ -2261,14 +2269,7 @@ sbGStreamerMediacore::SetVideoWindow(nsIDOMXULElement *aVideoWindow)
   rv = aVideoWindow->GetOwnerDocument(getter_AddRefs(domDocument));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsCOMPtr<nsIDOMDocumentView> domDocumentView(do_QueryInterface(domDocument));
-  NS_ENSURE_TRUE(domDocumentView, NS_NOINTERFACE);
-
-  nsCOMPtr<nsIDOMAbstractView> domAbstractView;
-  rv = domDocumentView->GetDefaultView(getter_AddRefs(domAbstractView));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsCOMPtr<nsIWebNavigation> webNavigation(do_GetInterface(domAbstractView));
+  nsCOMPtr<nsIWebNavigation> webNavigation(do_GetInterface(domDocument));
   nsCOMPtr<nsIDocShellTreeItem> docShellTreeItem(do_QueryInterface(webNavigation));
   NS_ENSURE_TRUE(docShellTreeItem, NS_NOINTERFACE);
 

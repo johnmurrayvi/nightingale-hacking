@@ -229,6 +229,4 @@ RemoveHelper.prototype = {
 } // RemoveHelper.prototype
 
 
-function NSGetModule(compMgr, fileSpec) {
-  return XPCOMUtils.generateModule([RemoveHelper]);
-}
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([RemoveHelper]);

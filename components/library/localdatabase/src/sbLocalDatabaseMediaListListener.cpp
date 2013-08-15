@@ -34,6 +34,7 @@
 #include <nsIWeakReference.h>
 #include <nsIWeakReferenceUtils.h>
 
+#include <mozilla/Mutex.h>
 #include <nsHashKeys.h>
 #include <nsThreadUtils.h>
 #include <nsServiceManagerUtils.h>
@@ -67,7 +68,7 @@ static PRLogModuleInfo* gMediaListListenerLog = nsnull;
 #endif /* PR_LOGGING */
 
 sbLocalDatabaseMediaListListener::sbLocalDatabaseMediaListListener()
-: mListenerArrayLock(nsnull),
+: mListenerArrayLock("sbLocalDatabaseMediaListListener::mListenerArrayLock"),
   mBatchDepth(0)
 {
   MOZ_COUNT_CTOR(sbLocalDatabaseMediaListListener);
@@ -81,9 +82,6 @@ sbLocalDatabaseMediaListListener::sbLocalDatabaseMediaListListener()
 
 sbLocalDatabaseMediaListListener::~sbLocalDatabaseMediaListListener()
 {
-  if (mListenerArrayLock) {
-    nsAutoLock::DestroyLock(mListenerArrayLock);
-  }
   TRACE(("LocalDatabaseMediaListListener[0x%.8x] - Destructed", this));
   MOZ_COUNT_DTOR(sbLocalDatabaseMediaListListener);
 }
@@ -91,16 +89,7 @@ sbLocalDatabaseMediaListListener::~sbLocalDatabaseMediaListListener()
 nsresult
 sbLocalDatabaseMediaListListener::Init()
 {
-  NS_WARN_IF_FALSE(!mListenerArrayLock, "You're calling Init more than once!");
-
-  // Initialize our lock.
-  if (!mListenerArrayLock) {
-    mListenerArrayLock =
-      nsAutoLock::NewLock("sbLocalDatabaseMediaListListener::"
-                          "mListenerArrayLock");
-    NS_ENSURE_TRUE(mListenerArrayLock, NS_ERROR_OUT_OF_MEMORY);
-  }
-
+  mozilla::MutexAutoLock lock(mListenerArrayLock);
   return NS_OK;
 }
 
@@ -137,7 +126,6 @@ sbLocalDatabaseMediaListListener::AddListener(sbLocalDatabaseMediaListBase* aLis
   }
 #endif
 
-  NS_ASSERTION(mListenerArrayLock, "You haven't called Init yet!");
   NS_ENSURE_ARG_POINTER(aListener);
 
   nsresult rv;
@@ -154,7 +142,7 @@ sbLocalDatabaseMediaListListener::AddListener(sbLocalDatabaseMediaListBase* aLis
       do_ProxiedGetService(NS_XPCOMPROXY_CONTRACTID, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsAutoLock lock(mListenerArrayLock);
+  mozilla::MutexAutoLock lock(mListenerArrayLock);
 
   // See if we have already added this listener.
   PRUint32 length = mListenerArray.Length();
@@ -220,13 +208,12 @@ sbLocalDatabaseMediaListListener::RemoveListener(sbLocalDatabaseMediaListBase* a
 {
   TRACE(("LocalDatabaseMediaListListener[0x%.8x] - RemoveListener 0x%.8x",
          this, aListener));
-  NS_ASSERTION(mListenerArrayLock, "You haven't called Init yet!");
   NS_ENSURE_ARG_POINTER(aListener);
   nsresult rv;
 
   PRUint32 batchDepth = 0;
   {
-    nsAutoLock lock(mListenerArrayLock);
+    mozilla::MutexAutoLock lock(mListenerArrayLock);
 
     PRUint32 length = mListenerArray.Length();
 
@@ -293,9 +280,7 @@ sbLocalDatabaseMediaListListener::RemoveListener(sbLocalDatabaseMediaListBase* a
 PRUint32
 sbLocalDatabaseMediaListListener::ListenerCount()
 {
-  NS_ASSERTION(mListenerArrayLock, "You haven't called Init yet!");
-
-  nsAutoLock lock(mListenerArrayLock);
+  mozilla::MutexAutoLock lock(mListenerArrayLock);
   return mListenerArray.Length();
 }
 
@@ -304,7 +289,7 @@ sbLocalDatabaseMediaListListener::SnapshotListenerArray(sbMediaListListenersArra
                                                         PRUint32 aFlags,
                                                         sbIPropertyArray* aProperties)
 {
-  nsAutoLock lock(mListenerArrayLock);
+  mozilla::MutexAutoLock lock(mListenerArrayLock);
 
   PRUint32 length = mListenerArray.Length();
   for (PRUint32 i = 0; i < length; i++) {
@@ -324,7 +309,7 @@ sbLocalDatabaseMediaListListener::SnapshotListenerArray(sbMediaListListenersArra
 void
 sbLocalDatabaseMediaListListener::SweepListenerArray(sbStopNotifyArray& aStopNotifying)
 {
-  nsAutoLock lock(mListenerArrayLock);
+  mozilla::MutexAutoLock lock(mListenerArrayLock);
 
   PRUint32 numStopNotifying = aStopNotifying.Length();
 
@@ -389,8 +374,6 @@ sbLocalDatabaseMediaListListener::SweepListenerArray(sbStopNotifyArray& aStopNot
 #endif
 
 #define SB_NOTIFY_LISTENERS_HEAD                                          \
-  NS_ASSERTION(mListenerArrayLock, "You haven't called Init yet!");       \
-                                                                          \
   sbMediaListListenersArray snapshot;
 
 #define SB_NOTIFY_LISTENERS_TAIL(method, call, flag)                      \
@@ -583,7 +566,7 @@ sbLocalDatabaseMediaListListener::NotifyListenersBatchBegin(sbIMediaList* aList)
 
   // Tell all of our listener infos that we have started a batch
   {
-    nsAutoLock lock(mListenerArrayLock);
+    mozilla::MutexAutoLock lock(mListenerArrayLock);
     mBatchDepth++;
     PRUint32 length = mListenerArray.Length();
     for (PRUint32 i = 0; i < length; i++) {
@@ -606,7 +589,7 @@ sbLocalDatabaseMediaListListener::NotifyListenersBatchEnd(sbIMediaList* aList)
 
   // Tell all of our listener infos that we have ended a batch
   {
-    nsAutoLock lock(mListenerArrayLock);
+    mozilla::MutexAutoLock lock(mListenerArrayLock);
     
     if (mBatchDepth == 0) {
       NS_ERROR("Batch begin/end imbalance");
@@ -746,7 +729,7 @@ sbListenerInfo::ShouldNotify(PRUint32 aFlag, sbIPropertyArray* aProperties)
   }
 
   // Check if we are set to stop notifying for this batch
-  if (mStopNotifiyingStack.Length() > 0 && mStopNotifiyingStack[0] & aFlag) {
+  if (mStopNotifiyingStack.Length() > 0 && (mStopNotifiyingStack[0] & aFlag)) {
     return PR_FALSE;
   }
 

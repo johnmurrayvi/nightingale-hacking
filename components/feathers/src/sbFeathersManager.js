@@ -36,6 +36,7 @@
 Components.utils.import("resource://app/jsmodules/ObserverUtils.jsm");
 Components.utils.import("resource://app/jsmodules/StringUtils.jsm");
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+Components.utils.import("resource://gre/modules/AddonManager.jsm");
 
 const Ci = Components.interfaces;
 const Cc = Components.classes; 
@@ -169,14 +170,13 @@ AddonMetadataReader.prototype = {
    */
   loadMetadata: function(manager) {
     //debug("AddonMetadataReader: loadMetadata\n");
+
     this._manager = manager;
-    
-    var addons = RDFHelper.help(
-      "rdf:addon-metadata",
-      "urn:songbird:addon:root",
-      RDFHelper.DEFAULT_RDF_NAMESPACES
-    );
-    
+
+    var addons = RDFHelper.help("rdf:addon-metadata",
+                                "urn:songbird:addon:root",
+                                RDFHelper.DEFAULT_RDF_NAMESPACES);
+
     for (var i = 0; i < addons.length; i++) {
       // first a little workaround to for backwards compatibility 
       // with the now obsolete <feathers> element
@@ -187,7 +187,7 @@ AddonMetadataReader.prototype = {
                        "install.rdf is deprecated and will go away in a future version.");
         feathersHub = feathersHub.feathers[0];
       }
-      
+
       if (feathersHub.skin) {
         var skins = feathersHub.skin;
         for (var j = 0; j < skins.length; j++) {
@@ -215,8 +215,7 @@ AddonMetadataReader.prototype = {
       }
     }
   },
-  
-  
+
   /**
    * Extract skin metadata
    */
@@ -487,7 +486,8 @@ FeathersManager.prototype = {
   [{
     category: "app-startup",
     entry: "feathers-manager",
-    value: "service," + CONTRACTID
+    value: "service," + CONTRACTID,
+    service: true
   }],
   constructor: FeathersManager,
   
@@ -618,7 +618,7 @@ FeathersManager.prototype = {
     }
     // TODO: Rename accessibility.enabled?
     this._showChromeDataRemote = createDataRemote("accessibility.enabled", null);
-    
+
     // Load the feathers metadata
     var metadataReader = new AddonMetadataReader();
     metadataReader.loadMetadata(this);
@@ -775,6 +775,7 @@ FeathersManager.prototype = {
    * \sa sbIFeathersManager
    */
   getSkinDescription: function getSkinDescription(internalName) {
+    dump("sbFeathersManager::getSkinDescription(internalName = "+internalName+")\n");
     return this._skins[internalName];
   },
   
@@ -811,6 +812,7 @@ FeathersManager.prototype = {
    * \sa sbIFeathersManager
    */    
   getLayoutDescription: function getLayoutDescription(url) {
+    dump("sbFeathersManager::getLayoutDescription(url = "+url+")\n");
     return (url in this._layouts ? this._layouts[url] : null);
   }, 
 
@@ -1021,9 +1023,12 @@ FeathersManager.prototype = {
       return;
     }
 
-    layoutDescription = this.getLayoutDescription(layoutURL);
-    skinDescription = this.getSkinDescription(internalName);
-    
+    dump("sbFeathersManager::switchFeathers(layoutURL = "+layoutURL+", internalName = "+internalName+")\n");
+    var layoutDescription = this.getLayoutDescription(layoutURL);
+    var skinDescription = this.getSkinDescription(internalName);
+    dump("sbFeathersManager::switchFeathers -- layoutDescription = "+layoutDescription+"\n");
+    dump("sbFeathersManager::switchFeathers -- skinDescription = "+skinDescription+"\n");
+
     // Make sure we know about the requested skin and layout
     if (layoutDescription == null || skinDescription == null) {
       throw new Components.Exception("Unknown layout/skin passed to switchFeathers");
@@ -1098,6 +1103,8 @@ FeathersManager.prototype = {
    * Relaunch the main window
    */
   openPlayerWindow: function openPlayerWindow() {
+    dump("sbFeathersManager::openPlayerWindow\n");
+
     // First, check if we should auto switch to a new skin/layout
     // (but only if we're not already in the middle of a switch)
     if (this._autoswitch && !this._switching) {
@@ -1362,32 +1369,12 @@ FeathersManager.prototype = {
    * of a compatibility or security issue remain disabled.
    */
   _ensureAddOnEnabled: function(id) {
-    const nsIUpdateItem = Ci.nsIUpdateItem;
-    var em = Cc["@mozilla.org/extensions/manager;1"]
-               .getService(Ci.nsIExtensionManager);
-    var ds = em.datasource; 
-    var rdf = Cc["@mozilla.org/rdf/rdf-service;1"]
-                .getService(Ci.nsIRDFService);
-
-    var resource = rdf.GetResource("urn:mozilla:item:" + id); 
-
-    var property = rdf.GetResource("http://www.mozilla.org/2004/em-rdf#userDisabled");
-    var target = ds.GetTarget(resource, property, true);
-
-    function getData(literalOrResource) {
-      if (literalOrResource instanceof Ci.nsIRDFLiteral ||
-          literalOrResource instanceof Ci.nsIRDFResource ||
-          literalOrResource instanceof Ci.nsIRDFInt)
-        return literalOrResource.Value;
-      return undefined;
-    }
-
-    var userDisabled = getData(target);
-      
-    if (userDisabled == "true") {
-      em.enableItem(id); 
-    }
-  }, 
+    AddonManager.getAddonByID(id, function(addon) {
+      if (addon.userDisabled) {
+        addon.userDisabled = false;
+      }
+    });
+  },
 
   /**
    * See nsISupports.idl
@@ -1454,9 +1441,5 @@ FeathersManager_switchFeathers_callback.prototype = {
  * ----------------------------------------------------------------------------
  */
 
-function NSGetModule(comMgr, fileSpec) {
-  return XPCOMUtils.generateModule([FeathersManager]);
-} // NSGetModule
-
-
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([FeathersManager]);
 

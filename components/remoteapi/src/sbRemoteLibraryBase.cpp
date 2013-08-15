@@ -1,28 +1,27 @@
 /*
-//
-// BEGIN SONGBIRD GPL
-//
-// This file is part of the Songbird web player.
-//
-// Copyright(c) 2005-2008 POTI, Inc.
-// http://songbirdnest.com
-//
-// This file may be licensed under the terms of of the
-// GNU General Public License Version 2 (the "GPL").
-//
-// Software distributed under the License is distributed
-// on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either
-// express or implied. See the GPL for the specific language
-// governing rights and limitations.
-//
-// You should have received a copy of the GPL along with this
-// program. If not, go to http://www.gnu.org/licenses/gpl.html
-// or write to the Free Software Foundation, Inc.,
-// 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-//
-// END SONGBIRD GPL
-//
+ * BEGIN NIGHTINGALE GPL
+ *
+ * This file is part of the Nightingale Media Player.
+ *
+ * Copyright(c) 2013
+ * http://getnightingale.com
+ *
+ * This file may be licensed under the terms of of the
+ * GNU General Public License Version 2 (the "GPL").
+ *
+ * Software distributed under the License is distributed
+ * on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either
+ * express or implied. See the GPL for the specific language
+ * governing rights and limitations.
+ *
+ * You should have received a copy of the GPL along with this
+ * program. If not, go to http://www.gnu.org/licenses/gpl.html
+ * or write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *
+ * END NIGHTINGALE GPL
  */
+
 
 #include "sbRemoteLibraryBase.h"
 #include "sbRemotePlayer.h"
@@ -30,7 +29,6 @@
 #include <nsICategoryManager.h>
 #include <nsIDocument.h>
 #include <nsIDOMDocument.h>
-#include <nsIDOMDocumentEvent.h>
 #include <nsIDOMEvent.h>
 #include <nsIDOMEventTarget.h>
 #include <nsIDOMWindow.h>
@@ -80,6 +78,7 @@
 #include <sbStandardProperties.h>
 #include "sbURIChecker.h"
 #include <sbILibraryStatistics.h>
+#include "sbStringBundle.h"
 
 /*
  * To log this module, set the following environment variable:
@@ -1026,8 +1025,10 @@ sbRemoteLibraryBase::NewResolve( nsIXPConnectWrappedNative *wrapper,
   LOG_LIB(("sbRemoteLibraryBase::NewResolve()"));
 #ifdef DEBUG
   if ( JSVAL_IS_STRING(id) ) {
-    nsDependentString jsid( (PRUnichar *)::JS_GetStringChars(JSVAL_TO_STRING(id)),
-                            ::JS_GetStringLength(JSVAL_TO_STRING(id)));
+		size_t IDstrlen;
+		const jschar *jsIDstr =
+				JS_GetStringCharsAndLength(cx, JSVAL_TO_STRING(id), &IDstrlen);
+		nsDependentString jsid((PRUnichar*) jsIDstr, IDstrlen);
     TRACE_LIB(( "   resolving %s", NS_LossyConvertUTF16toASCII(jsid).get() ));
   }
 #endif
@@ -1056,8 +1057,12 @@ sbRemoteLibraryBase::GetProperty( nsIXPConnectWrappedNative *wrapper,
     return NS_OK;
   }
   
-  nsDependentString jsid( (PRUnichar *)::JS_GetStringChars(JSVAL_TO_STRING(id)),
-                          ::JS_GetStringLength(JSVAL_TO_STRING(id)));
+
+	size_t IDstrlen;
+	const jschar *jsIDstr =
+			JS_GetStringCharsAndLength(cx, JSVAL_TO_STRING(id), &IDstrlen);
+
+	nsDependentString jsid((PRUnichar*) jsIDstr, IDstrlen);
 
   TRACE_LIB(( "   Getting property %s", NS_LossyConvertUTF16toASCII(jsid).get() ));
   

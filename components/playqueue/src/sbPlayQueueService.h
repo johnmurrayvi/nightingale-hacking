@@ -34,7 +34,6 @@
 #include <nsCOMPtr.h>
 #include <nsTArray.h>
 #include <nsIObserver.h>
-#include <mozilla/ModuleUtils.h>
 #include <nsIWeakReference.h>
 #include <nsTHashtable.h>
 #include <nsHashKeys.h>
@@ -75,12 +74,6 @@ public:
 
   sbPlayQueueService();
   virtual ~sbPlayQueueService();
-
-  static NS_METHOD RegisterSelf(nsIComponentManager* aCompMgr,
-                                nsIFile* aPath,
-                                const char* aLoaderStr,
-                                const char* aType,
-                                const nsModuleComponentInfo* aInfo);
 
   nsresult Init();
 
@@ -328,6 +321,8 @@ private:
 #define SB_PLAYQUEUESERVICE_CONTRACTID                                         \
   "@songbirdnest.com/Songbird/playqueue/service;1"
 #define SB_PLAYQUEUESERVICE_CLASSNAME                                          \
+  "sbPlayQueueService"
+#define SB_PLAYQUEUESERVICE_DESCRIPTION                                        \
   "Songbird Play Queue Service"
 #define SB_PLAYQUEUESERVICE_CID                                                \
   { 0xe6407d63, 0x33d2, 0x402e,                                                \

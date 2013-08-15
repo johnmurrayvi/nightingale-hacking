@@ -1,27 +1,25 @@
 /*
-//
-// BEGIN SONGBIRD GPL
-//
-// This file is part of the Songbird web player.
-//
-// Copyright(c) 2005-2008 POTI, Inc.
-// http://songbirdnest.com
-//
-// This file may be licensed under the terms of of the
-// GNU General Public License Version 2 (the "GPL").
-//
-// Software distributed under the License is distributed
-// on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either
-// express or implied. See the GPL for the specific language
-// governing rights and limitations.
-//
-// You should have received a copy of the GPL along with this
-// program. If not, go to http://www.gnu.org/licenses/gpl.html
-// or write to the Free Software Foundation, Inc.,
-// 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-//
-// END SONGBIRD GPL
-//
+ * BEGIN NIGHTINGALE GPL
+ * 
+ * This file is part of the Nightingale Media Player.
+ *
+ * Copyright(c) 2013
+ * http://getnightingale.com
+ * 
+ * This file may be licensed under the terms of of the
+ * GNU General Public License Version 2 (the "GPL").
+ * 
+ * Software distributed under the License is distributed 
+ * on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ * express or implied. See the GPL for the specific language 
+ * governing rights and limitations.
+ *
+ * You should have received a copy of the GPL along with this 
+ * program. If not, go to http://www.gnu.org/licenses/gpl.html
+ * or write to the Free Software Foundation, Inc., 
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * 
+ * END NIGHTINGALE GPL
  */
 
 #include "sbRemoteAPIUtils.h"
@@ -207,23 +205,26 @@ sbRemoteMediaListBase::NewResolve( nsIXPConnectWrappedNative *wrapper,
   NS_ENSURE_ARG_POINTER(_retval);
   NS_ENSURE_ARG_POINTER(objp);
 
-  if ( JSVAL_IS_STRING(id) ) {
-    nsDependentString jsid( (PRUnichar *)
-                            ::JS_GetStringChars( JSVAL_TO_STRING(id) ),
-                            ::JS_GetStringLength( JSVAL_TO_STRING(id) ) );
+  /* TODO: Update all of the jsval types to JS::Value, mozilla just
+   * typedefed jsval for compatibility
+   */
+
+  if (JSVAL_TO_STRING(id)) {
+    size_t IDstrlen;
+    const jschar *jsIDstr =
+    		JS_GetStringCharsAndLength(cx, JSVAL_TO_STRING(id), &IDstrlen);
+
+    nsDependentString jsid((PRUnichar*) jsIDstr, IDstrlen);
 
     TRACE_LIB(( "   resolving %s", NS_LossyConvertUTF16toASCII(jsid).get() ));
+
 
     // If we're being asked for add, define the function and point the
     // caller to the AddHelper method.
     if ( jsid.EqualsLiteral("add") ) {
-      JSString *str = JSVAL_TO_STRING(id);
-      JSFunction *fnc = ::JS_DefineFunction( cx,
-                                             obj,
-                                             ::JS_GetStringBytes(str),
-                                             AddHelper,
-                                             1,
-                                             JSPROP_ENUMERATE );
+      JSAutoByteString bytes(cx, JSVAL_TO_STRING(id));
+      JSFunction *fnc = ::JS_DefineFunction( cx, obj, bytes.ptr(),
+                                             (JSNative) AddHelper, 1, JSPROP_ENUMERATE );
 
       *objp = obj;
 
@@ -422,9 +423,10 @@ sbRemoteMediaListBase::AddHelper( JSContext *cx,
     }
 
     // Convert the JS string into an XPCOM string.
-    nsDependentString url( (PRUnichar *)
-                           ::JS_GetStringChars( JSVAL_TO_STRING(argv[0]) ),
-                           ::JS_GetStringLength( JSVAL_TO_STRING(argv[0]) ) );
+    size_t strlen;
+    const jschar *aStr = JS_GetStringCharsAndLength(cx, JSVAL_TO_STRING(argv[0]), &strlen);
+
+    nsDependentString url((PRUnichar*) aStr, strlen);
 
     LOG_LIST(("sbRemoteMediaListBase::AddHelper() - argv[0] exists, is a string"));
     LOG_LIST(( "   str %s", NS_LossyConvertUTF16toASCII(url).get() ));

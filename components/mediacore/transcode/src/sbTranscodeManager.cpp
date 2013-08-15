@@ -102,7 +102,7 @@ sbTranscodeManager *sbTranscodeManager::GetSingleton()
     return gTranscodeManager;
   }
 
-  NS_NEWXPCOM(gTranscodeManager, sbTranscodeManager);
+  gTranscodeManager = new sbTranscodeManager;
   if (!gTranscodeManager)
     return nsnull;
 

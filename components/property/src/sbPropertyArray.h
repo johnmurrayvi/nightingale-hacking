@@ -29,6 +29,7 @@
 
 #include <sbIPropertyArray.h>
 
+#include <mozilla/Mutex.h>
 #include <nsCOMArray.h>
 #include <nsCOMPtr.h>
 #include <nsIArray.h>
@@ -68,7 +69,7 @@ private:
 private:
   nsCOMArray<sbIProperty> mArray;
   nsCOMPtr<sbIPropertyManager> mPropManager;
-  PRLock* mArrayLock;
+  mozilla::Mutex mArrayMutex;
   bool mStrict;
 };
 

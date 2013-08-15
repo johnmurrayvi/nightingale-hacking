@@ -29,7 +29,7 @@
 #include <mozilla/ModuleUtils.h>
 #include <nsICategoryManager.h>
 
-NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(sbDirectoryProvider, Init)
+NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(sbDirectoryProvider, Init);
 NS_DEFINE_NAMED_CID(SONGBIRD_DIRECTORY_PROVIDER_CID);
 
 static const mozilla::Module::CIDEntry kDirectoryProviderCIDs[] = {
@@ -43,7 +43,7 @@ static const mozilla::Module::ContractIDEntry kDirectoryProviderContracts[] = {
 };
 
 static const mozilla::Module::CategoryEntry kDirectoryProviderCategories[] = {
-  { "app-startup", "service", SONGBIRD_DIRECTORY_PROVIDER_CONTRACTID },
+  { "app-startup", SONGBIRD_DIRECTORY_PROVIDER_CLASSNAME, SONGBIRD_DIRECTORY_PROVIDER_CONTRACTID },
   { NULL }
 };
 

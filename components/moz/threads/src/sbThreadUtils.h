@@ -435,8 +435,7 @@ public:
 
     // Invoke method.
     ReturnType
-      returnValue = (BaseType::mObject->*mMethod)(BaseType::mArg1Value,
-                                                  mArg2Value);
+      returnValue = ((*BaseType::mObject).*(mMethod))(BaseType::mArg1Value, mArg2Value);
     {
       BaseType::mReturnValue = returnValue;
     }
@@ -743,7 +742,7 @@ public:
   bool Wait(PRIntervalTime aTimeout);
 
 private:
-  mozilla::ReentrantMonitor  mMonitor;
+  mozilla::ReentrantMonitor mMonitor;
   bool            mDone;
 };
 

@@ -46,6 +46,8 @@ class CDatabaseQuery;
 #include <prlock.h>
 #include <prmon.h>
 
+#include <mozilla/Mutex.h>
+#include <mozilla/ReentrantMonitor.h>
 #include <nsAutoPtr.h>
 #include <nsCOMPtr.h>
 #include <nsCOMArray.h>
@@ -165,7 +167,7 @@ protected:
   nsString m_DatabaseGUID;
   std::deque< nsCOMPtr<sbIDatabasePreparedStatement> > m_DatabaseQueryList;
 
-  PRMonitor* m_pQueryRunningMonitor;
+  mozilla::ReentrantMonitor m_pQueryRunningMonitor;
   bool m_QueryHasCompleted;
 
   nsInterfaceHashtableMT<nsISupportsHashKey, sbIDatabaseSimpleQueryCallback> m_CallbackList;

@@ -466,7 +466,4 @@ Metrics.prototype = {
   },    
 } // Metrics.prototype
 
-function NSGetModule(compMgr, fileSpec) {
-  return XPCOMUtils.generateModule([Metrics]);
-}
-
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([Metrics]);

@@ -74,6 +74,20 @@ public:
   NS_IMETHOD_(nsEvent*) GetInternalNSEvent();
   NS_IMETHOD SetTrusted(bool aTrusted);
 
+  /* XXX: Need to implement derivation from nsIPrivateDOMEvent.
+   * Don't know what to do with these.
+   */
+  void Serialize(IPC::Message*, bool)
+  {
+
+  }
+
+  bool Deserialize(const IPC::Message*, void**)
+  {
+  	return NS_ERROR_NOT_IMPLEMENTED;
+  }
+
+
 public:
   sbRemotePlaylistClickEvent( sbRemotePlayer* aRemotePlayer );
   ~sbRemotePlaylistClickEvent( );

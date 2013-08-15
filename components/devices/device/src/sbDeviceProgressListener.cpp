@@ -107,9 +107,9 @@ sbDeviceProgressListener::OnJobProgress(sbIJobProgress* aJobProgress)
   // Check for job completion.
   if (status != sbIJobProgress::STATUS_RUNNING) {
     if (mCompleteNotifyMonitor) {
-      nsAutoMonitor monitor(mCompleteNotifyMonitor);
+      PR_EnterMonitor(mCompleteNotifyMonitor);
       PR_AtomicSet(&mIsComplete, 1);
-      monitor.Notify();
+      PR_Notify(mCompleteNotifyMonitor);
     }
     else {
       PR_AtomicSet(&mIsComplete, 1);

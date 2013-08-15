@@ -27,6 +27,7 @@
 #include <nspr.h>
 #include "sbMetadataManager.h"
 
+#include <mozilla/Mutex.h>
 #include <nsXPCOM.h>
 #include <nsCOMPtr.h>
 #include <nsAutoPtr.h>
@@ -128,7 +129,7 @@ sbMetadataManager *sbMetadataManager::GetSingleton()
     return gMetadataManager;
   }
 
-  NS_NEWXPCOM(gMetadataManager, sbMetadataManager);
+  gMetadataManager = new sbMetadataManager;
   if (!gMetadataManager)
     return nsnull;
 

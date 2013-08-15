@@ -7,10 +7,10 @@
 # http://www.songbirdnest.com
 # 
 # This file may be licensed under the terms of of the
-# GNU General Public License Version 2 (the “GPL”).
+# GNU General Public License Version 2 (the ï¿½GPLï¿½).
 # 
 # Software distributed under the License is distributed 
-# on an “AS IS” basis, WITHOUT WARRANTY OF ANY KIND, either 
+# on an ï¿½AS ISï¿½ basis, WITHOUT WARRANTY OF ANY KIND, either 
 # express or implied. See the GPL for the specific language 
 # governing rights and limitations.
 #
@@ -43,13 +43,20 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/dataremote/public \
                      $(MOZSDK_IDL_DIR) \
                      $(NULL)
 
+CPP_EXTRA_FLAGS += "-std=gnu++0x" \
+                   $(NULL)
+
 # build a component (ie: a dynamically loadable module)
 IS_COMPONENT = 1
 
 DYNAMIC_LIB_EXTRA_IMPORTS = plds4 \
                             $(NULL)
 
+SONGBIRD_PP_RESOURCES = $(srcdir)/dataremote.manifest.in \
+                        $(NULL)
+
 SONGBIRD_COMPONENTS = $(topsrcdir)/components/dataremote/src/sbDataRemote.js \
+                      $(CURDIR)/dataremote.manifest \
                       $(NULL)
 
 include $(topsrcdir)/build/rules.mk

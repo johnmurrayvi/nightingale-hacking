@@ -38,7 +38,7 @@
 #include <mozilla/ModuleUtils.h>
 
 // Construct the sbPrompter object and call its Init method.
-NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(sbPrompter, Init)
+NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(sbPrompter, Init);
 NS_DEFINE_NAMED_CID(SONGBIRD_PROMPTER_CID);
 
 static const mozilla::Module::CIDEntry kPrompterCIDs[] = {

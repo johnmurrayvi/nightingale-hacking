@@ -50,7 +50,6 @@
 // Mozilla imports.
 #include <mozilla/ModuleUtils.h>
 
-
 //------------------------------------------------------------------------------
 //
 // Songbird file utilities module directory enumerator services.
@@ -58,9 +57,8 @@
 //------------------------------------------------------------------------------
 
 // Songbird directory enumerator defs.
-NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(sbDirectoryEnumerator, Initialize)
+NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(sbDirectoryEnumerator, Initialize);
 NS_DEFINE_NAMED_CID(SB_DIRECTORYENUMERATOR_CID);
-
 
 //------------------------------------------------------------------------------
 //
@@ -69,7 +67,7 @@ NS_DEFINE_NAMED_CID(SB_DIRECTORYENUMERATOR_CID);
 //------------------------------------------------------------------------------
 
 // Songbird file utilities defs.
-NS_GENERIC_FACTORY_CONSTRUCTOR(sbFileUtils)
+NS_GENERIC_FACTORY_CONSTRUCTOR(sbFileUtils);
 NS_DEFINE_NAMED_CID(SB_FILEUTILS_CID);
 
 //------------------------------------------------------------------------------
@@ -91,6 +89,8 @@ static const mozilla::Module::ContractIDEntry kFileUtilsContracts[] = {
 };
 
 static const mozilla::Module::CategoryEntry kFileUtilsCategories[] = {
+  // { "xpcom-startup", SB_DIRECTORYENUMERATOR_CID, SB_DIRECTORYENUMERATOR_CONTRACTID },
+  // { "xpcom-startup", SB_FILEUTILS_CID, SB_FILEUTILS_CONTRACTID },
   { NULL }
 };
 

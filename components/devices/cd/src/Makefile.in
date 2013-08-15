@@ -106,6 +106,8 @@ CPP_SRCS += sbBaseDeviceEventTarget.cpp \
             sbDeviceLibrarySyncSettings.cpp \
             $(NULL)
 
+CPP_EXTRA_FLAGS += "-std=gnu++0x" \
+                   $(NULL)
 
 DYNAMIC_LIB_EXTRA_IMPORTS = plds4 \
                             $(NULL)
@@ -134,7 +136,11 @@ else
     $(NULL)
 endif
 
+SONGBIRD_PP_RESOURCES = $(srcdir)/devices-cd.manifest.in \
+                        $(NULL)
+
 SONGBIRD_COMPONENTS = $(srcdir)/sbCDRipServicePaneService.js \
+                      $(CURDIR)/devices-cd.manifest \
                       $(NULL)
 
 SONGBIRD_JSMODULES = $(srcdir)/sbCDDeviceUtils.jsm

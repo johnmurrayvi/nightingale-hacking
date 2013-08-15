@@ -26,12 +26,14 @@
 
 #include <sbIGStreamerService.h>
 
+#include <nsIClassInfoImpl.h>
 #include <sbClassInfoUtils.h>
 #include <nsIInterfaceRequestorUtils.h>
 #include <nsIRunnable.h>
 #include <nsServiceManagerUtils.h>
 #include <nsThreadUtils.h>
 #include <prlog.h>
+#include <mozilla/ReentrantMonitor.h>
 
 #include <sbIMediacoreError.h>
 #include <sbMediacoreError.h>
@@ -49,17 +51,12 @@ static PRLogModuleInfo* gGStreamerPipeline = PR_NewLogModule("sbGStreamerPipelin
 #define TRACE(args) /* nothing */
 #endif /* PR_LOGGING */
 
-NS_IMPL_THREADSAFE_ADDREF(sbGStreamerPipeline)
-NS_IMPL_THREADSAFE_RELEASE(sbGStreamerPipeline)
+// XXX CID for sbGStreamerPipeline?
+//NS_IMPL_CLASSINFO(sbGStreamerPipeline, NULL, nsIClassInfo::THREADSAFE, sbGStreamerPipeline);
+NS_IMPL_CLASSINFO(sbGStreamerPipeline, NULL, nsIClassInfo::THREADSAFE, SB_GSTREAMER_PIPELINE_CID);
 
-NS_IMPL_QUERY_INTERFACE2_CI(sbGStreamerPipeline,
-                            sbIMediacoreEventTarget,
-                            nsIClassInfo)
+NS_IMPL_ISUPPORTS2_CI(sbGStreamerPipeline, sbIMediacoreEventTarget, nsIClassInfo);
 
-NS_IMPL_CI_INTERFACE_GETTER1(sbGStreamerPipeline,
-                             sbIMediacoreEventTarget)
-
-NS_DECL_CLASSINFO(sbGStreamerPipeline)
 NS_IMPL_THREADSAFE_CI(sbGStreamerPipeline)
 
 sbGStreamerPipeline::sbGStreamerPipeline() :
@@ -77,10 +74,6 @@ sbGStreamerPipeline::~sbGStreamerPipeline()
   TRACE(("sbGStreamerPipeline[0x%.8x] - Destructed", this));
 
   DestroyPipeline();
-
-  if (mMonitor) {
-    nsAutoMonitor::DestroyMonitor(mMonitor);
-  }
 }
 
 nsresult
@@ -102,9 +95,6 @@ sbGStreamerPipeline::InitGStreamer()
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  mMonitor = nsAutoMonitor::NewMonitor("sbGStreamerPipeline::mMonitor");
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_OUT_OF_MEMORY);
-
   return NS_OK;
 }
 
@@ -119,7 +109,7 @@ sbGStreamerPipeline::SetupPipeline()
 {
   TRACE(("sbGStreamerPipeline[0x%.8x] - SetupPipeline", this));
   nsresult rv;
-  nsAutoMonitor lock(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   rv = BuildPipeline();
   NS_ENSURE_SUCCESS (rv, rv);
@@ -154,10 +144,11 @@ sbGStreamerPipeline::DestroyPipeline()
   nsresult rv;
   GstElement *pipeline = NULL;
 
-  nsAutoMonitor lock(mMonitor);
-  if (mPipeline)
-    pipeline = (GstElement *)gst_object_ref (mPipeline);
-  lock.Exit();
+  {
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
+    if (mPipeline)
+      pipeline = (GstElement *)gst_object_ref (mPipeline);
+  }
 
   if (pipeline) {
     gst_element_set_state(pipeline, GST_STATE_NULL);
@@ -165,7 +156,7 @@ sbGStreamerPipeline::DestroyPipeline()
     TRACE(("sbGStreamerPipeline[0x%.8x] - DestroyPipeline NULL state.", this));
   }
 
-  lock.Enter();
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   if (mPipeline) {
     // Give subclass a chance to do something after the pipeline has been 
     // stopped, but before we unref it
@@ -196,13 +187,14 @@ sbGStreamerPipeline::PlayPipeline()
   GstElement *pipeline = NULL;
   nsresult rv;
 
-  nsAutoMonitor lock(mMonitor);
-  if (!mPipeline) {
-    rv = SetupPipeline();
-    NS_ENSURE_SUCCESS (rv, rv);
+  {
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
+    if (!mPipeline) {
+      rv = SetupPipeline();
+      NS_ENSURE_SUCCESS (rv, rv);
+    }
+    pipeline = (GstElement *)gst_object_ref (mPipeline);
   }
-  pipeline = (GstElement *)gst_object_ref (mPipeline);
-  lock.Exit();
 
   gst_element_set_state(pipeline, GST_STATE_PLAYING);
   gst_object_unref (pipeline);
@@ -217,13 +209,14 @@ sbGStreamerPipeline::PausePipeline()
   GstElement *pipeline = NULL;
   nsresult rv;
 
-  nsAutoMonitor lock(mMonitor);
-  if (!mPipeline) {
-    rv = SetupPipeline();
-    NS_ENSURE_SUCCESS (rv, rv);
+  {
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
+    if (!mPipeline) {
+      rv = SetupPipeline();
+      NS_ENSURE_SUCCESS (rv, rv);
+    }
+    pipeline = (GstElement *)gst_object_ref (mPipeline);
   }
-  pipeline = (GstElement *)gst_object_ref (mPipeline);
-  lock.Exit();
 
   gst_element_set_state(pipeline, GST_STATE_PAUSED);
   gst_object_unref (pipeline);
@@ -237,11 +230,12 @@ sbGStreamerPipeline::StopPipeline()
   TRACE(("sbGStreamerPipeline[0x%.8x] - StopPipeline", this));
   GstElement *pipeline = NULL;
   nsresult rv;
-  nsAutoMonitor lock(mMonitor);
 
-  if (mPipeline)
-    pipeline = (GstElement *)gst_object_ref (mPipeline);
-  lock.Exit();
+  {
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
+    if (mPipeline)
+      pipeline = (GstElement *)gst_object_ref (mPipeline);
+  }
 
   if (pipeline) {
     gst_element_set_state(pipeline, GST_STATE_NULL);
@@ -256,14 +250,14 @@ sbGStreamerPipeline::StopPipeline()
 
 void sbGStreamerPipeline::SetPipelineOp(GStreamer::pipelineOp_t aPipelineOp)
 {
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   mPipelineOp = aPipelineOp;
   return;
 }
 
 GStreamer::pipelineOp_t sbGStreamerPipeline::GetPipelineOp()
 {
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   return mPipelineOp;
 }
 

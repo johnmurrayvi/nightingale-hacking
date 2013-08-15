@@ -33,6 +33,7 @@
 #include "sbIMediaListListener.h"
 #include <sbStandardProperties.h>
 
+#include <mozilla/Mutex.h>
 #include <nsCOMPtr.h>
 #include <nsDataHashtable.h>
 
@@ -68,21 +69,18 @@ protected:
   /**
    * Initializes the lock and ignore listener count
    */
-  sbBaseIgnore() : mLock(nsAutoLock::NewLock("sbBaseIgnore::mLock")),
+  sbBaseIgnore() : mLock("sbBaseIgnoer::mLock"),
                    mIgnoreListenerCounter(0) {
     mIgnored.Init();
-    NS_ASSERTION(mLock, "Failed to allocate sbBaseIgnore::mLock");
   }
   /**
    * Destroys the lock and various other cleanup
    */
   ~sbBaseIgnore() {
-    nsAutoLock::DestroyLock(mLock);
-    mLock = nsnull;
   }
 private:
   nsDataHashtable<nsStringHashKey,PRInt32> mIgnored;
-  PRLock * mLock;
+  mozilla::Mutex mLock;
   PRInt32 mIgnoreListenerCounter;
 };
 

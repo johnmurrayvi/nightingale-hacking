@@ -187,6 +187,7 @@ SB_StringEnumeratorEquals(nsIStringEnumerator* aLeft,
     }
 
     leftValues.Put(value, count);
+
   }
 
   while (NS_SUCCEEDED(aRight->HasMore(&hasMore)) && hasMore) {

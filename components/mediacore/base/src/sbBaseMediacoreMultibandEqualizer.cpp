@@ -35,6 +35,7 @@
 
 #include <nsAutoPtr.h>
 #include <nsComponentManagerUtils.h>
+#include <mozilla/ReentrantMonitor.h>
 
 #include <prlog.h>
 #include <prprf.h>
@@ -102,7 +103,7 @@ NS_IMPL_THREADSAFE_ISUPPORTS1(sbBaseMediacoreMultibandEqualizer,
                               sbIMediacoreMultibandEqualizer)
 
 sbBaseMediacoreMultibandEqualizer::sbBaseMediacoreMultibandEqualizer()
-: mMonitor(nsnull)
+: mMonitor("sbBaseMediacoreMultibandEqualizer.mMonitor")
 , mEqEnabled(PR_FALSE)
 {
   TRACE(("sbBaseMediacoreMultibandEqualizer[0x%x] - Created", this));
@@ -111,10 +112,6 @@ sbBaseMediacoreMultibandEqualizer::sbBaseMediacoreMultibandEqualizer()
 sbBaseMediacoreMultibandEqualizer::~sbBaseMediacoreMultibandEqualizer()
 {
   TRACE(("sbBaseMediacoreMultibandEqualizer[0x%x] - Destroyed", this));
-
-  if(mMonitor) {
-    nsAutoMonitor::DestroyMonitor(mMonitor);
-  }
 
   if (mBands.IsInitialized()) {
     mBands.Clear();
@@ -126,7 +123,6 @@ sbBaseMediacoreMultibandEqualizer::EnsureBandIsCached(sbIMediacoreEqualizerBand 
 {
   TRACE(("sbBaseMediacoreMultibandEqualizer[0x%x] - EnsureBandIsCached", this));
 
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_TRUE(mBands.IsInitialized(), NS_ERROR_NOT_INITIALIZED);
 
   PRUint32 bandIndex = 0;
@@ -164,9 +160,6 @@ nsresult
 sbBaseMediacoreMultibandEqualizer::InitBaseMediacoreMultibandEqualizer()
 {
   TRACE(("sbBaseMediacoreMultibandEqualizer[0x%x] - InitBaseMediacoreMultibandEqualizer", this));
-
-  mMonitor = nsAutoMonitor::NewMonitor("sbBaseMediacoreMultibandEqualizer::mMonitor");
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_OUT_OF_MEMORY);
 
   bool success = mBands.Init(10);
   NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
@@ -243,10 +236,9 @@ sbBaseMediacoreMultibandEqualizer::GetEqEnabled(bool *aEqEnabled)
 {
   TRACE(("sbBaseMediacoreMultibandEqualizer[0x%x] - GetEqEnabled", this));
 
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_ARG_POINTER(aEqEnabled);
 
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   *aEqEnabled = mEqEnabled;
   
   return NS_OK;
@@ -257,9 +249,7 @@ sbBaseMediacoreMultibandEqualizer::SetEqEnabled(bool aEqEnabled)
 {
   TRACE(("sbBaseMediacoreMultibandEqualizer[0x%x] - SetEqEnabled", this));
 
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
-
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   
   nsresult rv = OnSetEqEnabled(aEqEnabled);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -304,18 +294,17 @@ sbBaseMediacoreMultibandEqualizer::GetBands(nsISimpleEnumerator * *aBands)
 
   nsresult rv = NS_ERROR_UNEXPECTED;
 
-  nsAutoMonitor mon(mMonitor);
-  
-  nsCOMPtr<nsIMutableArray> mutableArray =
-    do_CreateInstance("@songbirdnest.com/moz/xpcom/threadsafe-array;1", &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
+  {
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
+    nsCOMPtr<nsIMutableArray> mutableArray =
+      do_CreateInstance("@songbirdnest.com/moz/xpcom/threadsafe-array;1", &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
 
-  mBands.EnumerateRead(
-    sbBaseMediacoreMultibandEqualizer::EnumerateIntoArrayUint32Key,
-    mutableArray.get());
+    mBands.EnumerateRead(
+	  sbBaseMediacoreMultibandEqualizer::EnumerateIntoArrayUint32Key,
+	  mutableArray.get());
+  }
 
-  mon.Exit();
-  
   rv = mutableArray->Enumerate(aBands);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -352,7 +341,6 @@ sbBaseMediacoreMultibandEqualizer::GetBandCount(PRUint32 *aBandCount)
 {
   TRACE(("sbBaseMediacoreMultibandEqualizer[0x%x] - GetBandCount", this));
 
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_ARG_POINTER(aBandCount);
 
   nsAutoMonitor mon(mMonitor);
@@ -369,18 +357,17 @@ sbBaseMediacoreMultibandEqualizer::GetBand(PRUint32 aBandIndex, sbIMediacoreEqua
 {
   TRACE(("sbBaseMediacoreMultibandEqualizer[0x%x] - GetBand", this));
 
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_TRUE(mBands.IsInitialized(), NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_ARG_POINTER(_retval);
   nsresult rv = NS_ERROR_UNEXPECTED;
 
   nsCOMPtr<sbIMediacoreEqualizerBand> band;
 
-  nsAutoMonitor mon(mMonitor);
-    
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
+
   if(!mBands.Get(aBandIndex, getter_AddRefs(band))) {
     nsRefPtr<sbMediacoreEqualizerBand> newBand;
-    NS_NEWXPCOM(newBand, sbMediacoreEqualizerBand);
+    newBand = new sbMediacoreEqualizerBand;
     NS_ENSURE_TRUE(newBand, NS_ERROR_OUT_OF_MEMORY);
 
     rv = OnGetBand(aBandIndex, newBand);
@@ -405,10 +392,9 @@ sbBaseMediacoreMultibandEqualizer::SetBand(sbIMediacoreEqualizerBand *aBand)
 {
   TRACE(("sbBaseMediacoreMultibandEqualizer[0x%x] - SetBand", this));
 
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   nsresult rv = NS_ERROR_UNEXPECTED;
 
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   if(mEqEnabled) {
     rv = OnSetBand(aBand);

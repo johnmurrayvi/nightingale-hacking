@@ -44,6 +44,7 @@
 #include <sbIMediaListListener.h>
 
 // Mozilla imports.
+#include <mozilla/Mutex.h>
 #include <nsCOMPtr.h>
 
 
@@ -180,7 +181,7 @@ private:
 
   class sbBaseDevice*           mBaseDevice;
 
-  PRLock *                      mStatLock;
+  mozilla::Mutex                mStatLock;
   PRUint32                      mAudioCount;
   PRUint64                      mAudioUsed;
   PRUint64                      mAudioPlayTime;
@@ -208,7 +209,8 @@ private:
 
 
   // Prevent derivation.
-  sbDeviceStatistics(sbDeviceStatistics const &) {}
+  sbDeviceStatistics(sbDeviceStatistics const &) : 
+      mStatLock("sbDeviceStatistics::mStatLock") {}
 };
 
 #endif /* SBDEVICESTATISTICS_H_ */

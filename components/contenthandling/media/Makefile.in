@@ -7,10 +7,10 @@
 # http://www.songbirdnest.com
 #
 # This file may be licensed under the terms of of the
-# GNU General Public License Version 2 (the “GPL”).
+# GNU General Public License Version 2 (the ï¿½GPLï¿½).
 #
 # Software distributed under the License is distributed
-# on an “AS IS” basis, WITHOUT WARRANTY OF ANY KIND, either
+# on an ï¿½AS ISï¿½ basis, WITHOUT WARRANTY OF ANY KIND, either
 # express or implied. See the GPL for the specific language
 # governing rights and limitations.
 #
@@ -39,13 +39,20 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/mediacore/base/public \
                      $(MOZSDK_INCLUDE_DIR)/uriloader \
                      $(NULL)
 
+CPP_EXTRA_FLAGS += "-std=gnu++0x" \
+                   $(NULL)
+
 DYNAMIC_LIB = sbMediaSniffer
 
 DYNAMIC_LIB_EXTRA_IMPORTS = plds4 \
                             $(NULL)
 
+SONGBIRD_PP_RESOURCES = $(srcdir)/contenthandling.manifest.in \
+                        $(NULL)
+
 SONGBIRD_COMPONENTS = \
  $(topsrcdir)/components/contenthandling/media/sbMediaContentListener.js \
+ $(CURDIR)/contenthandling.manifest \
  $(NULL)
 
 IS_COMPONENT = 1

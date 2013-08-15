@@ -37,6 +37,7 @@
 #include <sbILibraryUtils.h>
 
 #include <nsCategoryCache.h>
+#include <mozilla/Mutex.h>
 #include <nsCOMPtr.h>
 #include <nsHashKeys.h>
 #include <nsClassHashtable.h>
@@ -88,12 +89,6 @@ public:
   NS_DECL_SBILIBRARYUTILS
 
   sbLibraryManager();
-
-  static NS_METHOD RegisterSelf(nsIComponentManager* aCompMgr,
-                                nsIFile* aPath,
-                                const char* aLoaderStr,
-                                const char* aType,
-                                const nsModuleComponentInfo *aInfo);
 
   nsresult Init();
 
@@ -162,7 +157,7 @@ private:
 
   nsCOMPtr<sbILibraryLoader> mCurrentLoader;
 
-  PRLock* mLock;
+  mozilla::Mutex mLock;
 
   nsCOMPtr<nsIThreadManager> mThreadManager;
 };

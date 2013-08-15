@@ -36,12 +36,15 @@ var DEBUG_DATAREMOTES = false;
 var Cr = Components.results;
 var Ci = Components.interfaces;
 var Cc = Components.classes;
+var Cu = Components.utils;
+
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 // This object should not be instantiated by user code.  Instead, use 
 // the original contract id "@songbirdnest.com/Songbird/DataRemote;1"
 // which will give a wrapper around this object.  See sbPIDataRemote2
 // and sbDataRemoteWrapper for details.
-const SONGBIRD_DATAREMOTE_CONTRACTID = null;
+const SONGBIRD_DATAREMOTE_CONTRACTID = "@songbirdnest.com/Songbird/DataRemoteInstance;1";
 const SONGBIRD_DATAREMOTE_CLASSNAME = "Songbird Data Remote Instance";
 const SONGBIRD_DATAREMOTE_CID = Components.ID("{e0990420-e9c0-11dd-ba2f-0800200c9a66}");
 const SONGBIRD_DATAREMOTE_IID = Ci.sbPIDataRemote2;
@@ -53,6 +56,10 @@ function DataRemote() {
 // Define the prototype block before adding to the prototype object or the
 //   additions will get blown away (at least the setters/getters were).
 DataRemote.prototype = {
+  className: SONGBIRD_DATAREMOTE_CLASSNAME,
+  classID: SONGBIRD_DATAREMOTE_CID,
+  contractID: SONGBIRD_DATAREMOTE_IID,
+
   _initialized: false,     // has init been called
   _observing: false,       // are we hooked up to the pref branch as a listener
   _prefBranch: null,       // the pref branch associated with the root
@@ -411,18 +418,6 @@ DataRemote.prototype = {
       count.value = ifaces.length;
       return ifaces;
   },
- 
-  get classDescription() {
-      return SONGBIRD_DATAREMOTE_CLASSNAME;
-  },
-
-  get contractID() {
-      return SONGBIRD_DATAREMOTE_CONTRACTID;
-  },
-
-  get classID() {
-      return SONGBIRD_DATAREMOTE_CID;
-  },
 
   getHelperForLanguage: function( language ) { return null; },
 
@@ -495,18 +490,15 @@ DataRemote.prototype = {
   },
 
   // nsISupports
-  QueryInterface: function(iid) {
-    if (!iid.equals(SONGBIRD_DATAREMOTE_IID) &&
-        !iid.equals(Ci.nsIClassInfo) && 
-        !iid.equals(Ci.nsIObserver) && 
-        !iid.equals(Ci.nsISecurityCheckedComponent) &&
-        !iid.equals(Ci.sbISecurityAggregator) &&
-        !iid.equals(Ci.nsISupportsWeakReference) &&
-        !iid.equals(Ci.nsISupports)) {
-      throw Cr.NS_ERROR_NO_INTERFACE;
-    }
-    return this;
-  }
+  QueryInterface: XPCOMUtils.generateQI([
+    SONGBIRD_DATAREMOTE_IID,
+    Ci.nsIClassInfo, 
+    Ci.nsIObserver, 
+    Ci.nsISecurityCheckedComponent,
+    Ci.sbISecurityAggregator,
+    Ci.nsISupportsWeakReference,
+    Ci.nsISupports
+  ])
 }; // DataRemote.prototype
 
 // be specific
@@ -578,55 +570,4 @@ if (DEBUG_DATAREMOTES) {
  * ----------------------------------------------------------------------------
  */
 
-const gDataRemoteModule = {
-  registerSelf: function(compMgr, fileSpec, location, type) {
-    compMgr = compMgr.QueryInterface(Ci.nsIComponentRegistrar);
-    compMgr.registerFactoryLocation(SONGBIRD_DATAREMOTE_CID,
-                                    SONGBIRD_DATAREMOTE_CLASSNAME,
-                                    SONGBIRD_DATAREMOTE_CONTRACTID,
-                                    fileSpec,
-                                    location,
-                                    type);
-  },
-
-  unregisterSelf : function (compMgr, location, type) {
-    compMgr.QueryInterface(Ci.nsIComponentRegistrar);
-    compMgr.unregisterFactoryLocation(SONGBIRD_DATAREMOTE_CID, location);
-  },
-
-  getClassObject : function (compMgr, cid, iid) {
-    if (!cid.equals(SONGBIRD_DATAREMOTE_CID))
-      throw Cr.NS_ERROR_NO_INTERFACE;
-
-    if (!iid.equals(Ci.nsIFactory))
-      throw Cr.NS_ERROR_NOT_IMPLEMENTED;
-
-    return this.mFactory;
-  },
-
-  mFactory : {
-    createInstance : function (outer, iid) {
-      if (outer != null)
-        throw Cr.NS_ERROR_NO_AGGREGATION;
-      
-      return (new DataRemote()).QueryInterface(iid);
-    }
-  },
-
-  canUnload: function(compMgr) { 
-    return true; 
-  },
-
-  QueryInterface : function (iid) {
-    if ( !iid.equals(Ci.nsIModule) ||
-         !iid.equals(Ci.nsISupports) )
-      throw Cr.NS_ERROR_NO_INTERFACE;
-    return this;
-  }
-
-}; // gDataRemoteModule
-
-function NSGetModule(compMgr, fileSpec) {
-  return gDataRemoteModule;
-} // NSGetModule
-
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([DataRemote]);

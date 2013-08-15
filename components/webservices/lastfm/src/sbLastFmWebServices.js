@@ -254,6 +254,4 @@ sbLastFmWebServices.prototype = {
  * ----------------------------------------------------------------------------
  */
 
-function NSGetModule(comMgr, fileSpec) {
-  return XPCOMUtils.generateModule([sbLastFmWebServices]);
-} // NSGetModule
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([sbLastFmWebServices]);

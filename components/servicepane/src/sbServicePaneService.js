@@ -643,6 +643,7 @@ ServicePaneService.prototype = {
   // XPCOM component info
   classID: Components.ID("{eb5c665a-bfe2-49f1-a747-cd3554e55606}"),
   classDescription: "Songbird Service Pane Service",
+  className: "ServicePaneService",
   contractID: "@songbirdnest.com/servicepane/service;1",
 
   _modules: null,
@@ -1080,4 +1081,4 @@ ServicePaneService.prototype = {
   }
 };
 
-var NSGetModule = XPCOMUtils.generateNSGetModule([ServicePaneService]);
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([ServicePaneService]);

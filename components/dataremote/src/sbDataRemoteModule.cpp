@@ -28,19 +28,29 @@
 
 #include <mozilla/ModuleUtils.h>
 
-NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(sbDataRemoteWrapper, InitWrapper)
+NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(sbDataRemoteWrapper, InitWrapper);
+NS_DEFINE_NAMED_CID(SB_DATAREMOTEWRAPPER_CID);
 
-// fill out data struct to register with component system
-static const nsModuleComponentInfo components[] =
-{
-  {
-    SB_DATAREMOTEWRAPPER_CLASSNAME,
-    SB_DATAREMOTEWRAPPER_CID,
-    SB_DATAREMOTEWRAPPER_CONTRACTID,
-    sbDataRemoteWrapperConstructor
-  }
+static const mozilla::Module::CIDEntry kDataRemoteWrapperCIDs[] = {
+  { &kSB_DATAREMOTEWRAPPER_CID, false, NULL, sbDataRemoteWrapperConstructor },
+  { NULL }
 };
 
-// create the module info struct that is used to regsiter
-NS_IMPL_NSGETMODULE(SongbirdDataRemoteLib, components)
+static const mozilla::Module::ContractIDEntry kDataRemoteWrapperContracts[] = {
+  { SB_DATAREMOTEWRAPPER_CONTRACTID, &kSB_DATAREMOTEWRAPPER_CID },
+  { NULL }
+};
 
+static const mozilla::Module::CategoryEntry kDataRemoteWrapperCategories[] = {
+  // { "profile-after-change", SB_DATAREMOTEWRAPPER_CLASSNAME, SB_DATAREMOTEWRAPPER_CONTRACTID },
+  { NULL }
+};
+
+static const mozilla::Module kDataRemoteWrapperModule = {
+  mozilla::Module::kVersion,
+  kDataRemoteWrapperCIDs,
+  kDataRemoteWrapperContracts,
+  kDataRemoteWrapperCategories
+};
+
+NSMODULE_DEFN(sbDataRemoteWrapper) = &kDataRemoteWrapperModule;

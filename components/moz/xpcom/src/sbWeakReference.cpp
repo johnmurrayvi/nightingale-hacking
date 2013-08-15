@@ -53,7 +53,6 @@ private:
     mReferent = nsnull;
   }
 
-
   mozilla::Mutex mReferentMutex;
   sbSupportsWeakReference*  mReferent;
 };

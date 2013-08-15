@@ -112,13 +112,13 @@ private:
   //   mRenderHTML
   //
 
-  mozilla::Mutex	            mPrompterLock;
+  mozilla::Mutex  	            mPrompterLock;
   nsCOMPtr<nsIWindowWatcher>    mWindowWatcher;
   nsCOMPtr<sbIWindowWatcher>    mSBWindowWatcher;
   nsCOMPtr<nsIPromptService>    mPromptService;
   nsString                      mParentWindowType;
-  bool                        mWaitForWindow;
-  bool                        mRenderHTML;
+  bool                          mWaitForWindow;
+  bool                          mRenderHTML;
   nsCOMPtr<nsIDOMWindow>        mCurrentWindow;
 
 
@@ -223,7 +223,6 @@ private:
                      const PRUnichar** aSelectList,
                      PRInt32*          aOutSelection,
                      bool*           _retval);
-
 };
 
 

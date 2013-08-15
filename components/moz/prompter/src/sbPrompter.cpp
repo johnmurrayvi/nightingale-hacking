@@ -1257,7 +1257,7 @@ sbPrompter::~sbPrompter()
 nsresult
 sbPrompter::Init()
 {
-  nsresult rv;	
+  nsresult rv;  
 
   // Set defaults.
   {

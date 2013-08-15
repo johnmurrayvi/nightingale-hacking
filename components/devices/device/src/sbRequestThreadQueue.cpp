@@ -206,23 +206,12 @@ sbRequestThreadQueue::sbRequestThreadQueue() :
   mCurrentBatchId(1)
 {
   SB_PRLOG_SETUP(sbRequestThreadQueue);
-
-  mLock = nsAutoLock::NewLock("sbRequestThreadQueue::mLock");
-  // Create the request wait monitor.
-  mStopWaitMonitor =
-    nsAutoMonitor::NewMonitor("sbRequestThreadQueue::mStopWaitMonitor");
 }
 
 sbRequestThreadQueue::~sbRequestThreadQueue()
 {
   NS_ASSERTION(mRequestQueue.size() == 0,
                "sbRequestThreadQueue destructor with items in queue");
-  if (mStopWaitMonitor) {
-    nsAutoMonitor::DestroyMonitor(mStopWaitMonitor);
-  }
-  if (mLock) {
-    nsAutoLock::DestroyLock(mLock);
-  }
 }
 
 nsresult sbRequestThreadQueue::BatchBegin()
@@ -230,7 +219,7 @@ nsresult sbRequestThreadQueue::BatchBegin()
   TRACE_FUNCTION("");
 
   NS_ENSURE_STATE(mLock);
-  nsAutoLock lock(mLock);
+  sbSimpleAutoLock lock(mLock);
 
   ++mBatchDepth;
 
@@ -241,7 +230,7 @@ nsresult sbRequestThreadQueue::BatchEnd()
 {
   TRACE_FUNCTION("");
   NS_ENSURE_STATE(mLock);
-  nsAutoLock lock(mLock);
+  sbSimpleAutoLock lock(mLock);
   NS_ASSERTION(mBatchDepth > 0,
                "sbRequestThreadQueue batch depth out of balance");
   if (mBatchDepth > 0 && --mBatchDepth == 0) {
@@ -331,7 +320,7 @@ nsresult sbRequestThreadQueue::Stop()
 
   // Check and set the thread state
   {
-    nsAutoLock lock(mLock);
+    sbSimpleAutoLock lock(mLock);
 
     // If stop was called with no Start or after another stop return an error
     if (!mThreadStarted) {
@@ -344,10 +333,11 @@ nsresult sbRequestThreadQueue::Stop()
 
   // Notify external users that we're stopping
   {
-    nsAutoMonitor monitor(mStopWaitMonitor);
+    PR_EnterMonitor(mStopWaitMonitor);
     // Set the stop processing requests flag.
     mStopProcessing = true;
-    monitor.NotifyAll();
+    PR_NotifyAll(mStopWaitMonitor);
+    PR_ExitMonitor(mStopWaitMonitor);
   }
 
   // Push the thread stop request onto the queue. This will signal the request
@@ -457,9 +447,9 @@ nsresult sbRequestThreadQueue::PushRequest(sbRequestItem * aRequestItem)
   nsresult rv;
 
   { /* scope for request lock */
-    nsAutoLock lock(mLock);
+    sbSimpleAutoLock lock(mLock);
 
-    nsAutoMonitor monitor(mStopWaitMonitor);
+    PR_EnterMonitor(mStopWaitMonitor);
     // If we're aborting or shutting down don't accept any more requests
     if (mAbortRequests || mStopProcessing)
     {
@@ -468,6 +458,7 @@ nsresult sbRequestThreadQueue::PushRequest(sbRequestItem * aRequestItem)
 
     rv = PushRequestInternal(aRequestItem);
     NS_ENSURE_SUCCESS(rv, rv);
+    PR_ExitMonitor(mStopWaitMonitor);
   }
 
   NS_ASSERTION(mBatchDepth >= 0,
@@ -485,7 +476,7 @@ nsresult sbRequestThreadQueue::PopBatch(Batch & aBatch)
   TRACE_FUNCTION("");
   NS_ENSURE_STATE(mLock);
 
-  nsAutoLock lock(mLock);
+  sbSimpleAutoLock lock(mLock);
 
   aBatch.clear();
 
@@ -560,7 +551,7 @@ nsresult sbRequestThreadQueue::ClearRequests()
   Batch batch;
   // Lock the queue while copy and clear it
   {
-    nsAutoLock lock(mLock);
+    sbSimpleAutoLock lock(mLock);
 
     rv = ClearRequestsNoLock(batch);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -586,18 +577,19 @@ nsresult sbRequestThreadQueue::CancelRequests()
   Batch batch;
   {
     // Have to lock mLock before mStopWaitMonitor to avoid deadlocks
-    nsAutoLock lock(mLock);
-    nsAutoMonitor monitor(mStopWaitMonitor);
+    sbSimpleAutoLock lock(mLock);
+    PR_EnterMonitor(mStopWaitMonitor);
     // If we're aborting set the flag, reset batch depth and clear requests
     if (!mAbortRequests) {
       if (mIsHandlingRequests) {
         mAbortRequests = true;
-        monitor.NotifyAll();
+        PR_NotifyAll(mStopWaitMonitor);
       }
       mBatchDepth = 0;
       rv = ClearRequestsNoLock(batch);
       NS_ENSURE_SUCCESS(rv, rv);
     }
+    PR_ExitMonitor(mStopWaitMonitor);
   }
   // must not hold onto the monitor while we create sbDeviceStatus objects
   // because that involves proxying to the main thread
@@ -616,11 +608,12 @@ bool sbRequestThreadQueue::CheckAndResetRequestAbort()
   // Notify interested parties that we are aborting. This would be anyone that
   // called GetStopWaitMonitor and may be blocking on it. Scope just to make
   // sure we follow AB BA lock pattern with mLock
-  nsAutoMonitor monitor(mStopWaitMonitor);
+  PR_EnterMonitor(mStopWaitMonitor);
   const bool abort = mAbortRequests || mStopProcessing;
   if (abort) {
     mAbortRequests = false;
   }
+  PR_ExitMonitor(mStopWaitMonitor);
   return abort;
 }
 

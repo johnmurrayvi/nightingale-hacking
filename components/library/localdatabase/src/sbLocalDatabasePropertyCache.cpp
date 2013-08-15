@@ -30,9 +30,11 @@
 #include <sbPropertiesCID.h>
 
 #include <DatabaseQuery.h>
+#include <nsAutoLock.h>
 #include <nsCOMArray.h>
 #include <nsComponentManagerUtils.h>
 #include <nsIObserverService.h>
+#include <nsIProxyObjectManager.h>
 #include <nsServiceManagerUtils.h>
 #include <nsIThreadManager.h>
 #include <nsThreadUtils.h>
@@ -119,7 +121,7 @@ sbLocalDatabasePropertyCache::~sbLocalDatabasePropertyCache()
 }
 
 NS_IMETHODIMP
-sbLocalDatabasePropertyCache::GetWritePending(bool *aWritePending)
+sbLocalDatabasePropertyCache::GetWritePending(PRBool *aWritePending)
 {
   NS_ASSERTION(mLibrary, "You didn't initialize!");
   NS_ENSURE_ARG_POINTER(aWritePending);
@@ -156,7 +158,7 @@ sbLocalDatabasePropertyCache::Init(sbLocalDatabaseLibrary* aLibrary,
   rv = LoadProperties();
   NS_ENSURE_SUCCESS(rv, rv);
 
-  bool success = mDirty.Init(CACHE_HASHTABLE_SIZE);
+  PRBool success = mDirty.Init(CACHE_HASHTABLE_SIZE);
   NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
   mThreadPoolService = do_GetService(SB_THREADPOOLSERVICE_CONTRACTID, &rv);
@@ -398,7 +400,7 @@ sbLocalDatabasePropertyCache::RetrievePrimaryProperties(sbIDatabaseQuery* query,
 
     aMissesIDs[index] = mediaItemId;
 
-    bool const success = aIDToBagMap.Put(mediaItemId, bag);
+    PRBool const success = aIDToBagMap.Put(mediaItemId, bag);
     NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
     aBags.ReplaceObjectAt(bag, index);
@@ -591,7 +593,7 @@ nsresult sbLocalDatabasePropertyCache::RetrieveProperties(
 
     nsTArray<PRUint32> itemIDs(aGUIDs.Length());
     IDToBagMap idToBagMap;
-    bool const success = idToBagMap.Init(aGUIDs.Length());
+    PRBool const success = idToBagMap.Init(aGUIDs.Length());
     NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
     rv = RetrievePrimaryProperties(query, aGUIDs, idToBagMap, aBags, itemIDs);
@@ -642,7 +644,7 @@ public:
   PRUint32 Length() const {
     return mLength;
   }
-  bool RemoveElement(nsAString const & aItemToRemove)
+  PRBool RemoveElement(nsAString const & aItemToRemove)
   {
     for (PRUint32 index = 0; index < mLength; ++index) {
       if (aItemToRemove.Equals(mCharArray[index])) {
@@ -689,7 +691,7 @@ sbLocalDatabasePropertyCache::CacheProperties(const PRUnichar **aGUIDArray,
   }
   // First, collect all the guids that are not cached
   nsTArray<nsString> misses;
-  bool cacheLibraryMediaItem = PR_FALSE;
+  PRBool cacheLibraryMediaItem = PR_FALSE;
 
   // Unfortunately need to lock for the duration of this call
   // till after we build the misses array, we don't want another
@@ -895,7 +897,7 @@ sbLocalDatabasePropertyCache::SetProperties(const PRUnichar **aGUIDArray,
 
   // Scoped locking. Must always avoid calling Write with monitor acquired.
   {
-    nsAutoMonitor mon(mMonitor);
+	mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
     for(PRUint32 i = 0; i < aGUIDArrayCount; i++) {
       nsDependentString const guid(aGUIDArray[i]);
       nsRefPtr<sbLocalDatabaseResourcePropertyBag> bag;
@@ -1130,7 +1132,7 @@ sbLocalDatabasePropertyCache::Write()
     DirtyItems dirtyItems;
 
     //Lock it.
-    nsAutoMonitor mon(mMonitor);
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
     if (!mDirty.Count()) {
       return NS_OK;
@@ -1247,9 +1249,7 @@ sbLocalDatabasePropertyCache::Write()
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsCOMPtr<nsIRunnable> runnable =
-      NS_NEW_RUNNABLE_METHOD(sbLocalDatabasePropertyCache, 
-                             this, 
-                             InvalidateGUIDArrays);
+      new nsRunnableMethod_InvalidateGUIDArrays(this);
     NS_ENSURE_TRUE(runnable, NS_ERROR_FAILURE);
 
     // We must dispatch async since the guid array may have acquired the
@@ -1357,7 +1357,7 @@ sbLocalDatabasePropertyCache::InvalidateSortData(sbIJobProgress** _retval)
   GetSetInvalidSortDataPref(PR_TRUE, hasInvalidData);
 
   // Start a job to read, process, and set all the properties in the library
-  NS_NEWXPCOM(mSortInvalidateJob, sbLocalDatabaseSortInvalidateJob);
+  mSortInvalidateJob = new sbLocalDatabaseSortInvalidateJob();
   NS_ENSURE_TRUE(mSortInvalidateJob, NS_ERROR_OUT_OF_MEMORY);
 
   // Go!
@@ -1420,7 +1420,7 @@ sbLocalDatabasePropertyCache::AddDependentGUIDArray(
 {
   NS_ENSURE_TRUE(aGUIDArray, /*void*/);
 
-  nsAutoMonitor mon(mDependentGUIDArrayMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mDependentGUIDArrayMonitor);
   nsCOMPtr<nsISupports> supports =
     do_QueryInterface(static_cast<sbILocalDatabaseGUIDArray*>(aGUIDArray));
   nsCOMPtr<nsIWeakReference> weakRef =
@@ -1435,7 +1435,7 @@ sbLocalDatabasePropertyCache::RemoveDependentGUIDArray(
                                 sbLocalDatabaseGUIDArray *aGUIDArray)
 {
   NS_ENSURE_TRUE(aGUIDArray, /*void*/);
-  nsAutoMonitor mon(mDependentGUIDArrayMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mDependentGUIDArrayMonitor);
 
   nsCOMPtr<nsISupports> supports =
     do_QueryInterface(static_cast<sbILocalDatabaseGUIDArray*>(aGUIDArray));
@@ -1451,7 +1451,7 @@ nsresult
 sbLocalDatabasePropertyCache::DispatchFlush()
 {
   nsCOMPtr<nsIRunnable> runnable =
-    NS_NEW_RUNNABLE_METHOD(sbLocalDatabasePropertyCache, this, RunFlushThread);
+    new nsRunnableMethod_RunFlushThread(this);
   NS_ENSURE_TRUE(runnable, NS_ERROR_FAILURE);
 
   nsresult rv = mThreadPoolService->Dispatch(runnable, NS_DISPATCH_NORMAL);
@@ -1694,7 +1694,7 @@ sbLocalDatabasePropertyCache::GetPropertyDBIDInternal(const nsAString& aProperty
   return retval;
 }
 
-bool
+PRBool
 sbLocalDatabasePropertyCache::GetPropertyID(PRUint32 aPropertyDBID,
                                             nsAString& aPropertyID)
 {
@@ -2086,7 +2086,7 @@ NS_IMETHODIMP sbLocalDatabaseSortInvalidateJob::GetStatus(PRUint16* aStatus)
 }
 
 /* readonly attribute boolean blocked; */
-NS_IMETHODIMP sbLocalDatabaseSortInvalidateJob::GetBlocked(bool* aBlocked)
+NS_IMETHODIMP sbLocalDatabaseSortInvalidateJob::GetBlocked(PRBool* aBlocked)
 {
   NS_ENSURE_ARG_POINTER( aBlocked );
   *aBlocked = PR_FALSE;
@@ -2183,7 +2183,7 @@ sbLocalDatabaseSortInvalidateJob::AddJobProgressListener(sbIJobProgressListener 
     // the listener already exists, do not re-add
     return NS_SUCCESS_LOSS_OF_INSIGNIFICANT_DATA;
   }
-  bool succeeded = mListeners.AppendObject(aListener);
+  PRBool succeeded = mListeners.AppendObject(aListener);
   return succeeded ? NS_OK : NS_ERROR_OUT_OF_MEMORY;
 }
 
@@ -2204,7 +2204,7 @@ sbLocalDatabaseSortInvalidateJob::RemoveJobProgressListener(sbIJobProgressListen
   }
 
   // remove the listener
-  bool succeeded = mListeners.RemoveObjectAt(indexToRemove);
+  PRBool succeeded = mListeners.RemoveObjectAt(indexToRemove);
   NS_ENSURE_TRUE(succeeded, NS_ERROR_FAILURE);
 
   return NS_OK;

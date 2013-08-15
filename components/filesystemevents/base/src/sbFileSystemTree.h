@@ -27,6 +27,8 @@
 #ifndef sbFileSystemTree_h_
 #define sbFileSystemTree_h_
 
+#include <a11yGeneric.h>
+#include <mozilla/Mutex.h>
 #include <nsAutoPtr.h>
 #include <nsStringAPI.h>
 #include <nsILocalFile.h>
@@ -293,17 +295,22 @@ protected:
   //
   void NotifySessionLoadError();
 
+  NS_DECL_RUNNABLEMETHOD(sbFileSystemTree, RunBuildThread);
+  NS_DECL_RUNNABLEMETHOD(sbFileSystemTree, NotifySessionLoadError);
+  NS_DECL_RUNNABLEMETHOD(sbFileSystemTree, NotifyRootPathIsMissing);
+  NS_DECL_RUNNABLEMETHOD(sbFileSystemTree, NotifyBuildComplete);
+
 private:
   nsRefPtr<sbFileSystemNode>           mRootNode;
   nsCOMPtr<nsIThread>                  mOwnerContextThread;
   nsCOMPtr<nsILocalFile>               mRootFile;
   sbFileSystemTreeListener             *mListener;
   nsString                             mRootPath;
-  bool                               mIsRecursiveBuild;
-  bool                               mShouldLoadSession; 
-  bool                               mIsIntialized;
-  PRLock                               *mRootNodeLock;
-  PRLock                               *mListenerLock;
+  bool                                 mIsRecursiveBuild;
+  bool                                 mShouldLoadSession; 
+  bool                                 mIsIntialized;
+  mozilla::Mutex                       mRootNodeLock;
+  mozilla::Mutex                       mListenerLock;
   sbStringArray                        mDiscoveredDirs;
   sbPathChangeArray                    mSessionChanges;
   nsID                                 mSavedSessionID;

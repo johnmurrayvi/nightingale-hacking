@@ -67,7 +67,8 @@ static const mozilla::Module::ContractIDEntry kWindowWatcherContracts[] = {
 };
 
 static const mozilla::Module::CategoryEntry kWindowWatcherCategories[] = {
-  { "app-startup","service", SB_WINDOWWATCHER_CONTRACTID }
+  { "app-startup", SB_WINDOWWATCHER_CLASSNAME, SB_WINDOWWATCHER_CONTRACTID },
+  { NULL }
 };
 
 static const mozilla::Module kWindowWatcherModule = {

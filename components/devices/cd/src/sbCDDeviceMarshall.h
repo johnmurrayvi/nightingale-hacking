@@ -37,6 +37,8 @@
 #include <nsStringAPI.h>
 #include <nsIWritablePropertyBag.h>
 #include <nsInterfaceHashtable.h>
+#include <a11yGeneric.h>
+#include <mozilla/Monitor.h>
 #include <nsIThread.h>
 
 
@@ -110,7 +112,7 @@ protected:
 
 private:
   nsInterfaceHashtableMT<nsStringHashKey, nsISupports> mKnownDevices;
-  PRMonitor                                            *mKnownDevicesLock;
+  mozilla::Monitor                                     mKnownDevicesLock;
 
   // The CD device service to use
   nsCOMPtr<sbICDDeviceService> mCDDeviceService;
@@ -121,6 +123,11 @@ private:
   // Prevent copying and assignment
   sbCDDeviceMarshall(sbCDDeviceMarshall const &);
   sbCDDeviceMarshall & operator= (sbCDDeviceMarshall const &);
+
+protected:
+  NS_DECL_RUNNABLEMETHOD(sbCDDeviceMarshall, RunDiscoverDevices);
+  NS_DECL_RUNNABLEMETHOD(sbCDDeviceMarshall, RunNotifyDeviceStartScan);
+  NS_DECL_RUNNABLEMETHOD(sbCDDeviceMarshall, RunNotifyDeviceStopScan);
 };
 
 #endif  // sbCDDeviceMarshall_h_

@@ -136,6 +136,7 @@ function sbDownloadDeviceHelper()
 sbDownloadDeviceHelper.prototype =
 {
   classDescription: "Songbird Download Device Helper",
+  className:        "SongbirdDownloadDeviceHelper",
   classID:          Components.ID("{576b6833-15d8-483a-84d6-2fbd329c82e1}"),
   contractID:       "@songbirdnest.com/Songbird/DownloadDeviceHelper;1",
   QueryInterface:   XPCOMUtils.generateQI([Ci.sbIDownloadDeviceHelper])
@@ -503,6 +504,4 @@ function sbDownloadDeviceHelper__setDownloadDestinationIfNotSet(
   }
 }
 
-function NSGetModule(compMgr, fileSpec) {
-  return XPCOMUtils.generateModule([sbDownloadDeviceHelper]);
-}
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([sbDownloadDeviceHelper]);

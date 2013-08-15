@@ -36,6 +36,7 @@
 #include <nsComponentManagerUtils.h>
 #include <nsMemory.h>
 #include <nsXPCOMCID.h>
+#include <mozilla/ReentrantMonitor.h>
 #include <prlog.h>
 
 #include <sbIPropertyArray.h>
@@ -60,8 +61,12 @@ static PRLogModuleInfo* gMediacoreWrapper = nsnull;
 #define LOG(args)   /* nothing */
 #endif
 
+// XXX Need to convert the following macros?
+
 NS_IMPL_THREADSAFE_ADDREF(sbMediacoreWrapper)
 NS_IMPL_THREADSAFE_RELEASE(sbMediacoreWrapper)
+
+NS_IMPL_CLASSINFO(sbMediacoreWrapper, NULL, nsIClassInfo::THREADSAFE, SB_MEDIACOREWRAPPER_CID)
 
 NS_IMPL_QUERY_INTERFACE8_CI(sbMediacoreWrapper,
                             sbIMediacore,
@@ -82,11 +87,10 @@ NS_IMPL_CI_INTERFACE_GETTER7(sbMediacoreWrapper,
                              sbIMediacoreWrapper,
                              nsIClassInfo)
 
-NS_DECL_CLASSINFO(sbMediacoreWrapper)
 NS_IMPL_THREADSAFE_CI(sbMediacoreWrapper)
 
 sbMediacoreWrapper::sbMediacoreWrapper()
-: mProxiedObjectsMonitor(nsnull)
+: mProxiedObjectsMonitor("sbMediacoreWrapper.mProxiedObjectsMonitor")
 , mWindowIsReady(PR_FALSE)
 {
 #ifdef PR_LOGGING
@@ -101,10 +105,6 @@ sbMediacoreWrapper::sbMediacoreWrapper()
 sbMediacoreWrapper::~sbMediacoreWrapper()
 {
   TRACE(("sbMediacoreWrapper[0x%x] - Destroyed", this));
-
-  if(mProxiedObjectsMonitor) {
-    nsAutoMonitor::DestroyMonitor(mProxiedObjectsMonitor);
-  }
 }
 
 nsresult
@@ -121,10 +121,6 @@ sbMediacoreWrapper::Init()
   rv = sbBaseMediacoreVolumeControl::InitBaseMediacoreVolumeControl();
   NS_ENSURE_SUCCESS(rv, rv);
 
-  mProxiedObjectsMonitor = 
-    nsAutoMonitor::NewMonitor("sbMediacoreWrapper::mProxiedObjectsMonitor");
-  NS_ENSURE_TRUE(mProxiedObjectsMonitor, NS_ERROR_OUT_OF_MEMORY);
-  
   return NS_OK;
 }
 
@@ -471,11 +467,13 @@ sbMediacoreWrapper::Initialize(const nsAString &aInstanceName,
   rv = mPluginHostWindow->GetDocument(getter_AddRefs(document));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsCOMPtr<nsIDOMDocumentEvent> documentEvent = 
-    do_QueryInterface(document, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
 
-  documentEvent.swap(mDocumentEvent);
+  // XXX No more nsIDOMDocumentEvents
+//  nsCOMPtr<nsIDOMDocumentEvent> documentEvent =
+//    do_QueryInterface(document, &rv);
+//  NS_ENSURE_SUCCESS(rv, rv);
+
+//  documentEvent.swap(mDocumentEvent);
 
   return NS_OK;
 }
@@ -535,7 +533,7 @@ sbMediacoreWrapper::HandleEvent(nsIDOMEvent *aEvent)
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsRefPtr<sbMediacoreError> error;
-    NS_NEWXPCOM(error, sbMediacoreError);
+    error = new sbMediacoreError;
     NS_ENSURE_TRUE(error, NS_ERROR_OUT_OF_MEMORY);
 
     rv = error->Init(code, message);
@@ -691,38 +689,35 @@ sbMediacoreWrapper::SendDOMEvent(const nsAString &aEventName,
   nsresult rv = NS_ERROR_UNEXPECTED;
   bool isMainThread = NS_IsMainThread();
 
-  nsCOMPtr<nsIDOMDocumentEvent> documentEvent;
+  nsCOMPtr<nsIDOMDocument> doc;
   if(isMainThread) {
-    documentEvent = mDocumentEvent;
+	doc = mDoc;
   }
   else {
     // Scope monitor.
     {
-      nsAutoMonitor mon(mProxiedObjectsMonitor);
-      if(!mProxiedDocumentEvent) {
-        mon.Exit();
-
-        nsCOMPtr<nsIThread> target;
+      mozilla::ReentrantMonitorAutoEnter mon(mProxiedObjectsMonitor);
+      if (!mProxiedDoc) {
+    	nsCOMPtr<nsIThread> target;
         rv = NS_GetMainThread(getter_AddRefs(target));
         NS_ENSURE_SUCCESS(rv, rv);
 
         rv = do_GetProxyForObject(target,
-                                  NS_GET_IID(nsIDOMDocumentEvent),
-                                  mDocumentEvent,
-                                  NS_PROXY_SYNC | NS_PROXY_ALWAYS,
-                                  getter_AddRefs(mProxiedDocumentEvent));
+        						  NS_GET_IID(nsIDOMDocument),
+        						  mDoc,
+        						  NS_PROXY_SYNC | NS_PROXY_ALWAYS,
+        						  getter_AddRefs(mProxiedDoc));
         NS_ENSURE_SUCCESS(rv, rv);
       }
     }
-    documentEvent = mProxiedDocumentEvent;
+    doc = mProxiedDoc;
   }
 
   nsCOMPtr<nsIDOMEvent> domEvent;
   nsCOMPtr<nsIDOMDataContainerEvent> dataEvent;
 
   if(isMainThread) {
-    rv = documentEvent->CreateEvent(NS_LITERAL_STRING("DataContainerEvent"), 
-                                    getter_AddRefs(domEvent));
+	rv = doc->CreateEvent(NS_LITERAL_STRING("DataContainerEvent"), getter_AddRefs(domEvent));
     NS_ENSURE_SUCCESS(rv, rv);
 
     dataEvent = do_QueryInterface(domEvent, &rv);
@@ -734,7 +729,7 @@ sbMediacoreWrapper::SendDOMEvent(const nsAString &aEventName,
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsCOMPtr<nsIDOMEvent> tempEvent;
-    rv = documentEvent->CreateEvent(NS_LITERAL_STRING("DataContainerEvent"), 
+    rv = doc->CreateEvent(NS_LITERAL_STRING("DataContainerEvent"),
                                     getter_AddRefs(tempEvent));
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -779,10 +774,8 @@ sbMediacoreWrapper::SendDOMEvent(const nsAString &aEventName,
   else {
     // Scope monitor.
     {
-      nsAutoMonitor mon(mProxiedObjectsMonitor);
+	  mozilla::ReentrantMonitorAutoEnter mon(mProxiedObjectsMonitor);
       if(!mProxiedDOMEventTarget) {
-        mon.Exit();
-
         nsCOMPtr<nsIThread> target;
         rv = NS_GetMainThread(getter_AddRefs(target));
         NS_ENSURE_SUCCESS(rv, rv);

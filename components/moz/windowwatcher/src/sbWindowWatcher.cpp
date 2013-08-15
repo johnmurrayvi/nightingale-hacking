@@ -51,6 +51,7 @@
 
 // Mozilla imports.
 #include <mozilla/Mutex.h>
+#include <nsIDOMWindow.h>
 #include <nsIDOMDocument.h>
 #include <nsIDOMElement.h>
 #include <nsIDOMEvent.h>

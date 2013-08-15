@@ -34,6 +34,7 @@
 
 #include <sbIMediacoreMultibandEqualizer.h>
 
+#include <mozilla/Mutex.h>
 #include <nsCOMPtr.h>
 
 class sbMediacoreEqualizerBand : public sbIMediacoreEqualizerBand
@@ -47,7 +48,7 @@ public:
 protected:
   virtual ~sbMediacoreEqualizerBand();
 
-  PRLock* mLock;
+  mozilla::Mutex mLock;
   
   PRUint32  mIndex;
   PRUint32  mFrequency;

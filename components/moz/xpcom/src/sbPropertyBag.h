@@ -55,7 +55,7 @@
 #define IMETHOD_VISIBILITY NS_COM_GLUE
 
 class NS_COM_GLUE sbPropertyBag : public nsIWritablePropertyBag,
-                             public nsIWritablePropertyBag2
+                                  public nsIWritablePropertyBag2
 {
 public:
   sbPropertyBag() { }

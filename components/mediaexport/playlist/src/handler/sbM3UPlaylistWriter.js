@@ -135,6 +135,4 @@ sbM3UPlaylistWriter.prototype = {
   },
 };
 
-function NSGetModule(compMgr, fileSpec) {
-  return XPCOMUtils.generateModule([sbM3UPlaylistWriter]);
-}
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([sbM3UPlaylistWriter]);

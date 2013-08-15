@@ -23,8 +23,12 @@
 // END SONGBIRD GPL
 //
  */
+
+Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+
 const SONGBIRD_PARSERERRORHANDLER_CONTRACTID = "@songbirdnest.com/Songbird/ParserErrorHandler;1";
-const SONGBIRD_PARSERERRORHANDLER_CLASSNAME = "Songbird Parser Error Handler";
+const SONGBIRD_PARSERERRORHANDLER_CLASSDESC = "Songbird Parser Error Handler";
+const SONGBIRD_PARSERERRORHANDLER_CLASSNAME = "ParserErrorHandler";
 const SONGBIRD_PARSERERRORHANDLER_CID = Components.ID("{213a0ebb-12b3-492f-bc4c-f472f8f24d2c}");
 
 const MSG_ERROR_UNDEFINEDENTITY = '[JavaScript Error: "undefined entity"';
@@ -103,6 +107,14 @@ function ParserErrorHandler() {
 ParserErrorHandler.prototype.constructor = ParserErrorHandler;
 
 ParserErrorHandler.prototype = {
+  classDescription: SONGBIRD_PARSERERRORHANDLER_CLASSDESC,
+  className: SONGBIRD_PARSERERRORHANDLER_CLASSNAME,
+  classID: SONGBIRD_PARSERERRORHANDLER_CID,
+  contractID: SONGBIRD_PARSERERRORHANDLER_CONTRACTID,
+  _xpcom_categories: [{
+    category: "app-startup",
+    service: true
+  }],
 
   _init: function() {
     try {
@@ -139,12 +151,10 @@ ParserErrorHandler.prototype = {
   /**
    * See nsISupports.idl
    */
-  QueryInterface: function(iid) {
-    if (!iid.equals(Components.interfaces.nsIObserver) && 
-        !iid.equals(Components.interfaces.nsISupports))
-      throw Components.results.NS_ERROR_NO_INTERFACE;
-    return this;
-  }
+  QueryInterface: XPCOMUtils.generateQI([
+    Components.interfaces.nsIObserver,
+    Components.interfaces.nsISupports
+  ])
 }; // ParserErrorHandler.prototype
 
 /**
@@ -152,58 +162,59 @@ ParserErrorHandler.prototype = {
  * Registration for XPCOM
  * ----------------------------------------------------------------------------
  */
-var gModule = {
-  registerSelf: function(componentManager, fileSpec, location, type) {
-    componentManager = componentManager.QueryInterface(Components.interfaces.nsIComponentRegistrar);
-    for (var key in this._objects) {
-      var obj = this._objects[key];
-      componentManager.registerFactoryLocation(obj.CID, obj.className, obj.contractID,
-                                               fileSpec, location, type);
-    }
-    var categoryManager = Components.classes["@mozilla.org/categorymanager;1"]
-                                    .getService(Components.interfaces.nsICategoryManager);
-    categoryManager.addCategoryEntry("app-startup", this._objects.parsererrorhandler.className,
-                                    "service," + this._objects.parsererrorhandler.contractID, 
-                                    true, true, null);
-  },
 
-  getClassObject: function(componentManager, cid, iid) {
-    if (!iid.equals(Components.interfaces.nsIFactory))
-      throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([ParserErrorHandler]);
 
-    for (var key in this._objects) {
-      if (cid.equals(this._objects[key].CID))
-        return this._objects[key].factory;
-    }
+// var gModule = {
+//   registerSelf: function(componentManager, fileSpec, location, type) {
+//     componentManager = componentManager.QueryInterface(Components.interfaces.nsIComponentRegistrar);
+//     for (var key in this._objects) {
+//       var obj = this._objects[key];
+//       componentManager.registerFactoryLocation(obj.CID, obj.className, obj.contractID,
+//                                                fileSpec, location, type);
+//     }
+//     var categoryManager = Components.classes["@mozilla.org/categorymanager;1"]
+//                                     .getService(Components.interfaces.nsICategoryManager);
+//     categoryManager.addCategoryEntry("app-startup", this._objects.parsererrorhandler.className,
+//                                     "service," + this._objects.parsererrorhandler.contractID, 
+//                                     true, true, null);
+//   },
+
+//   getClassObject: function(componentManager, cid, iid) {
+//     if (!iid.equals(Components.interfaces.nsIFactory))
+//       throw Components.results.NS_ERROR_NOT_IMPLEMENTED;
+
+//     for (var key in this._objects) {
+//       if (cid.equals(this._objects[key].CID))
+//         return this._objects[key].factory;
+//     }
     
-    throw Components.results.NS_ERROR_NO_INTERFACE;
-  },
+//     throw Components.results.NS_ERROR_NO_INTERFACE;
+//   },
 
-  _makeFactory: #1= function(ctor) {
-    function ci(outer, iid) {
-      if (outer != null)
-        throw Components.results.NS_ERROR_NO_AGGREGATION;
-      return (new ctor()).QueryInterface(iid);
-    } 
-    return { createInstance: ci };
-  },
+//   _makeFactory: #1= function(ctor) {
+//     function ci(outer, iid) {
+//       if (outer != null)
+//         throw Components.results.NS_ERROR_NO_AGGREGATION;
+//       return (new ctor()).QueryInterface(iid);
+//     } 
+//     return { createInstance: ci };
+//   },
   
-  _objects: {
-    // The ParserError Component
-    parsererrorhandler:     { CID        : SONGBIRD_PARSERERRORHANDLER_CID,
-                              contractID : SONGBIRD_PARSERERRORHANDLER_CONTRACTID,
-                              className  : SONGBIRD_PARSERERRORHANDLER_CLASSNAME,
-                              factory    : #1#(ParserErrorHandler)
-                            },
-  },
+//   _objects: {
+//     // The ParserError Component
+//     parsererrorhandler:     { CID        : SONGBIRD_PARSERERRORHANDLER_CID,
+//                               contractID : SONGBIRD_PARSERERRORHANDLER_CONTRACTID,
+//                               className  : SONGBIRD_PARSERERRORHANDLER_CLASSNAME,
+//                               factory    : #1#(ParserErrorHandler)
+//                             },
+//   },
 
-  canUnload: function(componentManager) { 
-    return true; 
-  }
-}; // gModule
+//   canUnload: function(componentManager) { 
+//     return true; 
+//   }
+// }; // gModule
 
-function NSGetModule(comMgr, fileSpec) {
-  return gModule;
-} // NSGetModule
-
-
+// function NSGetModule(comMgr, fileSpec) {
+//   return gModule;
+// } // NSGetModule

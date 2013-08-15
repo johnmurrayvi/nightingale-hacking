@@ -69,6 +69,9 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/devices/device/test \
                      $(MOZSDK_INCLUDE_DIR)/xpconnect \
                      $(NULL)
 
+CPP_EXTRA_FLAGS += "-std=gnu++0x" \
+                   $(NULL)
+
 DYNAMIC_LIB = sbDeviceFirmwareTester
 
 DYNAMIC_LIB_EXTRA_IMPORTS = plds4 \
@@ -89,7 +92,11 @@ DYNAMIC_LIB_STATIC_IMPORTS += \
 
 IS_COMPONENT = 1
 
+SONGBIRD_PP_RESOURCES = $(srcdir)/devices-firmware-mock.manifest.in \
+                        $(NULL)
+
 SONGBIRD_COMPONENTS = $(srcdir)/sbMockFirmwareHandlerURLService.js \
+                      $(CURDIR)/devices-firmware-mock.manifest \
                       $(NULL)
 
 include $(topsrcdir)/build/rules.mk

@@ -27,7 +27,7 @@
 #include "sbVariant.h"
 #include <mozilla/ModuleUtils.h>
 
-NS_GENERIC_FACTORY_CONSTRUCTOR(sbVariant)
+NS_GENERIC_FACTORY_CONSTRUCTOR(sbVariant);
 NS_DEFINE_NAMED_CID(SONGBIRD_VARIANT_CID);
 
 static const mozilla::Module::CIDEntry kVariantCIDs[] = {

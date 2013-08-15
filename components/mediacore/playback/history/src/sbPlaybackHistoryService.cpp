@@ -39,6 +39,7 @@
 #include <nsIWeakReferenceUtils.h>
 
 #include <nsArrayUtils.h>
+#include <mozilla/ReentrantMonitor.h>
 #include <nsCOMArray.h>
 #include <nsComponentManagerUtils.h>
 #include <nsNetUtil.h>
@@ -134,6 +135,7 @@ sbPlaybackHistoryService::sbPlaybackHistoryService()
 , mCurrentStartTime(0)
 , mCurrentPauseTime(0)
 , mCurrentDelta(0)
+, mMonitor("sbPlaybackHistoryService::mMonitor")
 {
   MOZ_COUNT_CTOR(sbPlaybackHistoryService);
 }
@@ -141,34 +143,6 @@ sbPlaybackHistoryService::sbPlaybackHistoryService()
 sbPlaybackHistoryService::~sbPlaybackHistoryService()
 {
   MOZ_COUNT_DTOR(sbPlaybackHistoryService);
-}
-
-/*static*/ NS_METHOD 
-sbPlaybackHistoryService::RegisterSelf(nsIComponentManager* aCompMgr,
-                                       nsIFile* aPath,
-                                       const char* aLoaderStr,
-                                       const char* aType,
-                                       const nsModuleComponentInfo *aInfo)
-{
-  NS_ENSURE_ARG_POINTER(aCompMgr);
-  NS_ENSURE_ARG_POINTER(aPath);
-  NS_ENSURE_ARG_POINTER(aLoaderStr);
-  NS_ENSURE_ARG_POINTER(aType);
-  NS_ENSURE_ARG_POINTER(aInfo);
-
-  nsresult rv = NS_ERROR_UNEXPECTED;
-  nsCOMPtr<nsICategoryManager> categoryManager =
-    do_GetService(NS_CATEGORYMANAGER_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = categoryManager->AddCategoryEntry(NS_APPSTARTUP_CATEGORY,
-                                         SB_PLAYBACKHISTORYSERVICE_DESCRIPTION,
-                                         "service,"
-                                         SB_PLAYBACKHISTORYSERVICE_CONTRACTID,
-                                         PR_TRUE, PR_TRUE, nsnull);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  return NS_OK;
 }
 
 /* static */ PLDHashOperator PR_CALLBACK
@@ -206,9 +180,6 @@ sbPlaybackHistoryService::Init()
                                     SB_LIBRARY_MANAGER_BEFORE_SHUTDOWN_TOPIC, 
                                     PR_FALSE);
   NS_ENSURE_SUCCESS(rv, rv);
-
-  mMonitor = nsAutoMonitor::NewMonitor("sbPlaybackHistoryService::mMonitor");
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_OUT_OF_MEMORY);
 
   rv = CreateQueries();
   NS_ENSURE_SUCCESS(rv, rv);
@@ -1597,7 +1568,7 @@ sbPlaybackHistoryService::UpdateCurrentViewFromEvent(sbIMediacoreEvent *aEvent)
 nsresult
 sbPlaybackHistoryService::VerifyDataAndCreateNewEntry()
 {
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   NS_ENSURE_STATE(mCurrentlyTracking);
   NS_ENSURE_STATE(mCurrentItem);
@@ -1709,7 +1680,7 @@ sbPlaybackHistoryService::VerifyDataAndCreateNewEntry()
 nsresult 
 sbPlaybackHistoryService::ResetTrackingData()
 {
-  nsAutoMonitor mon(mMonitor);
+	mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   mCurrentlyTracking = PR_FALSE;
   mCurrentStartTime = 0;
@@ -1723,7 +1694,7 @@ sbPlaybackHistoryService::ResetTrackingData()
 nsresult 
 sbPlaybackHistoryService::UpdateMetrics()
 {
-  nsAutoMonitor mon(mMonitor);
+	mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   NS_ENSURE_STATE(mCurrentView);
   NS_ENSURE_STATE(mCurrentItem);
@@ -1922,7 +1893,7 @@ sbPlaybackHistoryService::OnMediacoreEvent(sbIMediacoreEvent *aEvent)
   nsresult rv = aEvent->GetType(&eventType);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   switch(eventType) {
     case sbIMediacoreEvent::STREAM_START: {

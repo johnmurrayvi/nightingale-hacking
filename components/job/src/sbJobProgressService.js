@@ -62,6 +62,4 @@ JobProgressService.prototype = {
 }
 
 
-function NSGetModule(compMgr, fileSpec) {
-  return XPCOMUtils.generateModule([JobProgressService]);
-}
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([JobProgressService]);

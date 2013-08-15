@@ -29,7 +29,6 @@
 #include <nsIClassInfoImpl.h>
 #include <nsICryptoHash.h>
 #include <nsIFileURL.h>
-#include <mozilla/ModuleUtils.h>
 #include <nsIPropertyBag2.h>
 #include <nsIWritablePropertyBag2.h>
 #include <nsIProgrammingLanguage.h>
@@ -39,6 +38,8 @@
 #include <nsThreadUtils.h>
 #include <nsILocalFile.h>
 #include <nsISound.h>
+#include <mozilla/Monitor.h>
+#include <mozilla/Mutex.h>
 
 #include <sbIDeviceEvent.h>
 #include <sbILibraryManager.h>
@@ -50,6 +51,7 @@
 #include <sbDeviceContent.h>
 #include <sbDeviceUtils.h>
 #include <sbDeviceStatusHelper.h>
+#include <sbProxiedComponentManager.h>
 #include <sbStandardProperties.h>
 #include <sbStandardDeviceProperties.h>
 #include <sbVariantUtils.h>
@@ -61,18 +63,16 @@
  *   NSPR_LOG_MODULES=sbCDDevice:5
  */
 
-NS_IMPL_THREADSAFE_ADDREF(sbCDDevice)
-NS_IMPL_THREADSAFE_RELEASE(sbCDDevice)
-NS_IMPL_QUERY_INTERFACE3_CI(sbCDDevice, sbIDevice,
-                            sbIJobProgressListener,
-                            sbIDeviceEventTarget)
+NS_IMPL_CLASSINFO(sbCDDevice, NULL, nsIClassInfo::THREADSAFE, SB_CDDEVICE_CID);
+
+NS_IMPL_ISUPPORTS3(sbCDDevice, sbIDevice,
+                   sbIJobProgressListener,
+                   sbIDeviceEventTarget);
 NS_IMPL_CI_INTERFACE_GETTER3(sbCDDevice, sbIDevice,
                              sbIJobProgressListener,
-                             sbIDeviceEventTarget)
+                             sbIDeviceEventTarget);
 
-// nsIClassInfo implementation.
-NS_DECL_CLASSINFO(sbCDDevice)
-NS_IMPL_THREADSAFE_CI(sbCDDevice)
+NS_IMPL_THREADSAFE_CI(sbCDDevice);
 
 #if _MSC_VER
 // Disable warning about 'this' used in base member initializer list.
@@ -86,10 +86,8 @@ sbCDDevice::sbCDDevice(const nsID & aControllerId,
   , mCreationProperties(aProperties)
   , mPrefAutoEject(PR_FALSE)
   , mPrefNotifySound(PR_FALSE)
+  , mPropertiesLock("sbCDDevice.mPropertiesLock")
 {
-  mPropertiesLock = nsAutoMonitor::NewMonitor("sbCDDevice::mPropertiesLock");
-  NS_ENSURE_TRUE(mPropertiesLock, );
-
   SB_PRLOG_SETUP(sbCDDevice);
 
   InitRequestHandler();
@@ -109,11 +107,6 @@ sbCDDevice::~sbCDDevice()
     NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),
         "sbCDDevice failed to finalize the device library");
     mDeviceLibrary = nsnull;
-  }
-
-  if (mPropertiesLock) {
-    nsAutoMonitor::DestroyMonitor(mPropertiesLock);
-    mPropertiesLock = nsnull;
   }
 
   if (lib && !mDeviceLibraryPath.IsEmpty()) {
@@ -285,7 +278,7 @@ NS_IMETHODIMP
 sbCDDevice::GetName(nsAString& aName)
 {
   // Operate under the properties lock.
-  nsAutoMonitor autoPropertiesLock(mPropertiesLock);
+  mozilla::MonitorAutoLock autoPropertiesLock(mPropertiesLock);
 
   return GetNameBase(aName);
 }
@@ -300,7 +293,7 @@ NS_IMETHODIMP
 sbCDDevice::GetProductName(nsAString& aProductName)
 {
   // Operate under the properties lock.
-  nsAutoMonitor autoPropertiesLock(mPropertiesLock);
+  mozilla::MonitorAutoLock autoPropertiesLock(mPropertiesLock);
 
   return GetProductNameBase("device.cd.default.model.number",
                             aProductName);
@@ -475,7 +468,7 @@ sbCDDevice::DeviceSpecificDisconnect()
   // Unmount and remove the default volume.
   nsRefPtr<sbBaseDeviceVolume> volume;
   {
-    nsAutoLock autoVolumeLock(mVolumeLock);
+    mozilla::MutexAutoLock autoVolumeLock(mVolumeLock);
     volume = mDefaultVolume;
   }
   if (volume) {
@@ -619,7 +612,7 @@ sbCDDevice::GetProperties(sbIDeviceProperties * *aProperties)
   NS_ENSURE_ARG_POINTER(aProperties);
 
   // Operate under the properties lock.
-  nsAutoMonitor autoPropertiesLock(mPropertiesLock);
+  mozilla::MonitorAutoLock autoPropertiesLock(mPropertiesLock);
 
   *aProperties = nsnull;
 
@@ -831,7 +824,7 @@ sbCDDevice::Mount(sbBaseDeviceVolume* aVolume)
 
   // Set the primary and default volume.
   {
-    nsAutoLock autoVolumeLock(mVolumeLock);
+    mozilla::MutexAutoLock autoVolumeLock(mVolumeLock);
     if (!mPrimaryVolume)
       mPrimaryVolume = aVolume;
     if (!mDefaultVolume)
@@ -1028,7 +1021,7 @@ sbCDDevice::HandleRipEnd()
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsCOMPtr<nsIRunnable> runnable =
-      NS_NEW_RUNNABLE_METHOD(sbCDDevice, this, ProxyHandleRipEnd);
+        new nsRunnableMethod_ProxyHandleRipEnd(this);
     NS_ENSURE_TRUE(runnable, NS_ERROR_FAILURE);
 
     rv = mainThread->Dispatch(runnable, NS_DISPATCH_NORMAL);
@@ -1104,7 +1097,7 @@ sbCDDevice::QueryUserViewErrors()
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsCOMPtr<nsIRunnable> runnable =
-      NS_NEW_RUNNABLE_METHOD(sbCDDevice, this, ProxyQueryUserViewErrors);
+        new nsRunnableMethod_ProxyQueryUserViewErrors(this);
     NS_ENSURE_TRUE(runnable, NS_ERROR_FAILURE);
 
     rv = mainThread->Dispatch(runnable, NS_DISPATCH_NORMAL);

@@ -87,6 +87,11 @@ sbAppStartupService.prototype =
   // DataRemote For App Restart
   _dataRemoteAppRestart: null,
 
+  _xpcom_categories: [{
+    category: "app-startup",
+    service: true
+  }],
+
   // nsIObserver
   observe: function(aSubject, aTopic, aData) {
     switch(aTopic) {
@@ -120,6 +125,7 @@ sbAppStartupService.prototype =
   ///////////////////////////////////////////////////////////////////
 
   _bootstrap: function() {
+    dump("AppStartupService::_bootstrap\n");
     if (this._initialized) {
       Cu.reportError("bootstrap is getting called multiple times");
       return;
@@ -138,6 +144,7 @@ sbAppStartupService.prototype =
     // Restart app if required.  Do this after initializing so that
     // shutting down does not cause errors.
     if (this._restartRequired) {
+      dump("AppStartupService::_bootstrap -- restarting\n");
       WindowUtils.restartApp();
       return;
     }
@@ -276,6 +283,7 @@ sbAppStartupService.prototype =
       // If restart is required, mark application for restart and return.  Don't
       // restart here, because doing so will lead to errors in shutting down.
       if (addOnBundleUpdateService.restartRequired) {
+        dump("AppStartupService::_mainWindowStart -- restart required\n");
         this._restartRequired = true;
         return;
       }
@@ -297,6 +305,7 @@ sbAppStartupService.prototype =
    * \brief Application First Run
    */
   _firstRun: function () {
+    dump("AppStartupService::_firstRun\n");
     var perfTest = false;
 
     // Skip first-run if we are in test mode (ie. started with -test)
@@ -369,6 +378,7 @@ sbAppStartupService.prototype =
   },
 
   _firstRunComplete: function(aRedo) {
+    dump("AppStartupService::_firstRunComplete\n");
     if (aRedo) {
       this._firstRun();
     }
@@ -395,11 +405,13 @@ sbAppStartupService.prototype =
    *        after first-run add-ons have been installed.
    */
   _initRestarter: function () {
+    dump("AppStartupService::_initRestarter\n");
     this._dataRemoteAppRestart = SBNewDataRemote( "restart.restartnow", null );
     this._dataRemoteAppRestart.boolValue = false;
 
     this._dataRemoteAppRestartHandler = {
       observe: function ( aSubject, aTopic, aData ) {
+        dump("AppStartupService::_initRestarter -- restarter\n");
         var appStartup = Components.classes["@mozilla.org/toolkit/app-startup;1"]
                                    .getService(Components.interfaces.nsIAppStartup);
         appStartup.quit(appStartup.eAttemptQuit | appStartup.eRestart);
@@ -954,19 +966,7 @@ sbAppStartupService.prototype =
 //------------------------------------------------------------------------------
 // XPCOM Registration
 
-function NSGetModule(compMgr, fileSpec)
-{
-  return XPCOMUtils.generateModule([sbAppStartupService],
-    function(aCompMgr, aFileSpec, aLocation) {
-      XPCOMUtils.categoryManager.addCategoryEntry("app-startup",
-                                                  SB_APPSTARTUPSERVICE_DESC,
-                                                  "service," +
-                                                  SB_APPSTARTUPSERVICE_CONTRACTID,
-                                                  true,
-                                                  true);
-    }
-  );
-}
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([sbAppStartupService]);
 
 //------------------------------------------------------------------------------
 // Startup command line handler

@@ -61,10 +61,10 @@
 //------------------------------------------------------------------------------
 
 // Songbird temporary file service defs.
-NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(sbTemporaryFileService, Initialize)
+NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(sbTemporaryFileService, Initialize);
 NS_DEFINE_NAMED_CID(SB_TEMPORARYFILESERVICE_CID);
 
-NS_GENERIC_FACTORY_CONSTRUCTOR(sbTemporaryFileFactory)
+NS_GENERIC_FACTORY_CONSTRUCTOR(sbTemporaryFileFactory);
 NS_DEFINE_NAMED_CID(SB_TEMPORARYFILEFACTORY_CID);
 
 static const mozilla::Module::CIDEntry kTemporaryFileServiceCIDs[] = {
@@ -80,7 +80,7 @@ static const mozilla::Module::ContractIDEntry kTemporaryFileServiceContracts[] =
 };
 
 static const mozilla::Module::CategoryEntry kTemporaryFileServiceCategories[] = {
-  { "app-startup", "service", SB_TEMPORARYFILESERVICE_CONTRACTID },
+  { "app-startup", SB_TEMPORARYFILESERVICE_CLASSNAME, SB_TEMPORARYFILESERVICE_CONTRACTID },
   { NULL }
 };
 

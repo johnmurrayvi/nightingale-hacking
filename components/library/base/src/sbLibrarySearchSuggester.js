@@ -500,6 +500,5 @@ LibrarySearchSuggester.prototype = {
                            Ci.nsIObserver])
 };
 
-function NSGetModule(compMgr, fileSpec) {
-  return XPCOMUtils.generateModule([LibrarySearchSuggester]);
-}
+
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([LibrarySearchSuggester]);

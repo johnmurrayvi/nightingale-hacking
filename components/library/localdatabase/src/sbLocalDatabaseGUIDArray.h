@@ -29,6 +29,8 @@
 #include "sbILocalDatabasePropertyCache.h"
 #include "sbLocalDatabaseGUIDArrayLengthCache.h"
 
+#include <mozilla/Mutex.h>
+#include <mozilla/ReentrantMonitor.h>
 #include <nsAutoPtr.h>
 #include <nsCOMPtr.h>
 #include <nsDataHashtable.h>
@@ -188,7 +190,7 @@ private:
   // Set of property IDs used in the length cache key; the cache entry should
   // be removed if any of these property IDs are invalidated.
   std::set<PRUint32> mPropIdsUsedInCacheKey;
-  PRLock* mPropIdsLock;
+  mozilla::Mutex mPropIdsLock;
 
   // Cached property manager
   nsCOMPtr<sbIPropertyManager> mPropMan;
@@ -227,7 +229,7 @@ private:
   nsTArray<FilterSpec> mFilters;
 
   // Monitor to protect mCache
-  PRMonitor* mCacheMonitor;
+  mozilla::ReentrantMonitor mCacheMonitor;
   // Ordered array of GUIDs
   nsTArray<nsAutoPtr<ArrayItem> > mCache;
 

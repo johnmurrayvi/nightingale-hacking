@@ -36,6 +36,7 @@
 #include <sbIDeviceFirmwareHandler.h>
 #include <sbILibraryManager.h>
 
+#include <mozilla/ReentrantMonitor.h>
 #include <nsAutoPtr.h>
 #include <nsArrayUtils.h>
 #include <nsComponentManagerUtils.h>
@@ -68,7 +69,7 @@ NS_IMPL_THREADSAFE_ISUPPORTS2(sbDeviceFirmwareUpdater,
                               sbIDeviceEventListener)
 
 sbDeviceFirmwareUpdater::sbDeviceFirmwareUpdater()
-: mMonitor(nsnull)
+: mMonitor("sbDeviceFirmwareUpdater::mMonitor")
 , mIsShutdown(PR_FALSE)
 {
 #ifdef PR_LOGGING
@@ -80,18 +81,13 @@ sbDeviceFirmwareUpdater::sbDeviceFirmwareUpdater()
 
 sbDeviceFirmwareUpdater::~sbDeviceFirmwareUpdater()
 {
-  if(mMonitor) {
-    nsAutoMonitor::DestroyMonitor(mMonitor);
-  }
+
 }
 
 nsresult
 sbDeviceFirmwareUpdater::Init()
 {
   LOG(("[sbDeviceFirmwareUpdater] - Init"));
-
-  mMonitor = nsAutoMonitor::NewMonitor("sbDeviceFirmwareUpdater::mMonitor");
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_OUT_OF_MEMORY);
 
   nsresult rv = NS_ERROR_UNEXPECTED;
   nsCOMPtr<nsISimpleEnumerator> categoryEnum;
@@ -124,7 +120,7 @@ sbDeviceFirmwareUpdater::Init()
         NS_ENSURE_SUCCESS(rv, rv);
 
         {
-          nsAutoMonitor mon(mMonitor);
+          mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
           nsCString *element = 
             mFirmwareHandlers.AppendElement(contractId);
           NS_ENSURE_TRUE(element, NS_ERROR_OUT_OF_MEMORY);
@@ -168,10 +164,9 @@ sbDeviceFirmwareUpdater::Init()
 nsresult
 sbDeviceFirmwareUpdater::Shutdown()
 {
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_FALSE(mIsShutdown, NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
 
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   
   // Even if we fail to shutdown we will report ourselves as shutdown.
   // This is done on purpose to avoid new operations coming into play
@@ -296,10 +291,9 @@ sbDeviceFirmwareUpdater::PutRunningHandler(sbIDevice *aDevice,
 sbDeviceFirmwareHandlerStatus* 
 sbDeviceFirmwareUpdater::GetHandlerStatus(sbIDeviceFirmwareHandler *aHandler)
 {
-  NS_ENSURE_TRUE(mMonitor, nsnull);
   NS_ENSURE_TRUE(aHandler, nsnull);
 
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   sbDeviceFirmwareHandlerStatus *_retval = nsnull;
 
   if(!mHandlerStatus.Get(aHandler, &_retval)) {
@@ -321,7 +315,6 @@ nsresult
 sbDeviceFirmwareUpdater::RequiresRecoveryMode(sbIDevice *aDevice,
                                               sbIDeviceFirmwareHandler *aHandler)
 {
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_ARG_POINTER(aDevice);
   NS_ENSURE_ARG_POINTER(aHandler);
 
@@ -402,7 +395,6 @@ sbDeviceFirmwareUpdater::CheckForUpdate(sbIDevice *aDevice,
 {
   LOG(("[sbDeviceFirmwareUpdater] - CheckForUpdate"));
 
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_FALSE(mIsShutdown, NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
   NS_ENSURE_ARG_POINTER(aDevice);
 
@@ -425,38 +417,38 @@ sbDeviceFirmwareUpdater::CheckForUpdate(sbIDevice *aDevice,
   NS_ENSURE_SUCCESS(rv, rv);
   NS_ENSURE_TRUE(canUpdate, NS_ERROR_NOT_IMPLEMENTED);
 
-  nsAutoMonitor mon(mMonitor);
+  {
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
+
+    sbDeviceFirmwareHandlerStatus *handlerStatus = GetHandlerStatus(handler);
+    NS_ENSURE_TRUE(handlerStatus, NS_ERROR_OUT_OF_MEMORY);
+
+    sbDeviceFirmwareHandlerStatus::handlerstatus_t status =
+      sbDeviceFirmwareHandlerStatus::STATUS_NONE;
+    rv = handlerStatus->GetStatus(&status);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    if(status != sbDeviceFirmwareHandlerStatus::STATUS_NONE &&
+       status != sbDeviceFirmwareHandlerStatus::STATUS_FINISHED) {
+      return NS_ERROR_FAILURE;
+    }
+
+
+    nsCOMPtr<sbIDeviceEventTarget> eventTarget = do_QueryInterface(aDevice, &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = eventTarget->AddEventListener(this);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = PutRunningHandler(aDevice, handler);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = handlerStatus->SetOperation(sbDeviceFirmwareHandlerStatus::OP_REFRESH);
+    NS_ENSURE_SUCCESS(rv, rv);
   
-  sbDeviceFirmwareHandlerStatus *handlerStatus = GetHandlerStatus(handler);
-  NS_ENSURE_TRUE(handlerStatus, NS_ERROR_OUT_OF_MEMORY);
-
-  sbDeviceFirmwareHandlerStatus::handlerstatus_t status = 
-    sbDeviceFirmwareHandlerStatus::STATUS_NONE;
-  rv = handlerStatus->GetStatus(&status);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  if(status != sbDeviceFirmwareHandlerStatus::STATUS_NONE &&
-     status != sbDeviceFirmwareHandlerStatus::STATUS_FINISHED) {
-    return NS_ERROR_FAILURE;
+    rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_WAITING_FOR_START);
+    NS_ENSURE_SUCCESS(rv, rv);
   }
-
-
-  nsCOMPtr<sbIDeviceEventTarget> eventTarget = do_QueryInterface(aDevice, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = eventTarget->AddEventListener(this);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = PutRunningHandler(aDevice, handler);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = handlerStatus->SetOperation(sbDeviceFirmwareHandlerStatus::OP_REFRESH);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_WAITING_FOR_START);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  mon.Exit();
 
   rv = handler->RefreshInfo();
   NS_ENSURE_SUCCESS(rv, rv);
@@ -471,7 +463,6 @@ sbDeviceFirmwareUpdater::DownloadUpdate(sbIDevice *aDevice,
 {
   LOG(("[sbDeviceFirmwareUpdater] - DownloadUpdate"));
 
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_FALSE(mIsShutdown, NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
   NS_ENSURE_ARG_POINTER(aDevice);
 
@@ -488,43 +479,43 @@ sbDeviceFirmwareUpdater::DownloadUpdate(sbIDevice *aDevice,
   rv = handler->GetDeviceVendor(deviceVendor);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsAutoMonitor mon(mMonitor);
+  {
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
+
+    sbDeviceFirmwareHandlerStatus *handlerStatus = GetHandlerStatus(handler);
+    NS_ENSURE_TRUE(handlerStatus, NS_ERROR_OUT_OF_MEMORY);
+
+    sbDeviceFirmwareHandlerStatus::handlerstatus_t status =
+      sbDeviceFirmwareHandlerStatus::STATUS_NONE;
+    rv = handlerStatus->GetStatus(&status);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    if(status != sbDeviceFirmwareHandlerStatus::STATUS_NONE &&
+       status != sbDeviceFirmwareHandlerStatus::STATUS_FINISHED) {
+      return NS_ERROR_FAILURE;
+    }
+
+    nsCOMPtr<sbIDeviceEventTarget> eventTarget = do_QueryInterface(aDevice, &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = eventTarget->AddEventListener(this);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = PutRunningHandler(aDevice, handler);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = handlerStatus->SetOperation(sbDeviceFirmwareHandlerStatus::OP_DOWNLOAD);
+    NS_ENSURE_SUCCESS(rv, rv);
   
-  sbDeviceFirmwareHandlerStatus *handlerStatus = GetHandlerStatus(handler);
-  NS_ENSURE_TRUE(handlerStatus, NS_ERROR_OUT_OF_MEMORY);
-
-  sbDeviceFirmwareHandlerStatus::handlerstatus_t status = 
-    sbDeviceFirmwareHandlerStatus::STATUS_NONE;
-  rv = handlerStatus->GetStatus(&status);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  if(status != sbDeviceFirmwareHandlerStatus::STATUS_NONE &&
-     status != sbDeviceFirmwareHandlerStatus::STATUS_FINISHED) {
-    return NS_ERROR_FAILURE;
+    rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_WAITING_FOR_START);
+    NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  nsCOMPtr<sbIDeviceEventTarget> eventTarget = do_QueryInterface(aDevice, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = eventTarget->AddEventListener(this);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = PutRunningHandler(aDevice, handler);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = handlerStatus->SetOperation(sbDeviceFirmwareHandlerStatus::OP_DOWNLOAD);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_WAITING_FOR_START);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  mon.Exit();
-
   nsRefPtr<sbDeviceFirmwareDownloader> downloader;
-  NS_NEWXPCOM(downloader, sbDeviceFirmwareDownloader);
+  downloader = new sbDeviceFirmwareDownloader;
   NS_ENSURE_TRUE(downloader, NS_ERROR_OUT_OF_MEMORY);
 
-  if(deviceModel.IsVoid() || deviceVendor.IsVoid()) {
+  if (deviceModel.IsVoid() || deviceVendor.IsVoid()) {
     rv = downloader->Init(aDevice,
                           aListener,
                           handler);
@@ -547,7 +538,7 @@ sbDeviceFirmwareUpdater::DownloadUpdate(sbIDevice *aDevice,
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<sbIFileDownloaderListener> listener;
-  if(mDownloaders.Get(aDevice, getter_AddRefs(listener))) {
+  if (mDownloaders.Get(aDevice, getter_AddRefs(listener))) {
     sbDeviceFirmwareDownloader *downloader = 
       reinterpret_cast<sbDeviceFirmwareDownloader *>(listener.get());
     
@@ -570,7 +561,6 @@ sbDeviceFirmwareUpdater::VerifyUpdate(sbIDevice *aDevice,
 {
   LOG(("[sbDeviceFirmwareUpdater] - VerifyUpdate"));
 
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_FALSE(mIsShutdown, NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
   NS_ENSURE_ARG_POINTER(aDevice);
   NS_ENSURE_ARG_POINTER(aFirmwareUpdate);
@@ -585,7 +575,6 @@ sbDeviceFirmwareUpdater::ApplyUpdate(sbIDevice *aDevice,
 {
   LOG(("[sbDeviceFirmwareUpdater] - ApplyUpdate"));
 
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_FALSE(mIsShutdown, NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
   NS_ENSURE_ARG_POINTER(aDevice);
   NS_ENSURE_ARG_POINTER(aFirmwareUpdate);
@@ -595,41 +584,42 @@ sbDeviceFirmwareUpdater::ApplyUpdate(sbIDevice *aDevice,
   nsCOMPtr<sbIDeviceFirmwareHandler> handler = 
     GetRunningHandler(aDevice, 0, 0, aListener, PR_TRUE);
 
-  nsAutoMonitor mon(mMonitor);
+  {
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
-  sbDeviceFirmwareHandlerStatus *handlerStatus = GetHandlerStatus(handler);
-  NS_ENSURE_TRUE(handlerStatus, NS_ERROR_OUT_OF_MEMORY);
+    sbDeviceFirmwareHandlerStatus *handlerStatus = GetHandlerStatus(handler);
+    NS_ENSURE_TRUE(handlerStatus, NS_ERROR_OUT_OF_MEMORY);
 
-  sbDeviceFirmwareHandlerStatus::handlerstatus_t status = 
-    sbDeviceFirmwareHandlerStatus::STATUS_NONE;
-  rv = handlerStatus->GetStatus(&status);
-  NS_ENSURE_SUCCESS(rv, rv);
+    sbDeviceFirmwareHandlerStatus::handlerstatus_t status =
+      sbDeviceFirmwareHandlerStatus::STATUS_NONE;
+    rv = handlerStatus->GetStatus(&status);
+    NS_ENSURE_SUCCESS(rv, rv);
 
-  if(status != sbDeviceFirmwareHandlerStatus::STATUS_NONE &&
-     status != sbDeviceFirmwareHandlerStatus::STATUS_FINISHED) {
-    return NS_ERROR_FAILURE;
+    if (status != sbDeviceFirmwareHandlerStatus::STATUS_NONE &&
+       status != sbDeviceFirmwareHandlerStatus::STATUS_FINISHED) {
+      return NS_ERROR_FAILURE;
+    }
+
+
+    nsCOMPtr<sbIDeviceEventTarget> eventTarget = do_QueryInterface(aDevice, &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = eventTarget->AddEventListener(this);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = PutRunningHandler(aDevice, handler);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = handlerStatus->SetOperation(sbDeviceFirmwareHandlerStatus::OP_UPDATE);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_WAITING_FOR_START);
+    NS_ENSURE_SUCCESS(rv, rv);
+
   }
 
-
-  nsCOMPtr<sbIDeviceEventTarget> eventTarget = do_QueryInterface(aDevice, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = eventTarget->AddEventListener(this);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = PutRunningHandler(aDevice, handler);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = handlerStatus->SetOperation(sbDeviceFirmwareHandlerStatus::OP_UPDATE);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_WAITING_FOR_START);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  mon.Exit();
-
   nsRefPtr<sbDeviceFirmwareUpdaterRunner> runner;
-  NS_NEWXPCOM(runner, sbDeviceFirmwareUpdaterRunner);
+  runner = new sbDeviceFirmwareUpdaterRunner;
   NS_ENSURE_TRUE(runner, NS_ERROR_OUT_OF_MEMORY);
 
   rv = runner->Init(aDevice, aFirmwareUpdate, handler);
@@ -650,7 +640,6 @@ sbDeviceFirmwareUpdater::RecoveryUpdate(sbIDevice *aDevice,
 {
   LOG(("[sbDeviceFirmwareUpdater] - RecoveryUpdate"));
 
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_FALSE(mIsShutdown, NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
   NS_ENSURE_ARG_POINTER(aDevice);
 
@@ -663,37 +652,38 @@ sbDeviceFirmwareUpdater::RecoveryUpdate(sbIDevice *aDevice,
                       aListener, 
                       PR_TRUE);
 
-  nsAutoMonitor mon(mMonitor);
+  {
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
-  sbDeviceFirmwareHandlerStatus *handlerStatus = GetHandlerStatus(handler);
-  NS_ENSURE_TRUE(handlerStatus, NS_ERROR_OUT_OF_MEMORY);
+    sbDeviceFirmwareHandlerStatus *handlerStatus = GetHandlerStatus(handler);
+    NS_ENSURE_TRUE(handlerStatus, NS_ERROR_OUT_OF_MEMORY);
 
-  sbDeviceFirmwareHandlerStatus::handlerstatus_t status = 
-    sbDeviceFirmwareHandlerStatus::STATUS_NONE;
-  rv = handlerStatus->GetStatus(&status);
-  NS_ENSURE_SUCCESS(rv, rv);
+    sbDeviceFirmwareHandlerStatus::handlerstatus_t status =
+      sbDeviceFirmwareHandlerStatus::STATUS_NONE;
+    rv = handlerStatus->GetStatus(&status);
+    NS_ENSURE_SUCCESS(rv, rv);
 
-  if(status != sbDeviceFirmwareHandlerStatus::STATUS_NONE &&
-     status != sbDeviceFirmwareHandlerStatus::STATUS_FINISHED) {
-    return NS_ERROR_FAILURE;
+    if (status != sbDeviceFirmwareHandlerStatus::STATUS_NONE &&
+       status != sbDeviceFirmwareHandlerStatus::STATUS_FINISHED) {
+      return NS_ERROR_FAILURE;
+    }
+
+    nsCOMPtr<sbIDeviceEventTarget> eventTarget = do_QueryInterface(aDevice, &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = eventTarget->AddEventListener(this);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = PutRunningHandler(aDevice, handler);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = handlerStatus->SetOperation(sbDeviceFirmwareHandlerStatus::OP_RECOVERY);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_WAITING_FOR_START);
+    NS_ENSURE_SUCCESS(rv, rv);
+
   }
-
-  nsCOMPtr<sbIDeviceEventTarget> eventTarget = do_QueryInterface(aDevice, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = eventTarget->AddEventListener(this);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = PutRunningHandler(aDevice, handler);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = handlerStatus->SetOperation(sbDeviceFirmwareHandlerStatus::OP_RECOVERY);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_WAITING_FOR_START);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  mon.Exit();
 
   // This will determine if we need to cache the firmware update
   // or if it's already cached.
@@ -713,11 +703,10 @@ sbDeviceFirmwareUpdater::RecoveryUpdate(sbIDevice *aDevice,
        NS_SUCCEEDED(rv) ? "true" : "false"));
 
   // No firmware update passed, use default one.
-  if(!aFirmwareUpdate) {
+  if (!aFirmwareUpdate) {
     rv = handler->GetDefaultFirmwareUpdate(getter_AddRefs(defaultFirmwareUpdate));
     NS_ENSURE_SUCCESS(rv, rv);
-  }
-  else {
+  } else {
     //
     // Use specific firmware updated passed. In this case we assume 
     // it's available and has already been cached into the firmware cache
@@ -736,7 +725,7 @@ sbDeviceFirmwareUpdater::RecoveryUpdate(sbIDevice *aDevice,
   // as the default one. If not, we need to delete the cached one and use
   // the default one. We'll also check the filesizes, if they don't match
   // we're going to prefer the default firmware instead.
-  if(cachedFirmwareUpdate && defaultFirmwareUpdate) {
+  if (cachedFirmwareUpdate && defaultFirmwareUpdate) {
     nsCOMPtr<nsIFile> cachedFile;
     rv = cachedFirmwareUpdate->GetFirmwareImageFile(getter_AddRefs(cachedFile));
     NS_ENSURE_SUCCESS(rv, rv);
@@ -760,7 +749,7 @@ sbDeviceFirmwareUpdater::RecoveryUpdate(sbIDevice *aDevice,
     rv = defaultFile->GetFileSize(&defaultFileSize);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    if((cachedFileName != defaultFileName) || 
+    if ((cachedFileName != defaultFileName) ||
        (cachedFileName == defaultFileName && cachedFileSize != defaultFileSize)) {
       nsCOMPtr<nsIFile> cacheDir;
       rv = cachedFile->GetParent(getter_AddRefs(cacheDir));
@@ -777,7 +766,7 @@ sbDeviceFirmwareUpdater::RecoveryUpdate(sbIDevice *aDevice,
       rv = cacheDirEntries->HasMoreElements(&hasMore);
       NS_ENSURE_SUCCESS(rv, rv);
 
-      while(hasMore) {
+      while (hasMore) {
         nsCOMPtr<nsIFile> file;
         rv = cacheDirEntries->GetNext(getter_AddRefs(file));
         NS_ENSURE_SUCCESS(rv, rv);
@@ -786,7 +775,7 @@ sbDeviceFirmwareUpdater::RecoveryUpdate(sbIDevice *aDevice,
         rv = file->IsFile(&isFile);
         NS_ENSURE_SUCCESS(rv, rv);
         
-        if(isFile) {
+        if (isFile) {
           rv = file->Remove(PR_FALSE);
           NS_ENSURE_SUCCESS(rv, rv);
         }
@@ -797,20 +786,16 @@ sbDeviceFirmwareUpdater::RecoveryUpdate(sbIDevice *aDevice,
         
       firmwareUpdate = defaultFirmwareUpdate;
       needsCaching = PR_TRUE;
-    }
-    else {
+    } else {
       firmwareUpdate = cachedFirmwareUpdate;
       needsCaching = PR_FALSE;
     }
-  }
-  else if(cachedFirmwareUpdate) {
+  } else if (cachedFirmwareUpdate) {
     firmwareUpdate = cachedFirmwareUpdate;
-  }
-  else if(defaultFirmwareUpdate) {
+  } else if (defaultFirmwareUpdate) {
     firmwareUpdate = defaultFirmwareUpdate;
     needsCaching = PR_TRUE;
-  }
-  else {
+  } else {
     return NS_ERROR_UNEXPECTED;
   }
 
@@ -827,7 +812,7 @@ sbDeviceFirmwareUpdater::RecoveryUpdate(sbIDevice *aDevice,
   // Yes, this sucks if it's a 100MB firmware image. But that's really, really
   // really, really rare :)
   //
-  if(needsCaching) {
+  if (needsCaching) {
     nsString deviceModel;
     rv = handler->GetDeviceModelNumber(deviceModel);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -836,14 +821,13 @@ sbDeviceFirmwareUpdater::RecoveryUpdate(sbIDevice *aDevice,
     rv = handler->GetDeviceVendor(deviceVendor);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    if(deviceModel.IsVoid() || deviceVendor.IsVoid()) {
+    if (deviceModel.IsVoid() || deviceVendor.IsVoid()) {
       nsCOMPtr<sbIDeviceFirmwareUpdate> cachedFirmwareUpdate;
       rv = sbDeviceFirmwareDownloader::CacheFirmwareUpdate(aDevice,
                                                            firmwareUpdate, 
                                                            getter_AddRefs(cachedFirmwareUpdate));
       NS_ENSURE_SUCCESS(rv, rv);
-    }
-    else {
+    } else {
       nsString deviceCacheDirName(deviceVendor);
       deviceCacheDirName.AppendLiteral(" ");
       deviceCacheDirName += deviceModel;
@@ -860,7 +844,7 @@ sbDeviceFirmwareUpdater::RecoveryUpdate(sbIDevice *aDevice,
   }
 
   nsRefPtr<sbDeviceFirmwareUpdaterRunner> runner;
-  NS_NEWXPCOM(runner, sbDeviceFirmwareUpdaterRunner);
+  runner = new sbDeviceFirmwareUpdaterRunner;
   NS_ENSURE_TRUE(runner, NS_ERROR_OUT_OF_MEMORY);
 
   rv = runner->Init(aDevice, firmwareUpdate, handler, PR_TRUE);
@@ -879,7 +863,6 @@ sbDeviceFirmwareUpdater::ContinueUpdate(sbIDevice *aDevice,
 {
   LOG(("[sbDeviceFirmwareUpdater] - ContinueUpdate"));
   
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_FALSE(mIsShutdown, NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
   NS_ENSURE_ARG_POINTER(aDevice);
   NS_ENSURE_ARG_POINTER(_retval);
@@ -947,14 +930,13 @@ sbDeviceFirmwareUpdater::FinalizeUpdate(sbIDevice *aDevice)
 {
   LOG(("[sbDeviceFirmwareUpdater] - FinalizeUpdate"));
   
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_FALSE(mIsShutdown, NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
   NS_ENSURE_ARG_POINTER(aDevice);
 
   nsCOMPtr<sbIDeviceFirmwareHandler> handler = GetRunningHandler(aDevice);
   NS_ENSURE_TRUE(handler, NS_OK);
 
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
 
   mRunningHandlers.Remove(aDevice);
   mRecoveryModeHandlers.Remove(aDevice);
@@ -980,7 +962,6 @@ sbDeviceFirmwareUpdater::VerifyDevice(sbIDevice *aDevice,
 {
   LOG(("[sbDeviceFirmwareUpdater] - VerifyDevice"));
 
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_FALSE(mIsShutdown, NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
   NS_ENSURE_ARG_POINTER(aDevice);
 
@@ -992,7 +973,6 @@ sbDeviceFirmwareUpdater::RegisterHandler(sbIDeviceFirmwareHandler *aFirmwareHand
 {
   LOG(("[sbDeviceFirmwareUpdater] - RegisterHandler"));
 
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_FALSE(mIsShutdown, NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
   NS_ENSURE_ARG_POINTER(aFirmwareHandler);
 
@@ -1002,8 +982,8 @@ sbDeviceFirmwareUpdater::RegisterHandler(sbIDeviceFirmwareHandler *aFirmwareHand
 
   NS_ConvertUTF16toUTF8 contractId8(contractId);
   
-  nsAutoMonitor mon(mMonitor);
-  if(!mFirmwareHandlers.Contains(contractId8)) {
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
+  if (!mFirmwareHandlers.Contains(contractId8)) {
     nsCString *element = mFirmwareHandlers.AppendElement(contractId8);
     NS_ENSURE_TRUE(element, NS_ERROR_OUT_OF_MEMORY);
   }
@@ -1016,7 +996,6 @@ sbDeviceFirmwareUpdater::UnregisterHandler(sbIDeviceFirmwareHandler *aFirmwareHa
 {
   LOG(("[sbDeviceFirmwareUpdater] - UnregisterHandler"));
 
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_FALSE(mIsShutdown, NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
   NS_ENSURE_ARG_POINTER(aFirmwareHandler);
 
@@ -1026,7 +1005,7 @@ sbDeviceFirmwareUpdater::UnregisterHandler(sbIDeviceFirmwareHandler *aFirmwareHa
 
   NS_ConvertUTF16toUTF8 contractId8(contractId);
   
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   firmwarehandlers_t::index_type index = 
     mFirmwareHandlers.IndexOf(contractId8);
 
@@ -1045,7 +1024,6 @@ sbDeviceFirmwareUpdater::HasHandler(sbIDevice *aDevice,
 {
   LOG(("[sbDeviceFirmwareUpdater] - HasHandler"));
 
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_FALSE(mIsShutdown, NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
   NS_ENSURE_ARG_POINTER(aDevice);
   NS_ENSURE_ARG_POINTER(_retval);
@@ -1072,7 +1050,6 @@ sbDeviceFirmwareUpdater::GetHandler(sbIDevice *aDevice,
 {
   LOG(("[sbDeviceFirmwareUpdater] - GetHandler"));
 
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_FALSE(mIsShutdown, NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
   NS_ENSURE_ARG_POINTER(_retval);
 
@@ -1082,7 +1059,7 @@ sbDeviceFirmwareUpdater::GetHandler(sbIDevice *aDevice,
   // rather than operating on it for a long period of time with the
   // monitor held.
   {
-    nsAutoMonitor mon(mMonitor);
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
     nsCString *element = firmwareHandlers.AppendElements(mFirmwareHandlers);
     NS_ENSURE_TRUE(element, NS_ERROR_OUT_OF_MEMORY);
   }
@@ -1123,7 +1100,6 @@ NS_IMETHODIMP
 sbDeviceFirmwareUpdater::GetActiveHandler(sbIDevice *aDevice,
                                           sbIDeviceFirmwareHandler **_retval)
 {
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_FALSE(mIsShutdown, NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
   NS_ENSURE_ARG_POINTER(aDevice);
   NS_ENSURE_ARG_POINTER(_retval);
@@ -1140,15 +1116,14 @@ sbDeviceFirmwareUpdater::GetActiveHandler(sbIDevice *aDevice,
 NS_IMETHODIMP
 sbDeviceFirmwareUpdater::Cancel(sbIDevice *aDevice) 
 {
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_FALSE(mIsShutdown, NS_ERROR_ILLEGAL_DURING_SHUTDOWN);
   NS_ENSURE_ARG_POINTER(aDevice);
 
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   
   nsCOMPtr<sbIDeviceFirmwareHandler> handler = GetRunningHandler(aDevice);
 
-  if(handler) {
+  if (handler) {
     nsresult rv = handler->Cancel();
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1165,7 +1140,6 @@ sbDeviceFirmwareUpdater::Cancel(sbIDevice *aDevice)
 NS_IMETHODIMP
 sbDeviceFirmwareUpdater::RequireRecovery(sbIDevice *aDevice)
 {
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_ARG_POINTER(aDevice);
 
   nsCOMPtr<sbIDeviceFirmwareHandler> handler = GetRunningHandler(aDevice);
@@ -1196,96 +1170,97 @@ sbDeviceFirmwareUpdater::OnDeviceEvent(sbIDeviceEvent *aEvent)
   rv = aEvent->GetType(&eventType);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsAutoMonitor mon(mMonitor);
-  sbDeviceFirmwareHandlerStatus *handlerStatus = GetHandlerStatus(handler);
-  NS_ENSURE_TRUE(handlerStatus, NS_ERROR_UNEXPECTED);
-  
-  sbDeviceFirmwareHandlerStatus::handleroperation_t operation = 
-    sbDeviceFirmwareHandlerStatus::OP_NONE;
-  rv = handlerStatus->GetOperation(&operation);
-  NS_ENSURE_SUCCESS(rv, rv);
+  bool removeListener;
 
-  sbDeviceFirmwareHandlerStatus::handlerstatus_t status = 
-    sbDeviceFirmwareHandlerStatus::STATUS_NONE;
-  rv = handlerStatus->GetStatus(&status);
-  NS_ENSURE_SUCCESS(rv, rv);
+  {
+    mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
+    sbDeviceFirmwareHandlerStatus *handlerStatus = GetHandlerStatus(handler);
+    NS_ENSURE_TRUE(handlerStatus, NS_ERROR_UNEXPECTED);
 
-  bool removeListener = PR_FALSE;
+    sbDeviceFirmwareHandlerStatus::handleroperation_t operation =
+      sbDeviceFirmwareHandlerStatus::OP_NONE;
+    rv = handlerStatus->GetOperation(&operation);
+    NS_ENSURE_SUCCESS(rv, rv);
 
-  switch(operation) {
-    case sbDeviceFirmwareHandlerStatus::OP_REFRESH: {
-      LOG(("[sbDeviceFirmwareUpdater] - OP_REFRESH"));
+    sbDeviceFirmwareHandlerStatus::handlerstatus_t status =
+      sbDeviceFirmwareHandlerStatus::STATUS_NONE;
+    rv = handlerStatus->GetStatus(&status);
+    NS_ENSURE_SUCCESS(rv, rv);
 
-      if(eventType == sbIDeviceEvent::EVENT_FIRMWARE_CFU_START &&
-         status == sbDeviceFirmwareHandlerStatus::STATUS_WAITING_FOR_START) {
-        rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_RUNNING);
-        NS_ENSURE_SUCCESS(rv, rv);
-      }
-      else if((eventType == sbIDeviceEvent::EVENT_FIRMWARE_CFU_END ||
-               eventType == sbIDeviceEvent::EVENT_FIRMWARE_CFU_ERROR) &&
-              status == sbDeviceFirmwareHandlerStatus::STATUS_RUNNING) {
-        rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_FINISHED);
-        NS_ENSURE_SUCCESS(rv, rv);
+    removeListener = PR_FALSE;
 
-        removeListener = PR_TRUE;
+    switch (operation) {
+      case sbDeviceFirmwareHandlerStatus::OP_REFRESH: {
+        LOG(("[sbDeviceFirmwareUpdater] - OP_REFRESH"));
 
-        // Check to see if the device requires recovery mode
-        rv = RequiresRecoveryMode(device, handler);
-        NS_ENSURE_SUCCESS(rv, rv);
-      }
-    }
-    break;
-
-    case sbDeviceFirmwareHandlerStatus::OP_DOWNLOAD: {
-      LOG(("[sbDeviceFirmwareUpdater] - OP_DOWNLOAD"));
-
-      if(eventType == sbIDeviceEvent::EVENT_FIRMWARE_DOWNLOAD_START &&
-         status == sbDeviceFirmwareHandlerStatus::STATUS_WAITING_FOR_START) {
-        rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_RUNNING);
-        NS_ENSURE_SUCCESS(rv, rv);
-      }
-      else if(eventType == sbIDeviceEvent::EVENT_FIRMWARE_DOWNLOAD_END &&
-              status == sbDeviceFirmwareHandlerStatus::STATUS_RUNNING) {
-        rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_FINISHED);
-        NS_ENSURE_SUCCESS(rv, rv);
-
-        removeListener = PR_TRUE;
-      }
-    }
-    break;
-
-    case sbDeviceFirmwareHandlerStatus::OP_UPDATE:
-    case sbDeviceFirmwareHandlerStatus::OP_RECOVERY: {
-      LOG(("[sbDeviceFirmwareUpdater] - OP_UPDATE or OP_RECOVERY"));
-      
-      if(eventType == sbIDeviceEvent::EVENT_FIRMWARE_UPDATE_START &&
-         status == sbDeviceFirmwareHandlerStatus::STATUS_WAITING_FOR_START) {
+        if (eventType == sbIDeviceEvent::EVENT_FIRMWARE_CFU_START &&
+           status == sbDeviceFirmwareHandlerStatus::STATUS_WAITING_FOR_START) {
           rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_RUNNING);
           NS_ENSURE_SUCCESS(rv, rv);
-      }
-      else if(eventType == sbIDeviceEvent::EVENT_FIRMWARE_UPDATE_END &&
-              status == sbDeviceFirmwareHandlerStatus::STATUS_RUNNING) {
+        } else if ((eventType == sbIDeviceEvent::EVENT_FIRMWARE_CFU_END ||
+                    eventType == sbIDeviceEvent::EVENT_FIRMWARE_CFU_ERROR) &&
+                    status == sbDeviceFirmwareHandlerStatus::STATUS_RUNNING) {
           rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_FINISHED);
           NS_ENSURE_SUCCESS(rv, rv);
 
           removeListener = PR_TRUE;
+  
+          // Check to see if the device requires recovery mode
+          rv = RequiresRecoveryMode(device, handler);
+          NS_ENSURE_SUCCESS(rv, rv);
+        }
       }
-      else if(eventType == sbIDeviceEvent::EVENT_FIRMWARE_NEEDREC_ERROR) {
-        // Reset status when we get a NEED RECOVERY error to enable normal
-        // operation after device is reconnected in recovery mode.
-        rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_NONE);
-        NS_ENSURE_SUCCESS(rv, rv);
-      }
-    }
-    break;
+      break;
 
-    default:
-      NS_WARNING("Unsupported operation");
+      case sbDeviceFirmwareHandlerStatus::OP_DOWNLOAD: {
+        LOG(("[sbDeviceFirmwareUpdater] - OP_DOWNLOAD"));
+
+        if (eventType == sbIDeviceEvent::EVENT_FIRMWARE_DOWNLOAD_START &&
+            status == sbDeviceFirmwareHandlerStatus::STATUS_WAITING_FOR_START) {
+          rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_RUNNING);
+          NS_ENSURE_SUCCESS(rv, rv);
+        } else if (eventType == sbIDeviceEvent::EVENT_FIRMWARE_DOWNLOAD_END &&
+                   status == sbDeviceFirmwareHandlerStatus::STATUS_RUNNING) {
+          rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_FINISHED);
+          NS_ENSURE_SUCCESS(rv, rv);
+
+          removeListener = PR_TRUE;
+        }
+      }
+      break;
+
+      case sbDeviceFirmwareHandlerStatus::OP_UPDATE:
+      case sbDeviceFirmwareHandlerStatus::OP_RECOVERY: {
+        LOG(("[sbDeviceFirmwareUpdater] - OP_UPDATE or OP_RECOVERY"));
+
+        if (eventType == sbIDeviceEvent::EVENT_FIRMWARE_UPDATE_START &&
+            status == sbDeviceFirmwareHandlerStatus::STATUS_WAITING_FOR_START) {
+          rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_RUNNING);
+          NS_ENSURE_SUCCESS(rv, rv);
+
+        } else if(eventType == sbIDeviceEvent::EVENT_FIRMWARE_UPDATE_END &&
+                  status == sbDeviceFirmwareHandlerStatus::STATUS_RUNNING) {
+          rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_FINISHED);
+          NS_ENSURE_SUCCESS(rv, rv);
+
+          removeListener = PR_TRUE;
+
+        } else if(eventType == sbIDeviceEvent::EVENT_FIRMWARE_NEEDREC_ERROR) {
+          // Reset status when we get a NEED RECOVERY error to enable normal
+          // operation after device is reconnected in recovery mode.
+          rv = handlerStatus->SetStatus(sbDeviceFirmwareHandlerStatus::STATUS_NONE);
+          NS_ENSURE_SUCCESS(rv, rv);
+        }
+      }
+      break;
+
+      default:
+        NS_WARNING("Unsupported operation");
+    }
+
   }
 
-  mon.Exit();
-
-  if(removeListener) {
+  if (removeListener) {
     nsCOMPtr<sbIDeviceEventTarget> eventTarget = 
       do_QueryInterface(device, &rv);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -1329,7 +1304,7 @@ sbDeviceFirmwareUpdater::Observe(nsISupports* aSubject,
                                  const char* aTopic,
                                  const PRUnichar* aData)
 {
-  LOG(("[sbDeviceFirmwareUpdater] - Observe: %s", this, aTopic));
+  LOG(("[sbDeviceFirmwareUpdater] - Observe: %s", aTopic));
 
   nsresult rv;
   nsCOMPtr<nsIObserverService> observerService =
@@ -1360,27 +1335,21 @@ sbDeviceFirmwareHandlerStatus::sbDeviceFirmwareHandlerStatus()
 
 sbDeviceFirmwareHandlerStatus::~sbDeviceFirmwareHandlerStatus()
 {
-  if(mMonitor) {
-    nsAutoMonitor::DestroyMonitor(mMonitor);
-  }
+
 }
 
 nsresult 
 sbDeviceFirmwareHandlerStatus::Init()
 {
-  mMonitor = nsAutoMonitor::NewMonitor("sbDeviceFirmwareHandlerStatus::mMonitor");
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_OUT_OF_MEMORY);
-
   return NS_OK;
 }
 
 nsresult 
 sbDeviceFirmwareHandlerStatus::GetOperation(handleroperation_t *aOperation)
 {
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_ARG_POINTER(aOperation);
 
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   *aOperation = mOperation;
 
   return NS_OK;
@@ -1389,9 +1358,8 @@ sbDeviceFirmwareHandlerStatus::GetOperation(handleroperation_t *aOperation)
 nsresult 
 sbDeviceFirmwareHandlerStatus::SetOperation(handleroperation_t aOperation)
 {
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
 
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   mOperation = aOperation;
 
   return NS_OK;
@@ -1400,10 +1368,9 @@ sbDeviceFirmwareHandlerStatus::SetOperation(handleroperation_t aOperation)
 nsresult 
 sbDeviceFirmwareHandlerStatus::GetStatus(handlerstatus_t *aStatus)
 {
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_ARG_POINTER(aStatus);
   
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   *aStatus = mStatus;
 
   return NS_OK;
@@ -1412,9 +1379,7 @@ sbDeviceFirmwareHandlerStatus::GetStatus(handlerstatus_t *aStatus)
 nsresult 
 sbDeviceFirmwareHandlerStatus::SetStatus(handlerstatus_t aStatus)
 {
-  NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
-  
-  nsAutoMonitor mon(mMonitor);
+  mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
   mStatus = aStatus;
 
   return NS_OK;
@@ -1429,11 +1394,13 @@ NS_IMPL_THREADSAFE_ISUPPORTS1(sbDeviceFirmwareUpdaterRunner,
 sbDeviceFirmwareUpdaterRunner::sbDeviceFirmwareUpdaterRunner()
 : mRecovery(PR_FALSE)
 {
+
 }
 
 /*virtual*/
 sbDeviceFirmwareUpdaterRunner::~sbDeviceFirmwareUpdaterRunner()
 {
+
 }
 
 nsresult

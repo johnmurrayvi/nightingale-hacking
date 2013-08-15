@@ -39,6 +39,7 @@
 #include <sbThreadUtils.h>
 #include <sbVariantUtils.h>
 
+#include <mozilla/Monitor.h>
 #include <nsComponentManagerUtils.h>
 #include <nsIClassInfoImpl.h>
 #include <nsIProgrammingLanguage.h>
@@ -51,34 +52,31 @@
 #include <prlog.h>
 #include <sbDebugUtils.h>
 
-NS_DEFINE_STATIC_IID_ACCESSOR(sbCDDeviceMarshall, SB_CDDEVICE_MARSHALL_IID)
+NS_DEFINE_STATIC_IID_ACCESSOR(sbCDDeviceMarshall, SB_CDDEVICE_MARSHALL_IID);
 
-NS_IMPL_THREADSAFE_ADDREF(sbCDDeviceMarshall)
-NS_IMPL_THREADSAFE_RELEASE(sbCDDeviceMarshall)
-NS_IMPL_QUERY_INTERFACE2_CI(sbCDDeviceMarshall,
-                            sbIDeviceMarshall,
-                            sbICDDeviceListener)
+NS_IMPL_CLASSINFO(sbCDDeviceMarshall, NULL,
+                  nsIClassInfo::THREADSAFE, SB_CDDEVICE_MARSHALL_CID);
+
+NS_IMPL_ISUPPORTS2(sbCDDeviceMarshall,
+                   sbIDeviceMarshall,
+                   sbICDDeviceListener);
+
 NS_IMPL_CI_INTERFACE_GETTER2(sbCDDeviceMarshall,
                              sbIDeviceMarshall,
-                             sbICDDeviceListener)
+                             sbICDDeviceListener);
 
-// nsIClassInfo implementation.
-NS_DECL_CLASSINFO(sbCDDeviceMarshall)
 NS_IMPL_THREADSAFE_CI(sbCDDeviceMarshall)
 
 sbCDDeviceMarshall::sbCDDeviceMarshall()
   : sbBaseDeviceMarshall(NS_LITERAL_CSTRING(SB_DEVICE_CONTROLLER_CATEGORY))
-  , mKnownDevicesLock(nsAutoMonitor::NewMonitor("sbCDDeviceMarshall::mKnownDevicesLock"))
+  , mKnownDevicesLock("sbCDDeviceMarshall.mKnownDevicesLock")
 {
   mKnownDevices.Init(8);
 }
 
 sbCDDeviceMarshall::~sbCDDeviceMarshall()
 {
-  nsAutoMonitor mon(mKnownDevicesLock);
-  mon.Exit();
 
-  nsAutoMonitor::DestroyMonitor(mKnownDevicesLock);
 }
 
 nsresult
@@ -221,7 +219,7 @@ sbCDDeviceMarshall::AddDevice(sbICDDevice *aCDDevice)
                                       static_cast<sbIDeviceMarshall *>(this));
 
   // Stash this device in the hash of known CD devices.
-  nsAutoMonitor mon(mKnownDevicesLock);
+  mozilla::MonitorAutoLock mon(mKnownDevicesLock);
   mKnownDevices.Put(deviceName, sbDevice);
 
   return NS_OK;
@@ -257,7 +255,7 @@ sbCDDeviceMarshall::RemoveDevice(sbIDevice* aDevice) {
 
   // Remove device from hash of known CD devices.
   {
-    nsAutoMonitor mon(mKnownDevicesLock);
+    mozilla::MonitorAutoLock mon(mKnownDevicesLock);
     mKnownDevices.Remove(deviceName);
   }
 
@@ -345,7 +343,7 @@ sbCDDeviceMarshall::GetHasDevice(nsAString const &aName, bool *aOutHasDevice)
   *aOutHasDevice = PR_FALSE;  // assume false
 
   // Operate under the known devices lock
-  nsAutoMonitor mon(mKnownDevicesLock);
+  mozilla::MonitorAutoLock mon(mKnownDevicesLock);
 
   nsresult rv;
   nsCOMPtr<sbIDevice> deviceRef;
@@ -380,7 +378,7 @@ sbCDDeviceMarshall::DiscoverDevices()
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIRunnable> runnable =
-    NS_NEW_RUNNABLE_METHOD(sbCDDeviceMarshall, this, RunDiscoverDevices);
+      new nsRunnableMethod_RunDiscoverDevices(this);
   NS_ENSURE_TRUE(runnable, NS_ERROR_FAILURE);
 
   rv = threadPoolService->Dispatch(runnable, NS_DISPATCH_NORMAL);
@@ -399,7 +397,7 @@ sbCDDeviceMarshall::RunDiscoverDevices()
 
   // Notify of scan start.
   nsCOMPtr<nsIRunnable> runnable =
-    NS_NEW_RUNNABLE_METHOD(sbCDDeviceMarshall, this, RunNotifyDeviceStartScan);
+      new nsRunnableMethod_RunNotifyDeviceStartScan(this);
   NS_ENSURE_TRUE(runnable, /* void */);
   rv = mOwnerContextThread->Dispatch(runnable, NS_DISPATCH_SYNC);
   NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),
@@ -426,9 +424,7 @@ sbCDDeviceMarshall::RunDiscoverDevices()
 
 
   // Notify of scan end.
-  runnable = NS_NEW_RUNNABLE_METHOD(sbCDDeviceMarshall,
-                                    this,
-                                    RunNotifyDeviceStopScan);
+  runnable = new nsRunnableMethod_RunNotifyDeviceStopScan(this);
   NS_ENSURE_TRUE(runnable, /* void */);
   rv = mOwnerContextThread->Dispatch(runnable, NS_DISPATCH_SYNC);
   NS_WARN_IF_FALSE(NS_SUCCEEDED(rv),

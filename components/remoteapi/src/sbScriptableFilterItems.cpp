@@ -56,6 +56,9 @@ static PRLogModuleInfo* gScriptableFilterItemsLog = nsnull;
 #define LOG(args) PR_LOG(gScriptableFilterItemsLog, PR_LOG_WARN, args)
 #define TRACE(args) PR_LOG(gScriptableFilterItemsLog, PR_LOG_DEBUG, args)
 
+NS_IMPL_CLASSINFO(sbScriptableFilterItems, NULL,
+									nsIClassInfo::THREADSAFE, SB_SCRIPTABLE_FILETER_ITEMS_CID);
+
 NS_IMPL_ISUPPORTS4( sbScriptableFilterItems,
                     nsISecurityCheckedComponent,
                     nsIXPCScriptable,
@@ -190,9 +193,11 @@ NS_IMETHODIMP sbScriptableFilterItems::GetProperty( nsIXPConnectWrappedNative *w
   NS_ENSURE_SUCCESS( rv, rv );
 
   *_retval = PR_TRUE;
-  
-  nsDependentString jsid( (PRUnichar *)::JS_GetStringChars(jsstr),
-                          ::JS_GetStringLength(jsstr));
+
+  size_t jsstrLen;
+  const jschar *jsstrChars =
+      JS_GetStringCharsAndLength(cx, jsstr, &jsstrLen);
+  nsDependentString jsid( (PRUnichar *) jsstrChars, jsstrLen);
   TRACE(( "  getting property %s", NS_LossyConvertUTF16toASCII(jsid).get() ));
 
   PRInt32 length = mItems.Count();
@@ -258,7 +263,8 @@ NS_IMETHODIMP sbScriptableFilterItems::NewEnumerate( nsIXPConnectWrappedNative *
     case JSENUMERATE_INIT: {
       *statep = INT_TO_JSVAL(0);
       if (idp) {
-        *idp = INT_TO_JSVAL(mItems.Count());
+        rv = JS_ValueToId(cx, INT_TO_JSVAL(mItems.Count()), idp);
+        NS_ENSURE_SUCCESS(rv, rv);
       }
       TRACE(("  init: count %i", mItems.Count()));
       break;
@@ -294,12 +300,16 @@ NS_IMETHODIMP sbScriptableFilterItems::NewEnumerate( nsIXPConnectWrappedNative *
         *_retval = PR_FALSE;
         return NS_ERROR_OUT_OF_MEMORY;
       }
-      
+
+      size_t jsstrLen;
+      const jschar *jsstrChars =
+          JS_GetStringCharsAndLength(cx, jsstr, &jsstrLen);
+
       // define the property while we're here
       *_retval = JS_DefineUCProperty( cx,
                                       obj,
-                                      JS_GetStringChars(jsstr),
-                                      JS_GetStringLength(jsstr),
+                                      jsstrChars,
+                                      jsstrLen,
                                       JSVAL_VOID,
                                       nsnull,
                                       nsnull,
@@ -346,8 +356,8 @@ NS_IMETHODIMP sbScriptableFilterItems::NewResolve( nsIXPConnectWrappedNative *wr
   nsresult rv = ReadEnumerator();
   NS_ENSURE_SUCCESS( rv, rv );
 
-  jsval v;
-  *_retval = JS_IdToValue( cx, id, &v );
+  jsid jID;
+  *_retval = JS_ValueToId(cx, id, &jID);
   NS_ENSURE_TRUE( *_retval, NS_ERROR_INVALID_ARG );
   
   // we only consider string properties
@@ -358,8 +368,11 @@ NS_IMETHODIMP sbScriptableFilterItems::NewResolve( nsIXPConnectWrappedNative *wr
     }
     return NS_OK;
   }
-  
-  nsDependentString prop( JS_GetStringChars(jsstr) );
+
+  size_t jsstrLen;
+  const jschar *jsstrChars =
+      JS_GetStringCharsAndLength(cx, jsstr, &jsstrLen);
+  nsDependentString prop( jsstrChars );
   TRACE(("  Resolving property %s",
          NS_LossyConvertUTF16toASCII(prop).BeginReading() ));
   
@@ -371,8 +384,8 @@ NS_IMETHODIMP sbScriptableFilterItems::NewResolve( nsIXPConnectWrappedNative *wr
     if ( guid.Equals(prop) ) {
       *_retval = JS_DefineUCProperty( cx,
                                       obj,
-                                      JS_GetStringChars(jsstr),
-                                      JS_GetStringLength(jsstr),
+                                      jsstrChars,
+                                      jsstrLen,
                                       JSVAL_VOID,
                                       nsnull,
                                       nsnull,
@@ -584,7 +597,6 @@ NS_IMETHODIMP sbScriptableFilterItems::CanSetProperty( const nsIID * iid,
 //                          nsIClassInfo
 //
 // ---------------------------------------------------------------------------
-NS_DECL_CLASSINFO(sbScriptableFilterItems)
 
 SB_IMPL_CLASSINFO_INTERFACES_ONLY(sbScriptableFilterItems)
 

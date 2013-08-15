@@ -52,7 +52,8 @@
 
 #define SONGBIRD_DownloadDevice_CONTRACTID                                     \
                     "@songbirdnest.com/Songbird/OldDeviceImpl/DownloadDevice;1"
-#define SONGBIRD_DownloadDevice_CLASSNAME "Songbird Download Device"
+#define SONGBIRD_DownloadDevice_CLASSDESCRIPTION "Songbird Download Device"
+#define SONGBIRD_DownloadDevice_CLASSNAME "SongbirdDownloadDevice"
 #define SONGBIRD_DownloadDevice_CID                                            \
 {                                                                              \
     0x961DA3F4,                                                                \
@@ -83,7 +84,8 @@
 #include <nsIRunnable.h>
 #include <nsIStringBundle.h>
 #include <nsIThreadPool.h>
-#include <prmon.h>
+#include <mozilla/Mutex.h>
+#include <mozilla/Monitor.h>
 
 /* Songbird imports. */
 #include <sbDownloadButtonPropertyInfo.h>
@@ -184,7 +186,7 @@ class sbDownloadDevice : public nsIObserver,
     nsString                    mQueuedStr;
     nsCOMPtr<nsIFile>           mpTmpDownloadDir;
     nsRefPtr<sbDownloadSession> mpDownloadSession;
-    PRMonitor                   *mpDeviceMonitor;
+    mozilla::Monitor            mpDeviceMonitor;
     nsString                    mDeviceIdentifier;
 
     nsCOMPtr<nsIThreadPool>     mFileMoveThreadPool;
@@ -367,7 +369,7 @@ class sbDownloadSession : public nsIWebProgressListener, nsITimerCallback
      *                          seeing progress.
      */
 
-    PRLock                      *mpSessionLock;
+    mozilla::Mutex              mpSessionLock;
     sbDownloadDevice            *mpDownloadDevice;
     nsCOMPtr<nsIStringBundle>   mpStringBundle;
     nsString                    mCompleteStr;

@@ -32,6 +32,7 @@
 #include <nsIStringEnumerator.h>
 
 #include <nsArrayUtils.h>
+#include <mozilla/Mutex.h>
 #include <nsComponentManagerUtils.h>
 #include <nsServiceManagerUtils.h>
 
@@ -43,7 +44,7 @@ NS_IMPL_THREADSAFE_ISUPPORTS1(sbPlaybackHistoryEntry,
                               sbIPlaybackHistoryEntry)
 
 sbPlaybackHistoryEntry::sbPlaybackHistoryEntry()
-: mLock(nsnull)
+: mLock("sbPlaybackHistoryEntry::mLock")
 , mEntryId(-1)
 , mTimestamp(0)
 , mDuration(0)
@@ -54,19 +55,14 @@ sbPlaybackHistoryEntry::sbPlaybackHistoryEntry()
 sbPlaybackHistoryEntry::~sbPlaybackHistoryEntry()
 {
   MOZ_COUNT_DTOR(sbPlaybackHistoryEntry);
-
-  if(mLock) {
-    nsAutoLock::DestroyLock(mLock);
-  }
 }
 
 NS_IMETHODIMP 
 sbPlaybackHistoryEntry::GetEntryId(PRInt64 *aEntryId)
 {
-  NS_ENSURE_TRUE(mLock, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_ARG_POINTER(aEntryId);
   
-  nsAutoLock lock(mLock);
+  mozilla::MutexAutoLock lock(mLock);
   *aEntryId = mEntryId;
 
   return NS_OK;
@@ -75,9 +71,7 @@ sbPlaybackHistoryEntry::GetEntryId(PRInt64 *aEntryId)
 void
 sbPlaybackHistoryEntry::SetEntryId(PRInt64 aEntryId)
 {
-  NS_ENSURE_TRUE(mLock, );
-
-  nsAutoLock lock(mLock);
+	mozilla::MutexAutoLock lock(mLock);
   
   if(mEntryId != -1)
     return;
@@ -90,10 +84,9 @@ sbPlaybackHistoryEntry::SetEntryId(PRInt64 aEntryId)
 NS_IMETHODIMP 
 sbPlaybackHistoryEntry::GetItem(sbIMediaItem * *aItem)
 {
-  NS_ENSURE_TRUE(mLock, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_ARG_POINTER(aItem);
 
-  nsAutoLock lock(mLock);
+  mozilla::MutexAutoLock lock(mLock);
   NS_IF_ADDREF(*aItem = mItem);
 
   return NS_OK;
@@ -102,10 +95,9 @@ sbPlaybackHistoryEntry::GetItem(sbIMediaItem * *aItem)
 NS_IMETHODIMP 
 sbPlaybackHistoryEntry::GetTimestamp(PRInt64 *aTimestamp)
 {
-  NS_ENSURE_TRUE(mLock, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_ARG_POINTER(aTimestamp);
 
-  nsAutoLock lock(mLock);
+  mozilla::MutexAutoLock lock(mLock);
   *aTimestamp = mTimestamp;
 
   return NS_OK;
@@ -114,10 +106,9 @@ sbPlaybackHistoryEntry::GetTimestamp(PRInt64 *aTimestamp)
 NS_IMETHODIMP 
 sbPlaybackHistoryEntry::GetDuration(PRInt64 *aDuration)
 {
-  NS_ENSURE_TRUE(mLock, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_ARG_POINTER(aDuration);
 
-  nsAutoLock lock(mLock);
+  mozilla::MutexAutoLock lock(mLock);
   *aDuration = mDuration;
 
   return NS_OK;
@@ -126,10 +117,9 @@ sbPlaybackHistoryEntry::GetDuration(PRInt64 *aDuration)
 NS_IMETHODIMP 
 sbPlaybackHistoryEntry::GetAnnotations(sbIPropertyArray * *aAnnotations)
 {
-  NS_ENSURE_TRUE(mLock, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_ARG_POINTER(aAnnotations);
 
-  nsAutoLock lock(mLock);
+  mozilla::MutexAutoLock lock(mLock);
   NS_IF_ADDREF(*aAnnotations = mAnnotations);
 
   return NS_OK;
@@ -139,11 +129,9 @@ NS_IMETHODIMP
 sbPlaybackHistoryEntry::GetAnnotation(const nsAString & aAnnotationId, 
                                       nsAString & _retval)
 {
-  NS_ENSURE_TRUE(mLock, NS_ERROR_NOT_INITIALIZED);
-
   _retval.Truncate();
 
-  nsAutoLock lock(mLock);
+  mozilla::MutexAutoLock lock(mLock);
 
   if(!mAnnotations)
     return NS_OK;
@@ -158,11 +146,9 @@ NS_IMETHODIMP
 sbPlaybackHistoryEntry::HasAnnotation(const nsAString & aAnnotationId, 
                                       bool *_retval)
 {
-  NS_ENSURE_TRUE(mLock, NS_ERROR_NOT_INITIALIZED);
-
   *_retval = PR_FALSE;
 
-  nsAutoLock lock(mLock);
+  mozilla::MutexAutoLock lock(mLock);
 
   if(!mAnnotations)
     return NS_OK;
@@ -180,9 +166,7 @@ NS_IMETHODIMP
 sbPlaybackHistoryEntry::SetAnnotation(const nsAString & aAnnotationId, 
                                       const nsAString & aAnnotationValue)
 {
-  NS_ENSURE_TRUE(mLock, NS_ERROR_NOT_INITIALIZED);
-
-  nsAutoLock lock(mLock);
+  mozilla::MutexAutoLock lock(mLock);
 
   nsresult rv = NS_ERROR_UNEXPECTED;
   nsCOMPtr<sbIMutablePropertyArray> annotations;
@@ -222,9 +206,7 @@ sbPlaybackHistoryEntry::SetAnnotation(const nsAString & aAnnotationId,
 NS_IMETHODIMP
 sbPlaybackHistoryEntry::RemoveAnnotation(const nsAString &aAnnotationId)
 {
-  NS_ENSURE_TRUE(mLock, NS_ERROR_NOT_INITIALIZED);
-
-  nsAutoLock lock(mLock);
+  mozilla::MutexAutoLock lock(mLock);
 
   nsresult rv = NS_ERROR_UNEXPECTED;
   nsCOMPtr<nsIMutableArray> annotations;
@@ -284,10 +266,7 @@ sbPlaybackHistoryEntry::Init(sbIMediaItem *aItem,
   NS_ENSURE_ARG_MIN(aTimestamp, 0);
   NS_ENSURE_ARG_MIN(aDuration, 0);
 
-  mLock = nsAutoLock::NewLock("sbPlaybackHistoryEntry::mLock");
-  NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
-  
-  nsAutoLock lock(mLock);
+  mozilla::MutexAutoLock lock(mLock);
 
   mItem = aItem;
   mTimestamp = aTimestamp;

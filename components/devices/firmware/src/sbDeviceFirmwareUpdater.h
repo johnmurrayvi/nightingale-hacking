@@ -42,7 +42,7 @@
 #include <nsInterfaceHashtable.h>
 #include <nsStringGlue.h>
 #include <nsTArray.h>
-#include <prmon.h>
+#include <mozilla/ReentrantMonitor.h>
 
 class sbDeviceFirmwareHandlerStatus;
 class sbDeviceFirmwareDownloader;
@@ -95,8 +95,8 @@ protected:
                                    void* aArray);
 
 protected:
-  PRMonitor*    mMonitor;
-  PRPackedBool  mIsShutdown;
+  mozilla::ReentrantMonitor mMonitor;
+  PRPackedBool mIsShutdown;
 
   typedef nsTArray<nsCString> firmwarehandlers_t;
   firmwarehandlers_t mFirmwareHandlers;
@@ -157,7 +157,7 @@ public:
   nsresult SetStatus(handlerstatus_t aStatus);
 
 private:
-  PRMonitor* mMonitor;
+  mozilla::ReentrantMonitor mMonitor;
   
   handleroperation_t mOperation;
   handlerstatus_t    mStatus;

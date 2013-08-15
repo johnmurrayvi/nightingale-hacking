@@ -477,20 +477,13 @@ sbLDBDSEnumerator::OnEnumerationEnd(sbIMediaList *aMediaList,
   return NS_OK;
 }
 
-NS_IMPL_THREADSAFE_ADDREF(sbLocalDatabaseDiffingService)
-NS_IMPL_THREADSAFE_RELEASE(sbLocalDatabaseDiffingService)
+NS_IMPL_CLASSINFO(sbLocalDatabaseDiffingService, NULL,
+		  nsIClassInfo::THREADSAFE,
+		  SB_LOCALDATABASE_DIFFINGSERVICE_CID);
+NS_IMPL_ISUPPORTS2_CI(sbLocalDatabaseDiffingService,
+		      sbILibraryDiffingService,
+		      nsIClassInfo)
 
-NS_INTERFACE_MAP_BEGIN(sbLocalDatabaseDiffingService)
-  NS_IMPL_QUERY_CLASSINFO(sbLocalDatabaseDiffingService)
-  NS_INTERFACE_MAP_ENTRY(sbILibraryDiffingService)
-  NS_INTERFACE_MAP_ENTRY(nsIClassInfo)
-  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, sbILibraryDiffingService)
-NS_INTERFACE_MAP_END
-
-NS_IMPL_CI_INTERFACE_GETTER1(sbLocalDatabaseDiffingService,
-                             sbILibraryDiffingService)
-
-NS_DECL_CLASSINFO(sbLocalDatabaseDiffingService)
 NS_IMPL_THREADSAFE_CI(sbLocalDatabaseDiffingService)
 
 sbLocalDatabaseDiffingService::sbLocalDatabaseDiffingService()
@@ -499,30 +492,6 @@ sbLocalDatabaseDiffingService::sbLocalDatabaseDiffingService()
 
 sbLocalDatabaseDiffingService::~sbLocalDatabaseDiffingService()
 {
-}
-
-/*static*/
-NS_METHOD sbLocalDatabaseDiffingService::RegisterSelf(
-                          nsIComponentManager* aCompMgr,
-                          nsIFile* aPath,
-                          const char* aLoaderStr,
-                          const char* aType,
-                          const nsModuleComponentInfo *aInfo)
-{
-  nsresult rv;
-  nsCOMPtr<nsICategoryManager> categoryManager =
-    do_GetService(NS_CATEGORYMANAGER_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  rv = categoryManager->AddCategoryEntry(APPSTARTUP_CATEGORY,
-                                         SB_LOCALDATABASE_DIFFINGSERVICE_DESCRIPTION,
-                                         "service," SB_LOCALDATABASE_DIFFINGSERVICE_CONTRACTID,
-                                         PR_TRUE,
-                                         PR_TRUE,
-                                         nsnull);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  return NS_OK;
 }
 
 template <class T, class M>
@@ -822,8 +791,7 @@ sbLocalDatabaseDiffingService::CreateLibraryChangeFromItems(
   }
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsRefPtr<sbLibraryChange> libraryChange;
-  NS_NEWXPCOM(libraryChange, sbLibraryChange);
+  nsRefPtr<sbLibraryChange> libraryChange = new sbLibraryChange();
   NS_ENSURE_TRUE(libraryChange, NS_ERROR_OUT_OF_MEMORY);
 
   rv = libraryChange->InitWithValues(sbIChangeOperation::MODIFIED,
@@ -845,8 +813,7 @@ sbLocalDatabaseDiffingService::CreateItemAddedLibraryChange(
   NS_ENSURE_ARG_POINTER(aSourceItem);
   NS_ENSURE_ARG_POINTER(aLibraryChange);
 
-  nsRefPtr<sbLibraryChange> libraryChange;
-  NS_NEWXPCOM(libraryChange, sbLibraryChange);
+  nsRefPtr<sbLibraryChange> libraryChange = new sbLibraryChange();
   NS_ENSURE_TRUE(libraryChange, NS_ERROR_OUT_OF_MEMORY);
 
   nsCOMPtr<sbIPropertyArray> properties;
@@ -876,8 +843,7 @@ sbLocalDatabaseDiffingService::CreateItemAddedLibraryChange(
     rv = property->GetValue(strPropertyValue);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    nsRefPtr<sbPropertyChange> propertyChange;
-    NS_NEWXPCOM(propertyChange, sbPropertyChange);
+    nsRefPtr<sbPropertyChange> propertyChange = new sbPropertyChange();
     NS_ENSURE_TRUE(propertyChange, NS_ERROR_OUT_OF_MEMORY);
 
     rv = propertyChange->InitWithValues(sbIChangeOperation::ADDED,
@@ -916,16 +882,14 @@ sbLocalDatabaseDiffingService::CreateItemMovedLibraryChange(sbIMediaItem *aSourc
 
   nsresult rv = NS_ERROR_UNEXPECTED;
 
-  nsRefPtr<sbLibraryChange> libraryChange;
-  NS_NEWXPCOM(libraryChange, sbLibraryChange);
+  nsRefPtr<sbLibraryChange> libraryChange = new sbLibraryChange();
   NS_ENSURE_TRUE(libraryChange, NS_ERROR_OUT_OF_MEMORY);
 
   nsCOMPtr<nsIMutableArray> propertyChanges =
     do_CreateInstance("@songbirdnest.com/moz/xpcom/threadsafe-array;1", &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsRefPtr<sbPropertyChange> propertyChange;
-  NS_NEWXPCOM(propertyChange, sbPropertyChange);
+  nsRefPtr<sbPropertyChange> propertyChange = new sbPropertyChange();
   NS_ENSURE_TRUE(propertyChange, NS_ERROR_OUT_OF_MEMORY);
 
   nsString strPropertyValue;
@@ -963,8 +927,7 @@ sbLocalDatabaseDiffingService::CreateItemDeletedLibraryChange(sbIMediaItem *aDes
   NS_ENSURE_ARG_POINTER(aDestinationItem);
   NS_ENSURE_ARG_POINTER(aLibraryChange);
 
-  nsRefPtr<sbLibraryChange> libraryChange;
-  NS_NEWXPCOM(libraryChange, sbLibraryChange);
+  nsRefPtr<sbLibraryChange> libraryChange = new sbLibraryChange();
   NS_ENSURE_TRUE(libraryChange, NS_ERROR_OUT_OF_MEMORY);
 
   nsresult rv = libraryChange->InitWithValues(sbIChangeOperation::DELETED,
@@ -1067,8 +1030,7 @@ sbLocalDatabaseDiffingService::CreatePropertyChangesFromProperties(
                                                   propertyDestinationValue);
     // Property has been added.
     if(rv == NS_ERROR_NOT_AVAILABLE) {
-      nsRefPtr<sbPropertyChange> propertyChange;
-      NS_NEWXPCOM(propertyChange, sbPropertyChange);
+      nsRefPtr<sbPropertyChange> propertyChange = new sbPropertyChange();
       NS_ENSURE_TRUE(propertyChange, NS_ERROR_OUT_OF_MEMORY);
 
       rv = propertyChange->InitWithValues(sbIChangeOperation::ADDED,
@@ -1126,8 +1088,7 @@ sbLocalDatabaseDiffingService::CreatePropertyChangesFromProperties(
         continue;
       }
 
-      nsRefPtr<sbPropertyChange> propertyChange;
-      NS_NEWXPCOM(propertyChange, sbPropertyChange);
+      nsRefPtr<sbPropertyChange> propertyChange = new sbPropertyChange();
       NS_ENSURE_TRUE(propertyChange, NS_ERROR_OUT_OF_MEMORY);
 
       rv = propertyChange->InitWithValues(sbIChangeOperation::MODIFIED,
@@ -1165,8 +1126,7 @@ sbLocalDatabaseDiffingService::CreatePropertyChangesFromProperties(
 
       // We couldn't find the property in the source properties, this means
       // the property must've been removed.
-      nsRefPtr<sbPropertyChange> propertyChange;
-      NS_NEWXPCOM(propertyChange, sbPropertyChange);
+      nsRefPtr<sbPropertyChange> propertyChange = new sbPropertyChange();
       NS_ENSURE_TRUE(propertyChange, NS_ERROR_OUT_OF_MEMORY);
 
       rv = propertyChange->InitWithValues(sbIChangeOperation::DELETED,
@@ -1202,18 +1162,15 @@ sbLocalDatabaseDiffingService::CreateLibraryChangesetFromLists(
   NS_ENSURE_ARG_POINTER(aDestinationList);
   NS_ENSURE_ARG_POINTER(aLibraryChangeset);
 
-  nsRefPtr<sbLibraryChangeset> libraryChangeset;
-  NS_NEWXPCOM(libraryChangeset, sbLibraryChangeset);
+  nsRefPtr<sbLibraryChangeset> libraryChangeset = new sbLibraryChangeset();
   NS_ENSURE_TRUE(libraryChangeset, NS_ERROR_OUT_OF_MEMORY);
 
   nsresult rv;
 
-  nsRefPtr<sbLDBDSEnumerator> sourceEnum;
-  NS_NEWXPCOM(sourceEnum, sbLDBDSEnumerator);
+  nsRefPtr<sbLDBDSEnumerator> sourceEnum = new sbLDBDSEnumerator();
   NS_ENSURE_TRUE(sourceEnum, NS_ERROR_OUT_OF_MEMORY);
 
-  nsRefPtr<sbLDBDSEnumerator> destinationEnum;
-  NS_NEWXPCOM(destinationEnum, sbLDBDSEnumerator);
+  nsRefPtr<sbLDBDSEnumerator> destinationEnum = new sbLDBDSEnumerator();
   NS_ENSURE_TRUE(destinationEnum, NS_ERROR_OUT_OF_MEMORY);
 
   rv = aSourceList->EnumerateAllItems(sourceEnum,
@@ -1292,18 +1249,15 @@ sbLocalDatabaseDiffingService::CreateLibraryChangesetFromLibraries(
 
   NS_NAMED_LITERAL_STRING(ORIGIN_ID, SB_PROPERTY_ORIGINITEMGUID);
 
-  nsRefPtr<sbLibraryChangeset> libraryChangeset;
-  NS_NEWXPCOM(libraryChangeset, sbLibraryChangeset);
+  nsRefPtr<sbLibraryChangeset> libraryChangeset = new sbLibraryChangeset();
   NS_ENSURE_TRUE(libraryChangeset, NS_ERROR_OUT_OF_MEMORY);
 
   nsresult rv;
 
-  nsRefPtr<sbLDBDSEnumerator> sourceEnum;
-  NS_NEWXPCOM(sourceEnum, sbLDBDSEnumerator);
+  nsRefPtr<sbLDBDSEnumerator> sourceEnum = new sbLDBDSEnumerator();
   NS_ENSURE_TRUE(sourceEnum, NS_ERROR_OUT_OF_MEMORY);
 
-  nsRefPtr<sbLDBDSEnumerator> destinationEnum;
-  NS_NEWXPCOM(destinationEnum, sbLDBDSEnumerator);
+  nsRefPtr<sbLDBDSEnumerator> destinationEnum = new sbLDBDSEnumerator();
   NS_ENSURE_TRUE(destinationEnum, NS_ERROR_OUT_OF_MEMORY);
 
   rv = aSourceLibrary->EnumerateAllItems(sourceEnum,
@@ -1525,16 +1479,14 @@ sbLocalDatabaseDiffingService::CreateLibraryChangesetFromListsToLibrary(
     }
   }
 
-  nsRefPtr<sbLibraryChangeset> libraryChangeset;
-  NS_NEWXPCOM(libraryChangeset, sbLibraryChangeset);
+  nsRefPtr<sbLibraryChangeset> libraryChangeset = new sbLibraryChangeset();
   NS_ENSURE_TRUE(libraryChangeset, NS_ERROR_OUT_OF_MEMORY);
 
   nsCOMPtr<nsIMutableArray> libraryChanges =
     do_CreateInstance("@songbirdnest.com/moz/xpcom/threadsafe-array;1", &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsRefPtr<sbLDBDSEnumerator> destinationEnum;
-  NS_NEWXPCOM(destinationEnum, sbLDBDSEnumerator);
+  nsRefPtr<sbLDBDSEnumerator> destinationEnum = new sbLDBDSEnumerator();
   NS_ENSURE_TRUE(destinationEnum, NS_ERROR_OUT_OF_MEMORY);
 
   rv = aDestinationLibrary->EnumerateAllItems(destinationEnum,

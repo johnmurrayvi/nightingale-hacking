@@ -48,6 +48,8 @@
 #include <nsIFile.h>
 #include <nsIURL.h>
 #include <nsTArray.h>
+#include <mozilla/Mutex.h>
+#include <a11yGeneric.h>
 
 #include <sbAutoRWLock.h>
 #include <sbILibraryChangeset.h>
@@ -682,7 +684,7 @@ protected:
 
   PRLock *mStateLock;
   PRUint32 mState;
-  PRLock *mPreviousStateLock;
+  mozilla::Mutex mPreviousStateLock;
   PRUint32 mPreviousState;
   PRInt32 mIgnoreMediaListCount; // Allows us to know if we're ignoring lists
   PRUint32 mPerTrackOverhead; // estimated bytes of overhead per track
@@ -696,7 +698,7 @@ protected:
   nsCOMPtr<sbIDeviceInfoRegistrar> mInfoRegistrar;
   PRUint32 mInfoRegistrarType;
   nsCOMPtr<sbIDeviceCapabilities> mCapabilities;
-  PRLock*  mPreferenceLock;
+  mozilla::Mutex mPreferenceLock;
   PRUint32 mMusicLimitPercent;
   sbDeviceTranscoding * mDeviceTranscoding;
   sbDeviceImages *mDeviceImages;
@@ -870,7 +872,7 @@ protected:
   //   mDefaultVolume           Default volume when none specified.
   //
 
-  PRLock*                                    mVolumeLock;
+  mozilla::Mutex                             mVolumeLock;
   nsTArray< nsRefPtr<sbBaseDeviceVolume> >   mVolumeList;
   nsInterfaceHashtableMT<nsStringHashKey,
                          sbBaseDeviceVolume> mVolumeGUIDTable;

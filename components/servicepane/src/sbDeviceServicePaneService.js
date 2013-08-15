@@ -90,6 +90,8 @@ sbDeviceServicePane.prototype.QueryInterface =
                          Ci.sbIDeviceServicePaneService]);
 sbDeviceServicePane.prototype.classDescription =
   "Songbird Device Service Pane Service";
+sbDeviceServicePane.prototype.className =
+  "DeviceServicePaneService";
 sbDeviceServicePane.prototype.classID =
   Components.ID("{845c31ee-c30e-4fb6-9667-0b10e58c7069}");
 sbDeviceServicePane.prototype.contractID =
@@ -753,4 +755,4 @@ function sbDeviceServicePane__moveLibraryResourceNode(aNode) {
 // XPCOM //
 ///////////
 
-var NSGetModule = XPCOMUtils.generateNSGetModule([sbDeviceServicePane]);
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([sbDeviceServicePane]);

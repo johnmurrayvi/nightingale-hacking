@@ -41,6 +41,7 @@
 #include <nsServiceManagerUtils.h>
 #include <nsStringGlue.h>
 
+#include <mozilla/ReentrantMonitor.h>
 #include <nsNetUtil.h>
 
 #include <nsIServiceManager.h>
@@ -48,7 +49,9 @@
 #include <nsSupportsArray.h>
 #include <nsIClassInfoImpl.h>
 #include <nsIProgrammingLanguage.h>
+#include <nsIProxyObjectManager.h>
 
+#include <sbProxiedComponentManager.h>
 #include <sbLockUtils.h>
 
 #ifdef DEBUG_locks
@@ -70,8 +73,10 @@ static PRLogModuleInfo* sDatabaseQueryLog = nsnull;
 // CDatabaseQuery Class
 //=============================================================================
 //-----------------------------------------------------------------------------
-NS_IMPL_THREADSAFE_ADDREF(CDatabaseQuery)
-NS_IMPL_THREADSAFE_RELEASE(CDatabaseQuery)
+NS_IMPL_THREADSAFE_ADDREF(CDatabaseQuery);
+NS_IMPL_THREADSAFE_RELEASE(CDatabaseQuery);
+
+NS_IMPL_CLASSINFO(CDatabaseQuery, NULL, nsIClassInfo::THREADSAFE, SONGBIRD_DATABASEQUERY_CID);
 
 NS_INTERFACE_MAP_BEGIN(CDatabaseQuery)
   NS_IMPL_QUERY_CLASSINFO(CDatabaseQuery)
@@ -79,10 +84,12 @@ NS_INTERFACE_MAP_BEGIN(CDatabaseQuery)
   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, sbIDatabaseQuery)
 NS_INTERFACE_MAP_END
 
-NS_IMPL_CI_INTERFACE_GETTER1(CDatabaseQuery, 
-                             sbIDatabaseQuery)
+//NS_IMPL_ISUPPORTS1(CDatabaseQuery,
+//                   sbIDatabaseQuery);
 
-NS_DECL_CLASSINFO(CDatabaseQuery)
+NS_IMPL_CI_INTERFACE_GETTER1(CDatabaseQuery, 
+                             sbIDatabaseQuery);
+
 NS_IMPL_THREADSAFE_CI(CDatabaseQuery)
 
 //-----------------------------------------------------------------------------
@@ -93,7 +100,7 @@ CDatabaseQuery::CDatabaseQuery()
 , m_AsyncQuery(PR_FALSE)
 , m_CurrentQuery((PRUint32)-1)
 , m_LastError(0)
-, m_pQueryRunningMonitor(nsAutoMonitor::NewMonitor("CDatabaseQuery.m_pdbQueryRunningMonitor"))
+, m_pQueryRunningMonitor("CDatabaseQuery::m_pQueryRunningMonitor")
 , m_QueryHasCompleted(PR_FALSE)
 , m_RollingLimit(0)
 , m_RollingLimitColumnIndex(0)
@@ -112,8 +119,6 @@ CDatabaseQuery::~CDatabaseQuery()
 {
   if (m_pLock)
     PR_DestroyLock(m_pLock);
-  if (m_pQueryRunningMonitor)
-    nsAutoMonitor::DestroyMonitor(m_pQueryRunningMonitor);
 
   m_CallbackList.Clear();
 } //dtor
@@ -344,7 +349,7 @@ nsresult CDatabaseQuery::PopQuery(sbIDatabasePreparedStatement **_retval)
 NS_IMETHODIMP CDatabaseQuery::ResetQuery()
 {
   // Make sure we're not running
-  nsAutoMonitor monQueryRunning(m_pQueryRunningMonitor);
+  mozilla::ReentrantMonitorAutoEnter monQueryRunning(m_pQueryRunningMonitor);
 
   // These should be in sync, but just in case
   NS_ASSERTION( !m_IsExecuting, "Resetting a query that is executing!!!!!");
@@ -406,7 +411,7 @@ NS_IMETHODIMP CDatabaseQuery::Execute(PRInt32 *_retval)
   *_retval = 1;
 
   {
-    nsAutoMonitor mon(m_pQueryRunningMonitor);
+    mozilla::ReentrantMonitorAutoEnter mon(m_pQueryRunningMonitor);
     m_QueryHasCompleted = PR_FALSE;
   }
 
@@ -419,7 +424,7 @@ NS_IMETHODIMP CDatabaseQuery::Execute(PRInt32 *_retval)
 
   if(*_retval != SQLITE_OK)
   {
-    nsAutoMonitor mon(m_pQueryRunningMonitor);
+    mozilla::ReentrantMonitorAutoEnter mon(m_pQueryRunningMonitor);
     m_QueryHasCompleted = PR_TRUE;
     mon.NotifyAll();
     return NS_ERROR_FAILURE;
@@ -435,7 +440,7 @@ NS_IMETHODIMP CDatabaseQuery::WaitForCompletion(PRInt32 *_retval)
 {
   NS_ENSURE_ARG_POINTER(_retval);
   {
-    nsAutoMonitor mon(m_pQueryRunningMonitor);
+    mozilla::ReentrantMonitorAutoEnter mon(m_pQueryRunningMonitor);
     while (!m_QueryHasCompleted) {
       mon.Wait();
     }

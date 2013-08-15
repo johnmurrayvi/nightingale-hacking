@@ -527,7 +527,5 @@ var MediaPageMetadataReader = {
   }
 }
 
-function NSGetModule(compMgr, fileSpec) {
-  return XPCOMUtils.generateModule([MediaPageManager]);
-}
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([MediaPageManager]);
 

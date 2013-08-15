@@ -1859,8 +1859,7 @@ sbLocalDatabaseTreeView::GetRowProperties(PRInt32 row,
     nsCOMPtr<nsIAtom> atom;
     properties->QueryElementAt(i, NS_GET_IID(nsIAtom), getter_AddRefs(atom));
     if (atom) {
-      nsString s;
-      atom->ToString(s);
+      nsString s(atom->GetUTF16String());
       props.Append(s);
       props.AppendLiteral(" ");
     }

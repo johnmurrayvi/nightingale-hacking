@@ -151,7 +151,6 @@ sbServiceManager::SetServiceReady(const char* aServiceContractID,
     mReadyServiceTable.Put(serviceContractID, PR_TRUE);
 
     // Send notification that the service is ready.
-
     nsRefPtr<sbRunnable_<nsresult>> job =
       new sbRunnableXPCOMMethod3_<nsresult,nsIObserverService,
         nsISupports*,const char*,const PRUnichar*>(

@@ -164,7 +164,7 @@ private:
     nsCOMPtr<nsIDOMEventTarget> eventTarget;
     nsRefPtr<sbWindowWatcherEventListener>
                                 eventListener;
-    bool                      isReady;
+    bool                        isReady;
   };
   nsClassHashtable<nsISupportsHashKey, WindowInfo>
                                 mWindowInfoTable;
@@ -175,7 +175,7 @@ private:
     nsCOMPtr<sbICallWithWindowCallback> callback;
   } CallWithWindowInfo;
   nsTArray<CallWithWindowInfo>  mCallWithWindowList;
-  bool                        mServicingCallWithWindowList;
+  bool                          mServicingCallWithWindowList;
 
 
   //
@@ -383,7 +383,7 @@ private:
   //
 
   nsCOMPtr<sbIWindowWatcher>    mSBWindowWatcher;
-  mozilla::ReentrantMonitor    mReadyMonitor;
+  mozilla::ReentrantMonitor     mReadyMonitor;
   nsCOMPtr<nsIDOMWindow>        mWindow;
   bool                        mReady;
 
@@ -394,7 +394,6 @@ private:
   nsresult Initialize();
 
   sbWindowWatcherWaitForWindow();
-
 };
 
 

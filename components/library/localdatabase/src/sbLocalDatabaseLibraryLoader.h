@@ -43,8 +43,6 @@ class sbILibraryManager;
 class sbLibraryLoaderInfo;
 class sbLocalDatabaseLibraryFactory;
 
-struct nsModuleComponentInfo;
-
 class sbLocalDatabaseLibraryLoader : public sbILibraryLoader,
                                      public nsIObserver
 {
@@ -134,7 +132,7 @@ private:
 class sbLibraryLoaderInfo
 {
 public:
-  sbLibraryLoaderInfo() { }
+  sbLibraryLoaderInfo();
 
   nsresult Init(const nsACString& aPrefKey);
 

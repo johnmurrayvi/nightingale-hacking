@@ -100,12 +100,6 @@ public:
 
   nsresult Init();
 
-  static NS_METHOD RegisterSelf(nsIComponentManager* aCompMgr,
-                                nsIFile* aPath,
-                                const char* aLoaderStr,
-                                const char* aType,
-                                const nsModuleComponentInfo *aInfo);
-
 protected:
   typedef std::set<nsString, sbStringIgnoreCaseCompare> sbStringSet;
   typedef sbStringSet::iterator sbStringSetIter;

@@ -71,7 +71,7 @@ function RDFHelper(aRdf, aDatasource, aResource, aNamespaces) {
                      .getService(Ci.nsIRDFContainerUtils);
   
   var createProperties = function() {
-    //dump("Resource "+that._resource.Value+" is a ")
+    //dump("Resource "+that.Value+" is a ")
     if (_containerUtils.IsContainer(aDatasource, aResource)) {
       //dump("container.\n");
       createContainerProperties(aResource);
@@ -83,9 +83,28 @@ function RDFHelper(aRdf, aDatasource, aResource, aNamespaces) {
   };
   
   var createContainerProperties = function(resource) {
+    // dump("RDFHelper::createContainerProperties(resource)\n");
     var container = _containerUtils.MakeSeq(aDatasource, resource);
     var contents = container.GetElements();
-    
+
+    /*
+    dump("RDFHelper::createContainerProperties -- aDatasource.URI = "+aDatasource.URI+"\n");
+    dump("RDFHelper::createContainerProperties -- resource.ValueUTF8 = "+resource.ValueUTF8+"\n");
+
+    dump("RDFHelper::createContainerProperties -- _containerUtils.IsEmpty(aDatasource, resource) = ");
+    if (_containerUtils.IsEmpty(aDatasource, resource))
+      dump("true\n");
+    else
+      dump("false\n");
+
+    dump("RDFHelper::createContainerProperties -- _containerUtils.IsSeq(aDatasource, resource) = ");
+    if (_containerUtils.IsSeq(aDatasource, resource)) 
+      dump("true\n");
+    else 
+      dump("false\n");
+    dump("RDFHelper::createContainerProperties -- container count = "+container.GetCount()+"\n");
+    */
+
     // urgh, this doesn't actually mean "this" is an array 
     // but at least it's sort of like one.
     var i = 0;
@@ -174,6 +193,16 @@ RDFHelper.help = function(datasource, resource, namespaces) {
     rdf, 
     rdf.GetDataSourceBlocking(datasource), 
     rdf.GetResource(resource),
+    namespaces
+  );
+  return helper;
+};
+
+RDFHelper.AMHelp = function(rdf, ds, res, namespaces) {
+  var helper = new RDFHelper(
+    rdf, 
+    ds, 
+    res,
     namespaces
   );
   return helper;

@@ -118,7 +118,9 @@ CPP_EXTRA_INCLUDES = $(topsrcdir)/components/include \
                      $(NULL)
 
 ifdef MEDIA_CORE_GST_SYSTEM
-   CPP_EXTRA_FLAGS = -DGST_SYSTEM=1
+   CPP_EXTRA_FLAGS = -DGST_SYSTEM=1 \
+                     -std=gnu++0x \
+                     $(NULL)
 
    CPP_RAW_INCLUDES += $(GSTREAMER_CFLAGS) \
                        $(GTK_CFLAGS) \
@@ -232,7 +234,11 @@ ifeq (windows,$(SB_PLATFORM))
    CPP_EXTRA_FLAGS += "-wd4244"
 endif
 
+SONGBIRD_PP_RESOURCES = $(srcdir)/mediacore-gstreamer.manifest.in \
+                        $(NULL)
+
 SONGBIRD_COMPONENTS = $(srcdir)/sbAboutGStreamer.js \
+                      $(CURDIR)/mediacore-gstreamer.manifest \
                       $(NULL)
 
 include $(topsrcdir)/build/rules.mk

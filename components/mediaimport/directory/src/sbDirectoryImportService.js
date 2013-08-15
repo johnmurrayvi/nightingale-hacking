@@ -956,6 +956,4 @@ DirectoryImportService.prototype = {
 } // DirectoryImportService.prototype
 
 
-function NSGetModule(compMgr, fileSpec) {
-  return XPCOMUtils.generateModule([DirectoryImportService]);
-}
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([DirectoryImportService]);

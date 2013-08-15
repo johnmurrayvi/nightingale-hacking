@@ -38,7 +38,6 @@
 #include <nsIPromptService.h>
 #include <nsIWindowMediator.h>
 #include <nsIDOMWindow.h>
-#include <nsIDOMWindowInternal.h>
 #include <nsThreadUtils.h>
 #include <prlog.h>
 
@@ -46,6 +45,7 @@
 #include <sbIMediacoreSequencer.h>
 #include <sbIMediacoreStatus.h>
 #include <sbIMediaItem.h>
+#include <sbProxiedComponentManager.h>
 #include <sbStandardProperties.h>
 #include <sbIDataRemote.h>
 
@@ -56,19 +56,32 @@
 #include "sbMetadataCrashTracker.h"
 
 
-// DEFINES ====================================================================
-#include "prlog.h"
+/**
+ * To log this class, set the following environment variable in a debug build:
+ *
+ *  NSPR_LOG_MODULES=sbFileMetadataService:5 (or :3 for LOG messages only)
+ *
+ */
 #ifdef PR_LOGGING
-extern PRLogModuleInfo* gMetadataLog;
-#define TRACE(args) PR_LOG(gMetadataLog, PR_LOG_DEBUG, args)
-#define LOG(args)   PR_LOG(gMetadataLog, PR_LOG_WARN, args)
-#ifdef __GNUC__
-#define __FUNCTION__ __PRETTY_FUNCTION__
-#endif
-#else
-#define TRACE(args) /* nothing */
+
+static PRLogModuleInfo* gFileMetadataService =
+  PR_NewLogModule("sbFileMetadataService");
+
+#define LOG(args)                                          \
+  if (gFileMetadataService)                             \
+    PR_LOG(gFileMetadataService, PR_LOG_WARNING, args)
+
+#define TRACE(args)                                        \
+  if (gFileMetadataService)                             \
+    PR_LOG(gFileMetadataService, PR_LOG_DEBUG, args)
+
+#else /* PR_LOGGING */
+
 #define LOG(args)   /* nothing */
-#endif
+#define TRACE(args) /* nothing */
+
+#endif /* PR_LOGGING */
+
 
 // Controls how often we send sbIJobProgress notifications
 #define TIMER_PERIOD  33
@@ -87,7 +100,8 @@ sbFileMetadataService::sbFileMetadataService() :
   mRunning(PR_FALSE),
   mNotificationTimer(nsnull),
   mNextJobIndex(0),
-  mCrashTracker(nsnull)
+  mCrashTracker(nsnull),
+  mJobLock("sbFileMetadataService::mJobLock")
 {
   MOZ_COUNT_CTOR(sbFileMetadataService);
   TRACE(("%s[%.8x]", __FUNCTION__, this));
@@ -97,10 +111,6 @@ sbFileMetadataService::~sbFileMetadataService()
 {
   MOZ_COUNT_DTOR(sbFileMetadataService);
   TRACE(("%s[%.8x]", __FUNCTION__, this));
-  
-  if (mJobLock) {
-    nsAutoLock::DestroyLock(mJobLock); 
-  }
 }
 
 nsresult sbFileMetadataService::Init()
@@ -111,10 +121,6 @@ nsresult sbFileMetadataService::Init()
   /////////////////////////////////////////////////////////
   // WARNING: Init may be called off of the main thread. //
   /////////////////////////////////////////////////////////
-  
-  mJobLock = nsAutoLock::NewLock(
-      "sbFileMetadataService job items lock");
-  NS_ENSURE_TRUE(mJobLock, NS_ERROR_OUT_OF_MEMORY);
 
   // Get the mediacore manager.
   mMediacoreManager = do_GetService(SB_MEDIACOREMANAGER_CONTRACTID, &rv);
@@ -165,7 +171,7 @@ nsresult sbFileMetadataService::Shutdown()
     mBackgroundThreadProcessor = nsnull;
   }
 
-  nsAutoLock lock(mJobLock);
+  mozilla::MutexAutoLock lock(mJobLock);
 
   if (mNotificationTimer) {
     rv = mNotificationTimer->Cancel();
@@ -268,9 +274,8 @@ sbFileMetadataService::ProxiedRestartProcessors(PRUint16 aProcessorsToRestart)
 
     if (aProcessorsToRestart & sbIFileMetadataService::BACKGROUND_THREAD_PROCESSOR) {
       nsCOMPtr<nsIRunnable> event =
-        NS_NEW_RUNNABLE_METHOD(sbBackgroundThreadMetadataProcessor,
-                               mBackgroundThreadProcessor.get(),
-                               Start);
+        new nsRunnableMethod_Start(mBackgroundThreadProcessor.get());
+
       NS_DispatchToCurrentThread(event);
     }
   }
@@ -345,7 +350,7 @@ sbFileMetadataService::StartJob(nsIArray* aMediaItemsArray,
   NS_ENSURE_SUCCESS(rv, rv);
 
   { 
-    nsAutoLock lock(mJobLock);
+    mozilla::MutexAutoLock lock(mJobLock);
     NS_ENSURE_TRUE(mInitialized, NS_ERROR_NOT_INITIALIZED);
     
     // If the last job in the job array is blocked, the new job will be too.
@@ -424,7 +429,7 @@ nsresult sbFileMetadataService::GetQueuedJobItem(bool aMainThreadOnly,
   NS_ENSURE_ARG_POINTER(aJobItem);
   nsresult rv = NS_OK;
   
-  nsAutoLock lock(mJobLock);
+  mozilla::MutexAutoLock lock(mJobLock);
    
   if (mJobArray.Length() > 0) {    
     nsRefPtr<sbMetadataJobItem> item;
@@ -618,7 +623,7 @@ sbFileMetadataService::Observe(nsISupports *aSubject,
     // potentially do a bunch of work
     nsTArray<nsRefPtr<sbMetadataJob> > jobs;
     {
-      nsAutoLock lock(mJobLock);
+      mozilla::MutexAutoLock lock(mJobLock);
       jobs.AppendElements(mJobArray);
 
       // Update blocked status of jobs.  If any job is blocked, all jobs after
@@ -644,7 +649,7 @@ sbFileMetadataService::Observe(nsISupports *aSubject,
     // Now lock again and see if there are any active jobs left
     {
       bool allComplete = PR_TRUE;
-      nsAutoLock lock(mJobLock);
+      mozilla::MutexAutoLock lock(mJobLock);
       for (PRUint32 i=0; i < mJobArray.Length(); i++) {
         mJobArray[i]->GetStatus(&status);
         if (status == sbIJobProgress::STATUS_RUNNING) {
@@ -711,7 +716,7 @@ nsresult sbFileMetadataService::EnsureWritePermitted()
       nsCOMPtr<nsIWindowMediator> windowMediator =
         do_GetService("@mozilla.org/appshell/window-mediator;1", &rv);
       NS_ENSURE_SUCCESS( rv, rv);
-      nsCOMPtr<nsIDOMWindowInternal> mainWindow;  
+      nsCOMPtr<nsIDOMWindow> mainWindow;
       windowMediator->GetMostRecentWindow(nsnull,
                                           getter_AddRefs(mainWindow));
       if (mainWindow) {

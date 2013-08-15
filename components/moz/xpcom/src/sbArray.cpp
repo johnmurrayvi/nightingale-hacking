@@ -57,15 +57,18 @@ NS_INTERFACE_MAP_BEGIN(sbArray)
   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIMutableArray)
 NS_INTERFACE_MAP_END
 
-sbArray::sbArray()
-	: mLock("nsThreadsafeArray::mLock")
-{}
-sbArray::sbArray(const sbCOMArray_base& aBaseArray)
-    : mArray(aBaseArray),
-    mLock("nsThreadsafeArray::mLock")
-{}
+sbArray::sbArray() : mLock("nsThreadsafeArray::mLock")
+{
 
-sbArray::~sbArray() 
+}
+
+sbArray::sbArray(const sbCOMArray_base& aBaseArray)
+    : mArray(aBaseArray), mLock("nsThreadsafeArray::mLock")
+{
+
+}
+
+sbArray::~sbArray()
 {
     Clear();
 }

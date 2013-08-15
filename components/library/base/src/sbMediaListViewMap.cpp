@@ -41,6 +41,7 @@
 #include <nsISupportsPrimitives.h>
 
 #include <nsArrayEnumerator.h>
+#include <mozilla/Mutex.h>
 #include <nsCOMArray.h>
 #include <nsComponentManagerUtils.h>
 #include <nsEnumeratorUtils.h>

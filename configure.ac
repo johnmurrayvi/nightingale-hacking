@@ -412,7 +412,7 @@ SB_MACOSX_SDK_DEFAULT=
 
 case $SB_PLATFORM in
   macosx)
-    SB_MACOSX_SDK_DEFAULT=$SB_MACOSX_DEV_ROOT/SDKs/MacOSX10.4u.sdk
+    SB_MACOSX_SDK_DEFAULT=$SB_MACOSX_DEV_ROOT/SDKs/MacOSX10.5.sdk
   ;;
 esac
 
@@ -421,7 +421,7 @@ esac
 #
 
 AC_ARG_WITH(macosx-sdk,
-            [  --with-macosx-sdk=<directory>,path to directory containing the Mac OS X SDK (default=<dev-tools>/SDKs/MacOSX10.4u.sdk) ],
+            [  --with-macosx-sdk=<directory>,path to directory containing the Mac OS X SDK (default=<dev-tools>/SDKs/MacOSX10.5.sdk) ],
             [ SB_MACOSX_SDK=$withval ],
             [ SB_MACOSX_SDK=$SB_MACOSX_SDK_DEFAULT])
 
@@ -492,7 +492,7 @@ _SAVE_CFLAGS=$CFLAGS
 _SAVE_CXXFLAGS=$CXXFLAGS
 
 #
-# Must use gcc 4.0 on Mac OS X with the 10.4u SDK.
+# Must use gcc 4.x on Mac OS X with the 10.5 SDK.
 # NOTE: gcc4.0 is the default compiler on 10.5 but not on 10.6 and we still
 #       support back to 10.4. See bug 17752 for juicy details.
 #
@@ -824,10 +824,15 @@ case "$SB_PLATFORM" in
 
     MSVC_COMPILER_FLAGS="-nologo -W3 -WL -GS -EHsc -Zi -c"
 
+    if test "$_CC_SUITE" -ge "8"; then
+      # MSVC 8+ use native wchar_t, but Mozilla builds without it
+      MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS -Zc:wchar_t-"
+    fi
+
     if test "$enable_debug" = "yes"; then
-      MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS -Od -RTC1 -RTCc -MDd"
+      MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS -Od -RTC1 -RTCc"
     else
-      MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS -Ox -MD"
+      MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS -Ox"
     fi
 
     if test "$enable_debug" == "yes"; then
@@ -848,7 +853,13 @@ case "$SB_PLATFORM" in
     fi
 
     if test "$SB_USE_JEMALLOC" == "1"; then
-      MSVC_DLL_LINKER_FLAGS=""
+      if test "$enable_debug" == "yes"; then
+        MOZ_CRT_DLL_NAME="mozcrt19d"
+      else
+        MOZ_CRT_DLL_NAME="mozcrt19"
+      fi
+
+      MSVC_DLL_LINKER_FLAGS="-NODEFAULTLIB:MSVCRT -NODEFAULTLIB:MSVCRTD -NODEFAULTLIB:LIBCMT -NODEFAULTLIB:LIBCMTD -DEFAULTLIB:$MOZ_CRT_DLL_NAME"
     fi
 
     CFLAGS="$CFLAGS $MSVC_COMPILER_FLAGS -TC"
@@ -963,9 +974,12 @@ case "$SB_PLATFORM" in
     AC_SUBST(DBUS_CFLAGS)
     AC_SUBST(DBUS_LIBS)
 
+    PKG_CHECK_MODULES(TAGLIB, taglib >= 1.8.0)
+    AC_SUBST(TAGLIB_LIBS)
+    AC_SUBST(TAGLIB_CFLAGS)
+
     # Breakpad needs stabs debugging data, so always explicitly request it with
-    # -gstabs+
-    GCC_COMPILER_FLAGS="-c -fPIC -fshort-wchar -fexceptions -fnon-call-exceptions -funwind-tables -fasynchronous-unwind-tables -fno-rtti -fno-strict-aliasing -Wall -Wno-conversion -Wno-attributes -Wpointer-arith -Wcast-align -Wno-long-long -pipe -pthread --std=gnu++0x"
+    GCC_COMPILER_FLAGS="-c -fPIC -fshort-wchar -fexceptions -fnon-call-exceptions -funwind-tables -fasynchronous-unwind-tables -fno-rtti -fno-strict-aliasing -Wall -Wno-conversion -Wno-attributes -Wpointer-arith -Wcast-align -Wno-long-long -pipe -pthread"
     if test "$enable_debug" = "yes"; then
       GCC_COMPILER_FLAGS="$GCC_COMPILER_FLAGS -g -ggdb3 -fno-inline"
     else
@@ -1159,6 +1173,55 @@ if test -z "$SB_DEPENDENCIES_DIR"; then
   SB_DEPENDENCIES_DIR=dependencies/$DEPS_SUBDIR
 fi
 AC_SUBST(SB_DEPENDENCIES_DIR)
+
+
+#
+# Are we going to use system or packaged taglib?
+#
+
+SB_SYSTEM_TAGLIB=
+AC_ARG_WITH(taglib-source,
+			[  --with-taglib-source=system,packaged,default  Taglib to use],
+			[ SB_TAGLIB=$withval ],
+			[ SB_TAGLIB=default ])
+for option in `echo $SB_TAGLIB | sed 's/,/ /g'`; do
+	if test "$option" = "default"; then
+		case "$SB_PLATFORM" in
+		windows)
+			SB_TAGLIB=packaged
+		;;
+		macosx)
+			SB_TAGLIB=packaged
+		;;
+		solaris)
+			SB_TAGLIB=packaged
+		;;
+		linux)
+			SB_TAGLIB=system
+		;;
+		*)
+			AC_MSG_ERROR([No platform default taglib found; please manually specify --with-taglib-source=])
+		;;
+		esac
+	elif test "$option" = "system"; then
+		SB_TAGLIB=system
+	elif test "$option" = "packaged"; then
+		SB_TAGLIB=packaged
+	else
+		AC_MSG_ERROR([Unknown --with-taglib-source option $option])
+	fi
+done
+AC_SUBST(SB_TAGLIB)
+
+#	
+# If we're building with SYSTEM_TAGLIB, find it
+#
+
+if test "$SB_TAGLIB" = "system"; then
+	PKG_CHECK_MODULES(TAGLIB, taglib >= 1.8.0)
+	AC_SUBST(TAGLIB_LIBS)
+	AC_SUBST(TAGLIB_CFLAGS)
+fi
 
 #
 # Check for media cores to enable

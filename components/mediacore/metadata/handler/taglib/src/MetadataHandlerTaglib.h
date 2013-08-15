@@ -84,10 +84,12 @@
 #include <sbITagLibChannelFileIOManager.h>
 
 /* TagLib imports. */
+#include <flacfile.h>
 #include <fileref.h>
 #include <mpegfile.h>
 #include <asffile.h>
 #include <vorbisfile.h>
+#include <id3v1tag.h>
 #include <id3v2tag.h>
 #include <mp4file.h>
 #include <mp4tag.h>
@@ -97,6 +99,7 @@
 #include <xiphcomment.h>
 #include <attachedpictureframe.h>
 
+#include <mozilla/Mutex.h>
 
 /* *****************************************************************************
  *
@@ -192,7 +195,8 @@ private:
 
 
     // Statics to help manage the single threading of taglib
-    static PRLock* sTaglibLock;
+    //static PRLock* sTaglibLock;
+    mozilla::Mutex sTaglibLock;
 
     /* Inherited interfaces. */
 public:
@@ -290,6 +294,12 @@ private:
         PRUint32                    *aDataLen,
         PRUint8                     **aData);
 
+    nsresult ReadImageFlac(	
+        TagLib::FLAC::File			*pTagFile,
+        PRInt32                     aType,
+        nsACString                  &aMimeType,
+        PRUint32                    *aDataLen,
+        PRUint8                     **aData);
     /*
      * Private taglib metadata handler ID3v2 services.
      */
@@ -343,8 +353,7 @@ private:
     // and don't try to acquire twice in a thread without releasing.
     nsresult AcquireTaglibLock();
     nsresult ReleaseTaglibLock();
-
-    nsresult OpenTagFile(TagLib::File *pTagFile);
+    
     nsresult CheckChannelRestart();
 
     nsresult ReadMetadata();
@@ -363,6 +372,11 @@ private:
         nsAString&                  aResult);
 
     void CompleteRead();
+
+    nsresult AddSeparatedNumbers(
+      TagLib::String                value,
+      const char                    *baseProperty,
+      const char                    *countProperty);
 
     bool ReadFile(
         TagLib::File                *pTagFile,
@@ -403,6 +417,30 @@ private:
         nsString                    numberKey,
         nsString                    totalKey);
 
+private:
+    /*
+     * Functions to write Metadata to tags
+     */
+    nsresult WriteBasic(
+      TagLib::PropertyMap           *properties);
+    nsresult WriteSeparatedNumbers(
+      TagLib::PropertyMap           *properties,
+      TagLib::String                target,
+      const nsAString               &baseProperty,
+      const nsAString               &countProperty);
+    nsresult WriteAPE(
+        TagLib::APE::Tag            *tag);
+    nsresult WriteASF(
+        TagLib::ASF::Tag            *tag);
+    nsresult WriteID3v1(
+        TagLib::ID3v1::Tag          *tag);
+    nsresult WriteID3v2(
+        TagLib::ID3v2::Tag          *tag);
+    nsresult WriteMP4(
+        TagLib::MP4::Tag            *tag);
+    nsresult WriteXiphComment(
+        TagLib::Ogg::XiphComment    *tag);
+
     /*
      * Private charset detector members
      */
@@ -411,6 +449,14 @@ private:
     // these apply only to the last thing being detected
     nsCString mLastCharset;
     nsDetectionConfident mLastConfidence;
+    
+private:
+    /*
+     * Base64 en-/decoding
+     */
+    std::string base64_decode(std::string const& encoded_string);
+    std::string base64_encode(unsigned char const* bytes_to_encode,
+                              unsigned int in_len);
 };
 
 

@@ -27,31 +27,26 @@
 
 #include "sbDeviceEventBeforeAddedData.h"
 
+#include <mozilla/Mutex.h>
 #include <nsAutoPtr.h>
 
 NS_IMPL_THREADSAFE_ISUPPORTS1(sbDeviceEventBeforeAddedData,
                               sbIDeviceEventBeforeAddedData)
 
 sbDeviceEventBeforeAddedData::sbDeviceEventBeforeAddedData()
-: mLock(nsnull)
+: mLock("sbDeviceEventBeforeAddedData::mLock")
 , mContinueAddingDevice(PR_TRUE)
 {
 }
 
 sbDeviceEventBeforeAddedData::~sbDeviceEventBeforeAddedData()
 {
-  if(mLock) {
-    nsAutoLock::DestroyLock(mLock);
-  }
 }
 
 nsresult 
 sbDeviceEventBeforeAddedData::Init(sbIDevice *aDevice)
 {
   NS_ENSURE_ARG_POINTER(aDevice);
-
-  mLock = nsAutoLock::NewLock("sbDeviceEventBeforeAddedData::mLock");
-  NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
 
   mDevice = aDevice;
 
@@ -67,7 +62,7 @@ sbDeviceEventBeforeAddedData::CreateEventBeforeAddedData(
   NS_ENSURE_ARG_POINTER(aBeforeAddedData);
 
   nsRefPtr<sbDeviceEventBeforeAddedData> beforeAddedData;
-  NS_NEWXPCOM(beforeAddedData, sbDeviceEventBeforeAddedData);
+  beforeAddedData = new sbDeviceEventBeforeAddedData;
 
   nsresult rv = beforeAddedData->Init(aDevice);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -84,10 +79,9 @@ sbDeviceEventBeforeAddedData::CreateEventBeforeAddedData(
 NS_IMETHODIMP
 sbDeviceEventBeforeAddedData::GetContinueAddingDevice(bool *aContinueAddingDevice)
 {
-  NS_ENSURE_TRUE(mLock, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_ARG_POINTER(aContinueAddingDevice);
 
-  nsAutoLock lock(mLock);
+  mozilla::MutexAutoLock lock(mLock);
   *aContinueAddingDevice = mContinueAddingDevice;
 
   return NS_OK;
@@ -96,9 +90,7 @@ sbDeviceEventBeforeAddedData::GetContinueAddingDevice(bool *aContinueAddingDevic
 NS_IMETHODIMP
 sbDeviceEventBeforeAddedData::SetContinueAddingDevice(bool aContinueAddingDevice)
 {
-  NS_ENSURE_TRUE(mLock, NS_ERROR_NOT_INITIALIZED);
-
-  nsAutoLock lock(mLock);
+  mozilla::MutexAutoLock lock(mLock);
   mContinueAddingDevice = aContinueAddingDevice;
 
   return NS_OK;
@@ -107,10 +99,9 @@ sbDeviceEventBeforeAddedData::SetContinueAddingDevice(bool aContinueAddingDevice
 NS_IMETHODIMP
 sbDeviceEventBeforeAddedData::GetDevice(sbIDevice **aDevice)
 {
-  NS_ENSURE_TRUE(mLock, NS_ERROR_NOT_INITIALIZED);
   NS_ENSURE_ARG_POINTER(aDevice);
 
-  nsAutoLock lock(mLock);
+  mozilla::MutexAutoLock lock(mLock);
 
   NS_ENSURE_TRUE(mDevice, NS_ERROR_UNEXPECTED);
   NS_ADDREF(*aDevice = mDevice);

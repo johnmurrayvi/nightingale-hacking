@@ -1,25 +1,25 @@
 /*
- *=BEGIN SONGBIRD GPL
+ * BEGIN NIGHTINGALE GPL
+ * 
+ * This file is part of the Nightingale Media Player.
  *
- * This file is part of the Songbird web player.
- *
- * Copyright(c) 2005-2010 POTI, Inc.
- * http://www.songbirdnest.com
- *
+ * Copyright(c) 2013
+ * http://getnightingale.com
+ * 
  * This file may be licensed under the terms of of the
- * GNU General Public License Version 2 (the ``GPL'').
- *
- * Software distributed under the License is distributed
- * on an ``AS IS'' basis, WITHOUT WARRANTY OF ANY KIND, either
- * express or implied. See the GPL for the specific language
+ * GNU General Public License Version 2 (the "GPL").
+ * 
+ * Software distributed under the License is distributed 
+ * on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either 
+ * express or implied. See the GPL for the specific language 
  * governing rights and limitations.
  *
- * You should have received a copy of the GPL along with this
+ * You should have received a copy of the GPL along with this 
  * program. If not, go to http://www.gnu.org/licenses/gpl.html
- * or write to the Free Software Foundation, Inc.,
+ * or write to the Free Software Foundation, Inc., 
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- *
- *=END SONGBIRD GPL
+ * 
+ * END NIGHTINGALE GPL
  */
 
 #include <sbArrayUtils.h>
@@ -906,30 +906,39 @@ sbMockCDService::NotifyEject(sbICDDevice *aCDDevice)
 // XPCOM component registration
 //==============================================================================
 
-NS_GENERIC_FACTORY_CONSTRUCTOR(sbMockCDDevice)
-NS_GENERIC_FACTORY_CONSTRUCTOR(sbMockCDTOC)
-NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(sbMockCDService, Init)
 
-static nsModuleComponentInfo sbMockCDDevice[] =
-{
-  {
-    SB_MOCK_CDDEVICE_CLASSNAME,
-    SB_MOCK_CDDEVICE_CID,
-    SB_MOCK_CDDEVICE_CONTRACTID,
-    sbMockCDDeviceConstructor,
-  },
-  {
-    SB_MOCK_CDTOC_CLASSNAME,
-    SB_MOCK_CDTOC_CID,
-    SB_MOCK_CDTOC_CONTRACTID,
-    sbMockCDTOCConstructor,
-  },
-  {
-    SB_MOCK_CDDEVICECONTROLLER_CLASSNAME,
-    SB_MOCK_CDDEVICECONTROLLER_CID,
-    SB_MOCK_CDDEVICECONTROLLER_CONTRACTID,
-    sbMockCDServiceConstructor
-  }
+
+NS_GENERIC_FACTORY_CONSTRUCTOR(sbMockCDDevice);
+NS_GENERIC_FACTORY_CONSTRUCTOR(sbMockCDTOC);
+NS_GENERIC_FACTORY_CONSTRUCTOR_INIT(sbMockCDService, Init);
+
+NS_DEFINE_NAMED_CID(SB_MOCK_CDDEVICE_CID);
+NS_DEFINE_NAMED_CID(SB_MOCK_CDTOC_CID);
+NS_DEFINE_NAMED_CID(SB_MOCK_CDDEVICECONTROLLER_CID);
+
+static const mozilla::Module::CIDEntry kMockCDDeviceCIDs[] = {
+  { &kSB_MOCK_CDDEVICE_CID, false, NULL, },
+  { &kSB_MOCK_CDTOC_CID, false, NULL, },
+  { &kSB_MOCK_CDDEVICECONTROLLER_CID, false, NULL, },
+  { NULL }
 };
 
-NS_IMPL_NSGETMODULE(SongbirdMockCDDevice, sbMockCDDevice)
+static const mozilla::Module::ContractIDEntry kMockCDDeviceContracts[] = {
+  { SB_MOCK_CDDEVICE_CONTRACTID, &kSB_MOCK_CDDEVICE_CID },
+  { SB_MOCK_CDTOC_CONTRACTID, &kSB_MOCK_CDTOC_CID },
+  { SB_MOCK_CDDEVICECONTROLLER_CONTRACTID, &kSB_MOCK_CDDEVICECONTROLLER_CID },
+  { NULL }
+};
+
+static const mozilla::Module::CategoryEntry kMockCDDeviceCategories[] = {
+  { NULL }
+};
+
+static const mozilla::Module kMockCDDeviceModule = {
+  mozilla::Module::kVersion,
+  kMockCDDeviceCIDs,
+  kMockCDDeviceContracts,
+  kMockCDDeviceCategories
+};
+
+NSMODULE_DEFN(sbMockCDDevice) = &kMockCDDeviceModule;

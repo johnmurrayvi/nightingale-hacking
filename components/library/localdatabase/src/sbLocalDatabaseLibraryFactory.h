@@ -51,11 +51,7 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_SBILIBRARYFACTORY
 
-  static NS_METHOD RegisterSelf(nsIComponentManager* aCompMgr,
-                                nsIFile* aPath,
-                                const char* aLoaderStr,
-                                const char* aType,
-                                const nsModuleComponentInfo *aInfo);
+  sbLocalDatabaseLibraryFactory();
 
   already_AddRefed<nsILocalFile> GetFileForGUID(const nsAString& aGUID);
   void GetGUIDFromFile(nsILocalFile* aFile,

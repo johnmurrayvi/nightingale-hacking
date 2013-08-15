@@ -101,6 +101,9 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/property/public \
                      $(MOZSDK_IDL_DIR) \
                      $(NULL)
 
+CPP_EXTRA_FLAGS += -std=gnu++0x \
+                   $(NULL)
+
 DYNAMIC_LIB_EXTRA_IMPORTS = plds4 \
                             $(NULL)
 
@@ -120,7 +123,12 @@ else
     $(NULL)
 endif
 
+
+SONGBIRD_PP_RESOURCES = $(srcdir)/property.manifest.in \
+                        $(NULL)
+
 SONGBIRD_COMPONENTS = $(srcdir)/sbSmartPlaylistPropertyRegistrar.js \
+                      $(CURDIR)/property.manifest \
                       $(NULL)
 
 IS_COMPONENT = 1

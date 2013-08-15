@@ -1,0 +1,58 @@
+#
+# BEGIN NIGHTINGALE GPL
+#
+# This file is part of the Nightingale media player.
+#
+# Copyright(c) 2013
+# http://www.getnightingale.com
+#
+# This file may be licensed under the terms of of the
+# GNU General Public License Version 2 (the “GPL”).
+#
+# Software distributed under the License is distributed
+# on an “AS IS” basis, WITHOUT WARRANTY OF ANY KIND, either
+# express or implied. See the GPL for the specific language
+# governing rights and limitations.
+#
+# You should have received a copy of the GPL along with this
+# program. If not, go to http://www.gnu.org/licenses/gpl.html
+# or write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+# END NIGHTINGALE GPL
+#
+
+DEPTH = ..
+topsrcdir = @top_srcdir@
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+include $(DEPTH)/build/autodefs.mk
+
+# manifests
+SONGBIRD_PP_RESOURCES = $(srcdir)/components.manifest.in \
+                        $(srcdir)/interfaces.manifest.in \
+                        $(srcdir)/jscomponents.manifest.in \
+                        $(srcdir)/vendor.manifest.in \
+                        $(srcdir)/libs.manifest.in \
+                        $(NULL)
+
+SONGBIRD_COMPONENTS = $(CURDIR)/components.manifest \
+                      $(CURDIR)/interfaces.manifest \
+                      $(CURDIR)/jscomponents.manifest \
+                      $(CURDIR)/vendor.manifest \
+                      $(NULL)
+
+SONGBIRD_LIB = $(CURDIR)/libs.manifest \
+               $(NULL)
+
+include $(topsrcdir)/build/rules.mk
+
+CR_MANIFEST = $(SONGBIRD_DISTDIR)/chrome.manifest
+
+export::
+	@$(GREP) -q -E 'components.manifest' $(CR_MANIFEST) || echo "manifest components/components.manifest" >> $(CR_MANIFEST)
+	@$(GREP) -q -E 'interfaces.manifest' $(CR_MANIFEST) || echo "manifest components/interfaces.manifest" >> $(CR_MANIFEST)
+	@$(GREP) -q -E 'jscomponents.manifest' $(CR_MANIFEST) || echo "manifest components/jscomponents.manifest" >> $(CR_MANIFEST)
+	@$(GREP) -q -E 'vendor.manifest' $(CR_MANIFEST) || echo "manifest components/vendor.manifest" >> $(CR_MANIFEST)
+	@$(GREP) -q -E 'libs.manifest' $(CR_MANIFEST) || echo "manifest lib/libs.manifest" >> $(CR_MANIFEST)

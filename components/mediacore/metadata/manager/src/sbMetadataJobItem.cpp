@@ -38,14 +38,36 @@
 #include "sbMetadataJobItem.h"
 
 // DEFINES ====================================================================
+
+/**
+ * To log this class, set the following environment variable in a debug build:
+ *
+ *  NSPR_LOG_MODULES=sbMetadataJobItem:5 (or :3 for LOG messages only)
+ *
+ */
 #ifdef PR_LOGGING
-extern PRLogModuleInfo* gMetadataLog;
-#define TRACE(args) PR_LOG(gMetadataLog, PR_LOG_DEBUG, args)
-#define LOG(args)   PR_LOG(gMetadataLog, PR_LOG_WARN, args)
-#else
-#define TRACE(args) /* nothing */
-#define LOG(args)   /* nothing */
+static PRLogModuleInfo* gMetadataJobItemLog =
+  PR_NewLogModule("sbMetadataJobItem");
+
+#define LOG(args)                                  \
+  if (gMetadataJobItemLog)                             \
+    PR_LOG(gMetadataJobItemLog, PR_LOG_WARNING, args)
+
+#define TRACE(args)                                \
+  if (gMetadataJobItemLog)                             \
+    PR_LOG(gMetadataJobItemLog, PR_LOG_DEBUG, args)
+
+#ifdef __GNUC__
+#define __FUNCTION__ __PRETTY_FUNCTION__
 #endif
+
+#else /* PR_LOGGING */
+
+#define LOG(args) /* nothing */
+#define TRACE(args) /* nothing */
+
+#endif /* PR_LOGGING */
+
 
 #define SB_MUTABLEPROPERTYARRAY_CONTRACTID "@songbirdnest.com/Songbird/Properties/MutablePropertyArray;1"
 
@@ -55,7 +77,7 @@ NS_IMPL_THREADSAFE_ISUPPORTS0(sbMetadataJobItem);
 
 sbMetadataJobItem::sbMetadataJobItem(sbMetadataJob::JobType aJobType, 
                                      sbIMediaItem* aMediaItem,
-                                     nsStringArray* aRequiredProperties, 
+                                     nsTArray<nsString>* aRequiredProperties,
                                      sbMetadataJob* aOwningJob) :
   mJobType(aJobType),
   mMediaItem(aMediaItem),
@@ -172,9 +194,9 @@ nsresult sbMetadataJobItem::GetProperties(sbIMutablePropertyArray** aPropertyArr
   nsCOMPtr<sbIProperty> property;
   nsString propertyId;
   nsString propertyValue;
-  for (PRInt32 current = 0; current < mPropertyList->Count(); ++current) {
+  for (PRInt32 current = 0; current < mPropertyList->Capacity(); ++current) {
     // Get the wanted property
-    mPropertyList->StringAt(current, propertyId);
+	propertyId = mPropertyList->ElementAt(current);
     
     // Get the value for this property and if null make an empty string
     rv = propArray->GetPropertyValue(propertyId, propertyValue);

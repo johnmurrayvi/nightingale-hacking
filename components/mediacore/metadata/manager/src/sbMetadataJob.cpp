@@ -33,6 +33,7 @@
 // INCLUDES ===================================================================
 #include <nspr.h>
 #include <nscore.h>
+#include <mozilla/Mutex.h>
 #include <pratom.h>
 
 #include <nsArrayUtils.h>
@@ -93,18 +94,36 @@ const PRUint32 NUM_ITEMS_PROCESSED_THRESHOLD = 1000;
 
 typedef sbStringSet::iterator sbStringSetIter;
 
+/**
+ * To log this class, set the following environment variable in a debug build:
+ *
+ *  NSPR_LOG_MODULES=sbMetadataJob:5 (or :3 for LOG messages only)
+ *
+ */
 #include "prlog.h"
 #ifdef PR_LOGGING
-extern PRLogModuleInfo* gMetadataLog;
-#define TRACE(args) PR_LOG(gMetadataLog, PR_LOG_DEBUG, args)
-#define LOG(args)   PR_LOG(gMetadataLog, PR_LOG_WARN, args)
+static PRLogModuleInfo* gMetadataJobLog =
+  PR_NewLogModule("sbMetadataJob");
+
+#define LOG(args)                                  \
+  if (gMetadataJobLog)                             \
+    PR_LOG(gMetadataJobLog, PR_LOG_WARNING, args)
+
+#define TRACE(args)                                \
+  if (gMetadataJobLog)                             \
+    PR_LOG(gMetadataJobLog, PR_LOG_DEBUG, args)
+
 #ifdef __GNUC__
 #define __FUNCTION__ __PRETTY_FUNCTION__
 #endif
-#else
+
+#else /* PR_LOGGING */
+
+#define LOG(args) /* nothing */
 #define TRACE(args) /* nothing */
-#define LOG(args)   /* nothing */
-#endif
+
+#endif /* PR_LOGGING */
+
 
 // CLASSES ====================================================================
 
@@ -122,7 +141,15 @@ NS_IMPL_CI_INTERFACE_GETTER5(sbMetadataJob,
                              sbIJobCancelable,
                              sbIAlbumArtListener)
 
-NS_DECL_CLASSINFO(sbMetadataJob)
+// NS_IMPL_CLASSINFO(sbMetadataJob, NULL, nsIClassInfo::THREADSAFE, SB_METADATAJOB_CID);
+
+// NS_IMPL_THREADSAFE_ISUPPORTS5_CI(sbMetadataJob,
+//                                  nsIClassInfo,
+//                                  sbIJobProgress,
+//                                  sbIJobProgressUI,
+//                                  sbIJobCancelable,
+//                                  sbIAlbumArtListener);
+
 NS_IMPL_THREADSAFE_CI(sbMetadataJob)
 
 sbMetadataJob::sbMetadataJob() :
@@ -135,9 +162,9 @@ sbMetadataJob::sbMetadataJob() :
   mRequiredProperties(nsnull),
   mNextMainThreadIndex(0),
   mNextBackgroundThreadIndex(0),
-  mBackgroundItemsLock(nsnull),
+  mBackgroundItemsLock("sbMetadataJob::mBackgroundItemsLock"),
   mProcessedBackgroundThreadItems(nsnull),
-  mProcessedBackgroundItemsLock(nsnull),
+  mProcessedBackgroundItemsLock("sbMetadataJob::mProcessedBackgroundItemsLock"),
   mInLibraryBatch(PR_FALSE),
   mStringBundle(nsnull)
 {
@@ -152,13 +179,6 @@ sbMetadataJob::~sbMetadataJob()
   
   // Make extra sure we aren't in a library batch
   EndLibraryBatch();
-  
-  if (mBackgroundItemsLock) {
-    nsAutoLock::DestroyLock(mBackgroundItemsLock);
-  }
-  if (mProcessedBackgroundItemsLock) {
-    nsAutoLock::DestroyLock(mProcessedBackgroundItemsLock);
-  }
 }
 
 
@@ -171,16 +191,6 @@ nsresult sbMetadataJob::Init(nsIArray *aMediaItemsArray,
   NS_ASSERTION(NS_IsMainThread(), \
     "sbMetadataJob::Init: MUST NOT INIT OFF OF MAIN THREAD!");
   nsresult rv;
-
-  NS_ENSURE_FALSE(mBackgroundItemsLock, NS_ERROR_ALREADY_INITIALIZED);
-  mBackgroundItemsLock = nsAutoLock::NewLock(
-      "sbMetadataJob background item lock");
-  NS_ENSURE_TRUE(mBackgroundItemsLock, NS_ERROR_OUT_OF_MEMORY);
-
-  NS_ENSURE_FALSE(mProcessedBackgroundItemsLock, NS_ERROR_ALREADY_INITIALIZED);
-  mProcessedBackgroundItemsLock = nsAutoLock::NewLock(
-      "sbMetadataJob processed background items lock");
-  NS_ENSURE_TRUE(mProcessedBackgroundItemsLock, NS_ERROR_OUT_OF_MEMORY);
 
   // Find the library for the items in the array.
   PRUint32 length;
@@ -211,7 +221,7 @@ nsresult sbMetadataJob::Init(nsIArray *aMediaItemsArray,
       rv = aRequiredProperties->GetNext(propertyId);
       NS_ENSURE_SUCCESS(rv, rv);
       
-      mRequiredProperties.AppendString(propertyId);
+      mRequiredProperties.AppendElement(propertyId);
   
       rv = aRequiredProperties->HasMore(&hasMore);
       NS_ENSURE_SUCCESS(rv, rv);
@@ -230,11 +240,11 @@ nsresult sbMetadataJob::Init(nsIArray *aMediaItemsArray,
 
     if (!enableRatingWrite) {
       // Remove the rating property if we are not allowed to write it out
-      mRequiredProperties.RemoveString(NS_LITERAL_STRING(SB_PROPERTY_RATING));
+      mRequiredProperties.RemoveElement(NS_LITERAL_STRING(SB_PROPERTY_RATING));
     }
     if (!enableArtworkWrite) {
       // Remove the primaryImageURL property if we are not allowed to write it out
-      mRequiredProperties.RemoveString(NS_LITERAL_STRING(SB_PROPERTY_PRIMARYIMAGEURL));      
+      mRequiredProperties.RemoveElement(NS_LITERAL_STRING(SB_PROPERTY_RATING));
     }
   }
 
@@ -378,7 +388,7 @@ nsresult sbMetadataJob::AppendMediaItems(nsIArray *aMediaItemsArray)
         
         mMainThreadJobItems.AppendElement(jobItem);
       } else {
-        nsAutoLock lock(mBackgroundItemsLock);
+        mozilla::MutexAutoLock lock(mBackgroundItemsLock);
         
         // If we haven't allocated space on the background thread queue yet,
         // do so now. Better to waste space than append.
@@ -427,7 +437,7 @@ sbMetadataJob::AppendJobItem(sbMetadataJobItem* aJobItem)
     
     mMainThreadJobItems.AppendElement(aJobItem);
   } else {
-    nsAutoLock lock(mBackgroundItemsLock);
+    mozilla::MutexAutoLock lock(mBackgroundItemsLock);
     
     // If we haven't allocated space on the background thread queue yet,
     // do so now. Better to waste space than append.
@@ -545,7 +555,7 @@ nsresult sbMetadataJob::GetQueuedItem(bool aMainThreadOnly,
     // more items could be appended (though in the current impl 
     // this does not happen), and because GetStatusText
     // needs to access it to find a file name.
-    nsAutoLock lock(mBackgroundItemsLock);
+	mozilla::MutexAutoLock lock(mBackgroundItemsLock);
     
     if (mNextBackgroundThreadIndex < mBackgroundThreadJobItems.Length()) {
       mBackgroundThreadJobItems[mNextBackgroundThreadIndex++].swap(item);
@@ -715,7 +725,7 @@ nsresult sbMetadataJob::DeferProcessedItemHandling(sbMetadataJobItem *aJobItem)
   // needs to be completed on the main thread 
   // (may release nsStandardURLs, etc.)
   
-  nsAutoLock lock(mProcessedBackgroundItemsLock);
+  mozilla::MutexAutoLock lock(mProcessedBackgroundItemsLock);
   
   // Make sure the job is still running.  
   // We do this inside the lock, since Cancel() will 
@@ -1108,7 +1118,7 @@ nsresult sbMetadataJob::BatchCompleteItems()
   // Are there items that need completing
   bool needBatchComplete = PR_FALSE;
   {
-    nsAutoLock processedLock(mProcessedBackgroundItemsLock);
+	mozilla::MutexAutoLock processedLock(mProcessedBackgroundItemsLock);
     if (mProcessedBackgroundThreadItems) {
       // If the list is full, or if we're finished
       // and still have a few things left to complete... 
@@ -1123,7 +1133,7 @@ nsresult sbMetadataJob::BatchCompleteItems()
         // then process right away.  This is to handle
         // the end of the job.
         // Note must grab locks in the same order as Cancel()
-        nsAutoLock waitingLock(mBackgroundItemsLock);
+    	mozilla::MutexAutoLock waitingLock(mBackgroundItemsLock);
         if (mNextBackgroundThreadIndex > (mBackgroundThreadJobItems.Length() - 1) &&
             mProcessedBackgroundThreadItems->Length() > 0)
         {
@@ -1176,7 +1186,7 @@ nsresult sbMetadataJob::BatchCompleteItemsCallback()
   nsAutoPtr<nsTArray<nsRefPtr<sbMetadataJobItem> > > items;
   
   { // Scope the lock
-    nsAutoLock lock(mProcessedBackgroundItemsLock);
+	mozilla::MutexAutoLock lock(mProcessedBackgroundItemsLock);
     NS_ENSURE_STATE(mProcessedBackgroundThreadItems);
     
     items = mProcessedBackgroundThreadItems.forget();
@@ -1404,7 +1414,7 @@ NS_IMETHODIMP sbMetadataJob::GetStatusText(nsAString& aText)
 
       // Ok, nothing in the main thread list, so we need to lock
       // and access the background list
-      nsAutoLock lock(mBackgroundItemsLock);
+      mozilla::MutexAutoLock lock(mBackgroundItemsLock);
       if (mNextBackgroundThreadIndex < mBackgroundThreadJobItems.Length()) {
         rv = mBackgroundThreadJobItems[mNextBackgroundThreadIndex]->
                                        GetMediaItem(getter_AddRefs(mediaItem));
@@ -1623,8 +1633,8 @@ NS_IMETHODIMP sbMetadataJob::Cancel()
   // Scope locks for background thread items
   {
     // Must lock in the same order as BatchCompleteItemsCallback.
-    nsAutoLock processedLock(mProcessedBackgroundItemsLock);
-    nsAutoLock waitingLock(mBackgroundItemsLock);
+	mozilla::MutexAutoLock processedLock(mProcessedBackgroundItemsLock);
+	mozilla::MutexAutoLock waitingLock(mBackgroundItemsLock);
     
     // Set cancelled inside of the lock to make sure
     // there is no race between checking the cancelled flag

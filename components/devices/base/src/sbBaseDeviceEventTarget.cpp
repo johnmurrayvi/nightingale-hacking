@@ -28,6 +28,7 @@
 #include "sbBaseDeviceEventTarget.h"
 
 #include <nsIThread.h>
+#include <mozilla/ReentrantMonitor.h>
 #include <nsAutoPtr.h>
 #include <nsCOMPtr.h>
 #include <nsDeque.h>
@@ -35,6 +36,7 @@
 
 #include "sbIDeviceEventListener.h"
 #include "sbDeviceEvent.h"
+#include <sbProxiedComponentManager.h>
 #include <sbThreadUtils.h>
 
 
@@ -59,20 +61,15 @@ class sbDeviceEventTargetRemovalHelper : public nsDequeFunctor {
     PRInt32 mIndexToRemove;
 };
 
-sbBaseDeviceEventTarget::sbBaseDeviceEventTarget()
+sbBaseDeviceEventTarget::sbBaseDeviceEventTarget() 
+  : mMonitor("sbBaseDeviceEventTarget.mMonitor")
 {
   /* member initializers and constructor code */
-  mMonitor = nsAutoMonitor::NewMonitor(__FILE__);
-  NS_ASSERTION(mMonitor, "Failed to create monitor");
 }
 
 sbBaseDeviceEventTarget::~sbBaseDeviceEventTarget()
 {
   /* destructor code */
-  if (mMonitor) {
-    nsAutoMonitor::DestroyMonitor(mMonitor);
-    mMonitor = nsnull;
-  }
 }
 
 /* boolean dispatchEvent (in sbIDeviceEvent aEvent, [optional] bool aAsync); */
@@ -191,8 +188,7 @@ NS_IMETHODIMP sbBaseDeviceEventTarget::AddEventListener(sbIDeviceEventListener *
     // middle of a listener, then got proxied onto a second thread)
     nsCOMPtr<sbIDeviceEventTarget> proxiedSelf;
     { /* scope the monitor */
-      NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
-      nsAutoMonitor mon(mMonitor);
+      mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
       rv = do_GetProxyForObject(NS_PROXY_TO_MAIN_THREAD,
                                 NS_GET_IID(sbIDeviceEventTarget),
                                 this,
@@ -225,8 +221,7 @@ NS_IMETHODIMP sbBaseDeviceEventTarget::RemoveEventListener(sbIDeviceEventListene
     // we need to proxy to the main thread
     nsCOMPtr<sbIDeviceEventTarget> proxiedSelf;
     { /* scope the monitor */
-      NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
-      nsAutoMonitor mon(mMonitor);
+      mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
       rv = do_GetProxyForObject(NS_PROXY_TO_MAIN_THREAD,
                                 NS_GET_IID(sbIDeviceEventTarget),
                                 this,

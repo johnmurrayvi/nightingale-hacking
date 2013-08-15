@@ -34,7 +34,7 @@
 #define SONGBIRD_MEDIASNIFFER_DESCRIPTION                  \
   "Songbird Media Sniffer"
 #define SONGBIRD_MEDIASNIFFER_CONTRACTID                   \
-  "@songbirdnest.com/sontentsniffer/manager;1"
+  "@songbirdnest.com/contentsniffer/manager;1"
 #define SONGBIRD_MEDIASNIFFER_CLASSNAME                    \
   "sbMediaSniffer"
 #define SONGBIRD_MEDIASNIFFER_CID                          \
@@ -53,16 +53,6 @@ class sbMediaSniffer : public nsIContentSniffer
 public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSICONTENTSNIFFER
-
-  static NS_METHOD Register(nsIComponentManager* compMgr,
-                            nsIFile* path, 
-                            const char* registryLocation,
-                            const char* componentType, 
-                            const nsModuleComponentInfo *info);
-  static NS_METHOD Unregister(nsIComponentManager* aCompMgr,
-                              nsIFile* aPath, 
-                              const char* aRegistryLocation,
-                              const nsModuleComponentInfo* aInfo);
 };
 
 #endif /* __SB_MEDIASNIFFER_H__ */

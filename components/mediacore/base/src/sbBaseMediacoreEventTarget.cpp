@@ -26,6 +26,7 @@
 
 #include "sbBaseMediacoreEventTarget.h"
 
+#include <mozilla/ReentrantMonitor.h>
 #include <nsComponentManagerUtils.h>
 
 #include <sbIMediacore.h>
@@ -33,16 +34,18 @@
 #include <sbIMediacoreEventListener.h>
 
 #include <sbMediacoreEvent.h>
+#include <sbProxiedComponentManager.h>
 
 /* ctor / dtor */
 sbBaseMediacoreEventTarget::sbBaseMediacoreEventTarget(sbIMediacoreEventTarget * aTarget)
-  : mTarget(aTarget),
-    mMonitor(nsAutoMonitor::NewMonitor("sbBaseMediacoreEventTarget::mMonitor"))
+  : mTarget(aTarget), mMonitor("sbBaseMediacoreEventTarget.mMonitor")
 {
+
 }
+
 sbBaseMediacoreEventTarget::~sbBaseMediacoreEventTarget()
 {
-  nsAutoMonitor::DestroyMonitor(mMonitor);
+
 }
 
 
@@ -68,8 +71,7 @@ sbBaseMediacoreEventTarget::DispatchEvent(sbIMediacoreEvent *aEvent,
     // we need to proxy to the main thread
     nsCOMPtr<sbIMediacoreEventTarget> proxiedSelf;
     { /* scope the monitor */
-      NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
-      nsAutoMonitor mon(mMonitor);
+      mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
       rv = do_GetProxyForObject(NS_PROXY_TO_MAIN_THREAD,
                                 NS_GET_IID(sbIMediacoreEventTarget),
                                 mTarget,
@@ -144,8 +146,7 @@ sbBaseMediacoreEventTarget::AddListener(sbIMediacoreEventListener *aListener)
     // middle of a listener, then got proxied onto a second thread)
     nsCOMPtr<sbIMediacoreEventTarget> proxiedSelf;
     { /* scope the monitor */
-      NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
-      nsAutoMonitor mon(mMonitor);
+      mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
       rv = do_GetProxyForObject(NS_PROXY_TO_MAIN_THREAD,
                                 NS_GET_IID(sbIMediacoreEventTarget),
                                 mTarget,
@@ -179,8 +180,7 @@ sbBaseMediacoreEventTarget::RemoveListener(sbIMediacoreEventListener *aListener)
     // we need to proxy to the main thread
     nsCOMPtr<sbIMediacoreEventTarget> proxiedSelf;
     { /* scope the monitor */
-      NS_ENSURE_TRUE(mMonitor, NS_ERROR_NOT_INITIALIZED);
-      nsAutoMonitor mon(mMonitor);
+      mozilla::ReentrantMonitorAutoEnter mon(mMonitor);
       rv = do_GetProxyForObject(NS_PROXY_TO_MAIN_THREAD,
                                 NS_GET_IID(sbIMediacoreEventTarget),
                                 mTarget,

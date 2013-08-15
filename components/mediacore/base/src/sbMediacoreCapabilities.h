@@ -34,6 +34,7 @@
 
 #include <sbIMediacoreCapabilities.h>
 
+#include <mozilla/Mutex.h>
 #include <nsStringGlue.h>
 #include <nsTArray.h>
 
@@ -69,7 +70,7 @@ public:
 protected:
   virtual ~sbMediacoreCapabilities();
 
-  PRLock *mLock;
+  mozilla::Mutex mLock;
 
   bool mSupportsAudioPlayback;
   bool mSupportsVideoPlayback;

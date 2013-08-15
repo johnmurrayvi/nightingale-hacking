@@ -52,6 +52,9 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/playlistcommands/public \
                      $(MOZSDK_IDL_DIR) \
                      $(NULL)
 
+CPP_EXTRA_FLAGS += "-std=gnu++0x" \
+                   $(NULL)
+
 DYNAMIC_LIB_EXTRA_IMPORTS = plds4 \
                             $(NULL)
 
@@ -59,10 +62,14 @@ ifeq ($(SB_PLATFORM), macosx)
    DYNAMIC_LIB_EXTRA_IMPORTS += mozjs
 endif
 
+SONGBIRD_PP_RESOURCES = $(srcdir)/playlistcommands.manifest.in \
+                        $(NULL)
+
 SONGBIRD_COMPONENTS = $(srcdir)/sbPlaylistCommandsBuilder.js \
                       $(srcdir)/sbPublicPlaylistCommands.js \
                       $(srcdir)/sbAddToPlaylist.jsm \
                       $(srcdir)/kPlaylistCommands.jsm \
+                      $(CURDIR)/playlistcommands.manifest \
                       $(NULL)
 
 IS_COMPONENT = 1

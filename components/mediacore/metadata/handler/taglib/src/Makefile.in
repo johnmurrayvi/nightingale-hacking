@@ -26,6 +26,7 @@ DEPTH = ../../../../../../
 topsrcdir = @top_srcdir@
 srcdir = @srcdir@
 VPATH = @srcdir@
+ZERO = 0
 
 include $(DEPTH)/build/autodefs.mk
 
@@ -60,8 +61,8 @@ CPP_EXTRA_INCLUDES = \
  $(MOZSDK_IDL_DIR) \
  $(NULL)
 
-CPP_EXTRA_DEFS = -DTAGLIB_STATIC \
-                 $(NULL)
+CPP_EXTRA_FLAGS += -std=gnu++0x \
+                   $(NULL)
 
 DYNAMIC_LIB_EXTRA_IMPORTS = unicharutil_external_s \
                             plds4 \
@@ -70,7 +71,6 @@ DYNAMIC_LIB_EXTRA_IMPORTS = unicharutil_external_s \
 DYNAMIC_LIB_STATIC_IMPORTS += \
  components/moz/strings/src/sbMozStringUtils \
  components/moz/threads/src/sbMozThreads \
- $(DEPS_DIR)/taglib/$(SB_CONFIGURATION)/lib/$(LIB_PREFIX)tag$(LIB_SUFFIX) \
  $(NULL)
 
 ifeq (windows,$(SB_PLATFORM))
@@ -91,8 +91,24 @@ ifeq (solaris,$(SB_PLATFORM))
    DYNAMIC_LIB_EXTRA_FLAGS += -R'$$ORIGIN/../xulrunner'
 endif
 
-CPP_EXTRA_INCLUDES += $(DEPS_DIR)/taglib/$(SB_CONFIGURATION)/include/taglib \
-                      $(NULL)
+CPP_EXTRA_FLAGS   += $(TAGLIB_CFLAGS) \
+					 -frtti \
+					  $(NULL)
+
+ifeq (system,$(SB_TAGLIB))
+	DYNAMIC_LIB_RAW_IMPORTS += $(TAGLIB_LIBS) \
+						  $(NULL)					  
+else
+	DYNAMIC_LIB_STATIC_IMPORTS += \
+		$(DEPS_DIR)/taglib/$(SB_CONFIGURATION)/lib/$(LIB_PREFIX)tag$(LIB_SUFFIX) \
+		$(NULL)
+
+	CPP_EXTRA_INCLUDES += $(DEPS_DIR)/taglib/$(SB_CONFIGURATION)/include/taglib \
+						  $(NULL)
+						  
+	CPP_EXTRA_DEFS = -DTAGLIB_STATIC \
+					 $(NULL)
+endif
         
 IS_COMPONENT = 1                     
 

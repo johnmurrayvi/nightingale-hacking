@@ -97,7 +97,8 @@ if (typeof(Cu) == "undefined")
 //
 
 var sbAddOnBundleUpdateServiceCfg = {
-  className: "Songbird Add-on Bundle Update Service",
+  classDescription: "Songbird Add-on Bundle Update Service",
+  className: "AddonBundleUpdateService",
   cid: Components.ID("{927d9849-8565-4bc4-805a-f3a6ad1b25ec}"),
   contractID: "@songbirdnest.com/AddOnBundleUpdateService;1",
   ifList: [ Ci.sbIAddOnBundleUpdateService, Ci.nsIObserver ],
@@ -114,7 +115,8 @@ sbAddOnBundleUpdateServiceCfg.categoryList = [
   {
     category: "app-startup",
     entry:    sbAddOnBundleUpdateServiceCfg.className,
-    value:    "service," + sbAddOnBundleUpdateServiceCfg.contractID
+    value:    "service," + sbAddOnBundleUpdateServiceCfg.contractID,
+    service: true
   }
 ];
 
@@ -159,7 +161,8 @@ sbAddOnBundleUpdateService.prototype = {
   //   _addOnBundleLoader       Add-on bundle loader object.
   //
 
-  classDescription: sbAddOnBundleUpdateServiceCfg.className,
+  classDescription: sbAddOnBundleUpdateServiceCfg.classDescription,
+  className: sbAddOnBundleUpdateServiceCfg.className,
   classID: sbAddOnBundleUpdateServiceCfg.cid,
   contractID: sbAddOnBundleUpdateServiceCfg.contractID,
   _xpcom_categories: sbAddOnBundleUpdateServiceCfg.categoryList,
@@ -193,6 +196,7 @@ sbAddOnBundleUpdateService.prototype = {
    */
 
   checkForUpdates: function sbAddOnBundleUpdateService_checkForUpdates() {
+    dump("AddOnBundleUpdateService::checkForUpdates()\n");
     // Ensure the services are initialized.
     this._initialize();
 
@@ -256,7 +260,10 @@ sbAddOnBundleUpdateService.prototype = {
   //
   //----------------------------------------------------------------------------
 
-  QueryInterface: XPCOMUtils.generateQI(sbAddOnBundleUpdateServiceCfg.ifList),
+  QueryInterface: XPCOMUtils.generateQI([
+    Ci.sbIAddOnBundleUpdateService, 
+    Ci.nsIObserver
+  ]),
 
 
   //----------------------------------------------------------------------------
@@ -270,6 +277,7 @@ sbAddOnBundleUpdateService.prototype = {
    */
 
   _handleAppStartup: function sbAddOnBundleUpdateService__handleAppStartup() {
+    dump("AddOnBundleUpdateService::_handleAppStartup()\n");
     // Initialize the services.
     this._initialize();
   },
@@ -281,6 +289,7 @@ sbAddOnBundleUpdateService.prototype = {
 
   _handleProfileAfterChange:
     function sbAddOnBundleUpdateService__handleProfileAfterChange() {
+    dump("AddOnBundleUpdateService::_handleProfileAfterChange()\n");
     // Preferences are now available.
     this._prefsAvailable = true;
 
@@ -295,6 +304,7 @@ sbAddOnBundleUpdateService.prototype = {
 
   _handleFinalUIStartup:
     function sbAddOnBundleUpdateService__handleFinalUIStartup() {
+    dump("AddOnBundleUpdateService::_handleFinalUIStartup()\n");
     // The network is now available.
     //XXXeps trying to load the add-on bundle too early will result in a hang
     //XXXeps during EM restart.  Not sure how to fix this better.
@@ -310,6 +320,7 @@ sbAddOnBundleUpdateService.prototype = {
    */
 
   _handleAppQuit: function sbAddOnBundleUpdateService__handleAppQuit() {
+    dump("AddOnBundleUpdateService::_handleAppQuit()\n");
     // Finalize the services.
     this._finalize();
   },
@@ -321,6 +332,7 @@ sbAddOnBundleUpdateService.prototype = {
 
   _handleAddOnUpdateTimer:
     function sbAddOnBundleUpdateService__handleAddOnUpdateTimer(aTimer) {
+    dump("AddOnBundleUpdateService::_handleAddOnUpdateTimer()\n");
     // Update the add-on bundle cache.
     this._updateAddOnBundleCache(false);
   },
@@ -337,6 +349,7 @@ sbAddOnBundleUpdateService.prototype = {
    */
 
   _initialize: function sbAddOnBundleUpdateService__initialize() {
+    dump("AddOnBundleUpdateService::_initialize()\n");
     // Do nothing if already initialized.
     if (this._isInitialized)
       return;
@@ -407,6 +420,7 @@ sbAddOnBundleUpdateService.prototype = {
    */
 
   _finalize: function sbAddOnBundleUpdateService__finalize() {
+    dump("AddOnBundleUpdateService::_finalize()\n");
     // Cancel the add-on bundle loader.
     if (this._addOnBundleLoader) {
       this._addOnBundleLoader.cancel();
@@ -427,6 +441,7 @@ sbAddOnBundleUpdateService.prototype = {
 
   _presentNewAddOns:
     function sbAddOnBundleUpdateService__presentNewAddOns() {
+    dump("AddOnBundleUpdateService::_presentNewAddOns()\n");
     // Load the add-on bundle.
     var addOnBundle = this._loadNewAddOns();
 
@@ -454,6 +469,7 @@ sbAddOnBundleUpdateService.prototype = {
    */
 
   _loadNewAddOns: function sbAddOnBundleUpdateService__loadNewAddOns() {
+    dump("AddOnBundleUpdateService::_loadNewAddOns()\n");
     // Create an add-on bundle loader.
     var addOnBundleLoader = new AddOnBundleLoader();
 
@@ -485,6 +501,7 @@ sbAddOnBundleUpdateService.prototype = {
 
   _updateAddOnBundleCache:
     function sbAddOnBundleUpdateService__updateAddOnBundleCache(aSync) {
+    dump("AddOnBundleUpdateService::_updateAddOnBundleCache()\n");
     // Start loading the add-on bundle into the cache.
     if (!this._addOnBundleLoader) {
       // Create an add-on bundle loader.
@@ -517,6 +534,7 @@ sbAddOnBundleUpdateService.prototype = {
 
   _updateAddOnBundleCacheContinue:
     function sbAddOnBundleUpdateService__updateAddOnBundleCacheContinue() {
+    dump("AddOnBundleUpdateService::_updateAddOnBundleCacheContinue()\n");
     // Clear the add-on bundle loader upon completion.
     if (this._addOnBundleLoader.complete)
       this._addOnBundleLoader = null;
@@ -531,6 +549,7 @@ sbAddOnBundleUpdateService.prototype = {
 
   _getApplicationWasUpdated:
     function sbAddOnBundleUpdateService__getApplicationWasUpdated() {
+    dump("AddOnBundleUpdateService::_getApplicationWasUpdated()\n");
     var updated = false;
 
     // Get the application services.
@@ -567,6 +586,7 @@ sbAddOnBundleUpdateService.prototype = {
 
   _updatePrevAppVersion:
     function sbAddOnBundleUpdateService__updatePrevAppVersion() {
+    dump("AddOnBundleUpdateService::_updatePrevAppVersion()\n");
     // Get the current application version.
     var appInfo = Cc["@mozilla.org/xre/app-info;1"]
                     .getService(Ci.nsIXULAppInfo);
@@ -586,7 +606,4 @@ sbAddOnBundleUpdateService.prototype = {
 //
 //------------------------------------------------------------------------------
 
-function NSGetModule(compMgr, fileSpec) {
-  return XPCOMUtils.generateModule([sbAddOnBundleUpdateService]);
-}
-
+var NSGetFactory = XPCOMUtils.generateNSGetFactory([sbAddOnBundleUpdateService]);

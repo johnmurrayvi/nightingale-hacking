@@ -28,6 +28,7 @@
 #include <sbILocalDatabaseGUIDArray.h>
 
 #include <nsDataHashtable.h>
+#include <mozilla/Mutex.h>
 
 #include <set>
 #include <map>
@@ -44,7 +45,7 @@ public:
 protected:
   virtual ~sbLocalDatabaseGUIDArrayLengthCache();
 
-  PRLock* mLock;
+  mozilla::Mutex mLock;
 
   nsDataHashtable<nsStringHashKey, PRUint32> mCachedLengths;
   nsDataHashtable<nsStringHashKey, PRUint32> mCachedNonNullLengths;

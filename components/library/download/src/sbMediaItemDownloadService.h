@@ -128,19 +128,19 @@ public:
   /**
    * Register the media item download service component.
    */
-  static NS_METHOD RegisterSelf(nsIComponentManager*         aCompMgr,
-                                nsIFile*                     aPath,
-                                const char*                  aLoaderStr,
-                                const char*                  aType,
-                                const nsModuleComponentInfo* aInfo);
+  // static NS_METHOD RegisterSelf(nsIComponentManager*         aCompMgr,
+  //                               nsIFile*                     aPath,
+  //                               const char*                  aLoaderStr,
+  //                               const char*                  aType,
+  //                               const nsModuleComponentInfo* aInfo);
 
   /**
    * Unregister the media item download service component.
    */
-  static NS_METHOD UnregisterSelf(nsIComponentManager*         aCompMgr,
-                                  nsIFile*                     aPath,
-                                  const char*                  aLoaderStr,
-                                  const nsModuleComponentInfo* aInfo);
+  // static NS_METHOD UnregisterSelf(nsIComponentManager*         aCompMgr,
+  //                                 nsIFile*                     aPath,
+  //                                 const char*                  aLoaderStr,
+  //                                 const nsModuleComponentInfo* aInfo);
 
 
   //----------------------------------------------------------------------------

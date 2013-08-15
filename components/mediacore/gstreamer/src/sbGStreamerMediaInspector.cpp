@@ -35,6 +35,7 @@
 #include <sbIMediaInspector.h>
 #include <sbIMediaFormatMutable.h>
 
+#include <nsIClassInfoImpl.h>
 #include <nsIWritablePropertyBag2.h>
 #include <nsServiceManagerUtils.h>
 #include <nsThreadUtils.h>
@@ -58,6 +59,8 @@ static PRLogModuleInfo* gGStreamerMediaInspector = PR_NewLogModule("sbGStreamerM
 #define TRACE(args) /* nothing */
 #endif /* PR_LOGGING */
 
+NS_IMPL_CLASSINFO(sbGStreamerMediaInspector, NULL, nsIClassInfo::THREADSAFE, SB_GSTREAMER_MEDIAINSPECTOR_CID)
+
 NS_IMPL_THREADSAFE_ISUPPORTS7(sbGStreamerMediaInspector,
                               nsIClassInfo,
                               sbIGStreamerPipeline,
@@ -73,7 +76,6 @@ NS_IMPL_CI_INTERFACE_GETTER4(sbGStreamerMediaInspector,
                              sbIJobProgress,
                              sbIJobCancelable)
 
-NS_DECL_CLASSINFO(sbGstreamerMediaInspector);
 NS_IMPL_THREADSAFE_CI(sbGStreamerMediaInspector);
 
 sbGStreamerMediaInspector::sbGStreamerMediaInspector() :

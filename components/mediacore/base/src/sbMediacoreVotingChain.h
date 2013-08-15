@@ -34,6 +34,7 @@
 
 #include <sbIMediacoreVotingChain.h>
 
+#include <mozilla/Mutex.h>
 #include <nsCOMPtr.h>
 #include <nsDataHashtable.h>
 #include <nsHashKeys.h>
@@ -60,7 +61,7 @@ public:
 protected:
   virtual ~sbMediacoreVotingChain();
 
-  PRLock *mLock;
+  mozilla::Mutex mLock;
   
   typedef std::map<PRUint32, nsCOMPtr<sbIMediacore> > votingmap_t;
   votingmap_t mResults;

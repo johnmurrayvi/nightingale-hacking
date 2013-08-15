@@ -166,7 +166,7 @@ sbDeviceLibraryMediaSyncSettings::GetMgmtType(PRUint32 *aSyncMgmtType)
 {
   NS_ENSURE_ARG_POINTER(aSyncMgmtType);
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
-  nsAutoLock lock(mLock);
+  sbSimpleAutoLock lock(mLock);
   *aSyncMgmtType = mSyncMgmtType;
   return NS_OK;
 }
@@ -179,7 +179,7 @@ sbDeviceLibraryMediaSyncSettings::GetLastActiveMgmtType
   NS_ENSURE_ARG_POINTER(aLastActiveSyncMgmtType);
   // jhawk do I actually need to lock this?
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
-  nsAutoLock lock(mLock);
+  sbSimpleAutoLock lock(mLock);
   *aLastActiveSyncMgmtType = mLastActiveSyncMgmtType;
   return NS_OK;
 }
@@ -190,7 +190,7 @@ sbDeviceLibraryMediaSyncSettings::SetMgmtType(PRUint32 aSyncMgmtType)
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
 
   {
-    nsAutoLock lock(mLock);
+    sbSimpleAutoLock lock(mLock);
     if (mSyncMgmtType != sbIDeviceLibraryMediaSyncSettings::SYNC_MGMT_NONE) {
       mLastActiveSyncMgmtType = mSyncMgmtType;
     }
@@ -205,7 +205,7 @@ sbDeviceLibraryMediaSyncSettings::GetImport(bool *aImport)
 {
   NS_ENSURE_ARG_POINTER(aImport);
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
-  nsAutoLock lock(mLock);
+  sbSimpleAutoLock lock(mLock);
   *aImport = mImport ? PR_TRUE : PR_FALSE;
   return NS_OK;
 }
@@ -216,7 +216,7 @@ sbDeviceLibraryMediaSyncSettings::SetImport(bool aImport)
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
 
   {
-    nsAutoLock lock(mLock);
+    sbSimpleAutoLock lock(mLock);
     mImport = aImport == PR_TRUE;
   }
 
@@ -249,7 +249,7 @@ sbDeviceLibraryMediaSyncSettings::GetSelectedPlaylists(
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
   nsresult rv;
 
-  nsAutoLock lock(mLock);
+  sbSimpleAutoLock lock(mLock);
 
   rv = GetSelectedPlaylistsNoLock(aSelectedPlaylists);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -267,7 +267,7 @@ sbDeviceLibraryMediaSyncSettings::SetSelectedPlaylists(
   nsresult rv;
 
   {
-    nsAutoLock lock(mLock);
+    sbSimpleAutoLock lock(mLock);
 
     mPlaylistsSelection.Enumerate(ResetSelection, nsnull);
 
@@ -294,7 +294,7 @@ sbDeviceLibraryMediaSyncSettings::SetPlaylistSelected(sbIMediaList *aPlaylist,
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
 
   {
-    nsAutoLock lock(mLock);
+    sbSimpleAutoLock lock(mLock);
     nsCOMPtr<nsISupports> supports = do_QueryInterface(aPlaylist);
     mPlaylistsSelection.Put(supports, aSelected);
   }
@@ -307,7 +307,7 @@ sbDeviceLibraryMediaSyncSettings::GetPlaylistSelected(sbIMediaList *aPlaylist,
                                                       bool * aSelected)
 {
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
-  nsAutoLock lock(mLock);
+  sbSimpleAutoLock lock(mLock);
 
   nsCOMPtr<nsISupports> supports = do_QueryInterface(aPlaylist);
   bool exists = mPlaylistsSelection.Get(supports, aSelected);
@@ -323,7 +323,7 @@ sbDeviceLibraryMediaSyncSettings::ClearSelectedPlaylists()
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
 
   {
-    nsAutoLock lock(mLock);
+    sbSimpleAutoLock lock(mLock);
     mPlaylistsSelection.Enumerate(ResetSelection, nsnull);
   }
 
@@ -334,7 +334,7 @@ NS_IMETHODIMP
 sbDeviceLibraryMediaSyncSettings::GetSyncFolder(nsAString & aSyncFolder)
 {
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
-  nsAutoLock lock(mLock);
+  sbSimpleAutoLock lock(mLock);
 
   aSyncFolder = mSyncFolder;
 
@@ -347,7 +347,7 @@ sbDeviceLibraryMediaSyncSettings::SetSyncFolder(const nsAString & aSyncFolder)
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
 
   {
-    nsAutoLock lock(mLock);
+    sbSimpleAutoLock lock(mLock);
     mSyncFolder = aSyncFolder;
   }
 
@@ -358,7 +358,7 @@ NS_IMETHODIMP
 sbDeviceLibraryMediaSyncSettings::GetSyncFromFolder(nsIFile ** aSyncFromFolder)
 {
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
-  nsAutoLock lock(mLock);
+  sbSimpleAutoLock lock(mLock);
 
   nsresult rv;
 
@@ -396,7 +396,7 @@ sbDeviceLibraryMediaSyncSettings::SetSyncFromFolder(
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
 
   {
-    nsAutoLock lock(mLock);
+    sbSimpleAutoLock lock(mLock);
     nsresult rv = aSyncFromFolder->Clone(getter_AddRefs(mSyncFromFolder));
     NS_ENSURE_SUCCESS(rv, rv);
   }
@@ -441,7 +441,7 @@ sbDeviceLibraryMediaSyncSettings::GetSyncPlaylists(nsIArray ** aSyncPlaylists)
 {
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
 
-  nsAutoLock lock(mLock);
+  sbSimpleAutoLock lock(mLock);
   return GetSyncPlaylistsNoLock(aSyncPlaylists);
 }
 

@@ -40,4 +40,12 @@ CPP_EXTRA_INCLUDES = \
                $(DEPTH)/components/moz/proxy/public \
                $(NULL)
 
+CPP_EXTRA_INCLUDES = \
+                $(topsrcdir)/components/moz/proxy/src \
+               	$(DEPTH)/components/moz/proxy/public \
+                $(NULL)
+
+CPP_EXTRA_FLAGS += -std=gnu++0x \
+                   $(NULL)
+
 include $(topsrcdir)/build/rules.mk

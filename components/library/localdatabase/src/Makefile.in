@@ -131,6 +131,9 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/dbengine/public \
                      $(topsrcdir)/components/sqlbuilder/src \
                      $(NULL)
 
+CPP_EXTRA_FLAGS += -std=gnu++0x \
+                   $(NULL)
+
 ifdef DEBUG
    CPP_EXTRA_INCLUDES += $(MOZSDK_INCLUDE_DIR)/xpconnect \
                          $(MOZSDK_INCLUDE_DIR)/js \
@@ -158,8 +161,12 @@ else
 	 $(NULL)
 endif
 
+SONGBIRD_PP_RESOURCES = $(srcdir)/library-localdatabase.manifest.in \
+                        $(NULL)
+
 SONGBIRD_COMPONENTS = $(srcdir)/sbSmartMediaListsUpdater.js \
                       $(srcdir)/sbLocalDatabaseMigrationHelper.js \
+                      $(CURDIR)/library-localdatabase.manifest \
                       $(NULL)
 
 IS_COMPONENT = 1

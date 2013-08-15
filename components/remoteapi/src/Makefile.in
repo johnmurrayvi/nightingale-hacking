@@ -80,6 +80,7 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/remoteapi/public \
                      $(DEPTH)/components/devicesobsolete/base/public \
                      $(DEPTH)/components/devicesobsolete/download/public \
                      $(DEPTH)/bindings/public \
+                     $(DEPTH)/components/moz/strings/components/public \
                      $(topsrcdir)/components/moz/strings/src \
                      $(topsrcdir)/components/library/localdatabase/src \
                      $(topsrcdir)/components/property/src \
@@ -102,6 +103,9 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/remoteapi/public \
                      $(MOZSDK_INCLUDE_DIR)/windowwatcher \
                      $(MOZSDK_INCLUDE_DIR)/xpconnect \
                      $(NULL)
+
+CPP_EXTRA_FLAGS += "-std=gnu++0x" \
+                   $(NULL)
 
 DYNAMIC_LIB_STATIC_IMPORTS = components/moz/strings/src/sbMozStringUtils \
                              $(NULL)

@@ -34,6 +34,8 @@
 #include <nsCOMArray.h>
 #include <nsDataHashtable.h>
 #include <nsStringGlue.h>
+#include <mozilla/Mutex.h>
+#include <mozilla/ReentrantMonitor.h>
 
 #include <nsIClassInfo.h>
 #include <nsIObserver.h>
@@ -111,7 +113,7 @@ public:
   nsresult ToString(nsAString& _retval);
 
 protected:
-  PRLock* mLock;
+  mozilla::Mutex mLock;
 
   nsString mPropertyID;
   nsString mOperatorString;
@@ -230,13 +232,13 @@ private:
 
   nsresult WriteConfiguration();
 
-  PRMonitor* mInnerMonitor;
+  mozilla::ReentrantMonitor mInnerMonitor;
 
   nsCOMPtr<sbIMediaItem> mItem;
   nsCOMPtr<sbILocalDatabaseMediaItem> mLocalDBItem;
   nsCOMPtr<sbIMediaList> mList;
 
-  PRMonitor* mConditionsMonitor;
+  mozilla::ReentrantMonitor mConditionsMonitor;
   nsTArray<sbRefPtrCondition> mConditions;
 
   PRUint32    mMatchType;
@@ -245,7 +247,7 @@ private:
   nsString    mSelectPropertyID;
   bool      mSelectDirection;
   bool      mRandomSelection;
-  PRMonitor * mAutoUpdateMonitor;
+  mozilla::ReentrantMonitor mAutoUpdateMonitor;
   PRUint32    mAutoUpdate;
   PRUint32    mNotExistsMode;
 
@@ -253,12 +255,12 @@ private:
   nsCOMPtr<sbILocalDatabasePropertyCache> mPropertyCache;
   nsCOMPtr<sbILocalDatabaseLibrary> mLocalDatabaseLibrary;
 
-  PRMonitor * mListenersMonitor;
+  mozilla::ReentrantMonitor mListenersMonitor;
   nsCOMArray<sbILocalDatabaseSmartMediaListListener> mListeners;
 
   nsString mClearListQuery;
 
-  PRMonitor * mSourceMonitor;
+  mozilla::ReentrantMonitor mSourceMonitor;
   nsString mSourceLibraryGuid;
 };
 
