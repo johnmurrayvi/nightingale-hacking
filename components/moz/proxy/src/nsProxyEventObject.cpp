@@ -216,7 +216,7 @@ nsProxyEventObject::CallMethod(PRUint16 methodIndex,
         return rv;
 
     bool callDirectly = false;
-    if (GetProxyType() & NS_PROXY_SYNC &&
+    if ((GetProxyType() & NS_PROXY_SYNC) &&
         NS_SUCCEEDED(GetTarget()->IsOnCurrentThread(&callDirectly)) &&
         callDirectly) {
 
@@ -242,8 +242,8 @@ nsProxyEventObject::CallMethod(PRUint16 methodIndex,
 
     // Post synchronously
 
-    nsIThread **thread;
-    NS_GetCurrentThread(thread);
+    nsIThread *thread;
+    NS_GetCurrentThread(&thread);
     
     nsCOMPtr<nsIThreadInternal> threadInt = do_QueryInterface(thread);
     NS_ENSURE_STATE(threadInt);
@@ -261,7 +261,7 @@ nsProxyEventObject::CallMethod(PRUint16 methodIndex,
     rv = GetTarget()->Dispatch(proxyInfo, NS_DISPATCH_NORMAL);
     if (NS_SUCCEEDED(rv)) {
         while (!proxyInfo->GetCompleted()) {
-            if (!NS_ProcessNextEvent(thread)) {
+            if (!NS_ProcessNextEvent(thread, true)) {
                 rv = NS_ERROR_UNEXPECTED;
                 break;
             }

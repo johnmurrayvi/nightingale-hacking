@@ -147,6 +147,8 @@ private:
     };
 
     friend class nsProxyObjectDestructorEvent;
+    // let nsAutoPtr call our destructor
+    friend class nsAutoPtr<nsProxyObject>;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsProxyObject, NS_PROXYOBJECT_CLASS_IID)
@@ -265,6 +267,86 @@ private:
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsProxyObjectCallInfo, NS_PROXYEVENT_IID)
 
+
+class nsProxyEventKey : public PLDHashEntryHdr
+{
+public:
+    // KeyType is what we use when Get()ing or Put()ing this entry
+    // this should either be a simple datatype (PRUint32, nsISupports*) or
+    // a const reference (const nsAString&)
+    typedef nsProxyObject* KeyType;
+
+    // KeyTypePointer is the pointer-version of KeyType, because pldhash.h
+    // requires keys to cast to <code>const void*</code>
+    typedef const PRInt32* KeyTypePointer;
+
+    nsProxyEventKey(KeyTypePointer aKey);
+
+    // the copy constructor must be defined, even if AllowMemMove() == true
+    // or you will cause link errors!
+    nsProxyEventKey(const nsProxyEventKey& aEnt);
+
+    // the destructor must be defined... or you will cause link errors!
+    ~nsProxyEventKey();
+
+    // KeyEquals(): does this entry match this key?
+    bool KeyEquals(KeyTypePointer aKey) const
+    {
+        const nsProxyEventKey* other = (const nsProxyEventKey*)aKey;
+        return mRootObjectKey == other->mRootObjectKey
+            && mTargetKey == other->mTargetKey
+            && mProxyType == other->mProxyType;
+    }
+
+    // KeyToPointer(): Convert KeyType to KeyTypePointer
+    static KeyTypePointer KeyToPointer(KeyType aKey);
+
+    // HashKey(): calculate the hash number
+    PLDHashNumber HashKey(KeyTypePointer aKey)
+    {
+        return NS_PTR_TO_INT32(mRootObjectKey) ^
+            NS_PTR_TO_INT32(mTargetKey) ^ mProxyType;
+    }
+
+    // ALLOW_MEMMOVE can we move this class with memmove(), or do we have
+    // to use the copy constructor?
+    enum { ALLOW_MEMMOVE = false };
+
+    nsProxyEventKey(void* rootObjectKey, void* targetKey, PRInt32 proxyType)
+        : mRootObjectKey(rootObjectKey), mTargetKey(targetKey), mProxyType(proxyType)
+    {
+
+    }
+
+    PRInt32 operator*(nsProxyEventKey &aPKey)
+    {
+        return NS_PTR_TO_INT32(aPKey.mRootObjectKey) ^
+            NS_PTR_TO_INT32(aPKey.mTargetKey) ^ aPKey.mProxyType;
+    }
+    PRUint32 HashCode(void) const {
+        return NS_PTR_TO_INT32(mRootObjectKey) ^
+            NS_PTR_TO_INT32(mTargetKey) ^ mProxyType;
+    }
+
+    bool KeyEquals(const KeyTypePointer aKey) {
+        const nsProxyEventKey* other = (const nsProxyEventKey*)aKey;
+        return mRootObjectKey == other->mRootObjectKey
+            && mTargetKey == other->mTargetKey
+            && mProxyType == other->mProxyType;
+    }
+
+//    nsHashKey *Clone() const {
+//        return new nsProxyEventKey(mRootObjectKey, mTargetKey, mProxyType);
+//    }
+
+protected:
+    void*        mRootObjectKey;
+    void*        mTargetKey;
+    PRInt32      mProxyType;
+    friend class nsTHashtable<nsProxyEventKey>;
+};
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // nsProxyObjectManager
 ////////////////////////////////////////////////////////////////////////////////
@@ -300,7 +382,8 @@ private:
     ~nsProxyObjectManager();
 
     static nsProxyObjectManager* gInstance;
-    nsTHashtable<nsStringHashKey> mProxyObjectMap;
+    nsTHashtable<nsProxyEventKey> mProxyObjectMap;
+    // nsClassHashtable<nsProxyEventKey, nsProxyObject> mProxyObjectMap;
     nsClassHashtable<nsIDHashKey, nsProxyEventClass> mProxyClassMap;
     Mutex mProxyCreationLock;
 };
