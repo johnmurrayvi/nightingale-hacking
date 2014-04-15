@@ -35,6 +35,7 @@
 #include <nsStringAPI.h>
 #include <nsThreadUtils.h>
 
+#include <sbComponentManager.h>
 #include <mozilla/Services.h>
 #include <nsXPCOMCIDInternal.h>
 
@@ -197,6 +198,7 @@ SB_NewURI(nsIURI**          aURI,
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Get a main thread URI.
+//  nsCOMPtr<nsIURI> mainThreadURI = do_MainThreadQueryInterface(uri, &rv);
   nsCOMPtr<nsIURI> mainThreadURI = do_MainThreadQueryInterface(uri, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 

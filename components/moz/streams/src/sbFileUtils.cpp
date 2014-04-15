@@ -205,10 +205,8 @@ inline
 nsCOMPtr<nsIIOService> GetIOService(nsresult & rv)
 {
   // Get the IO service.
-  if (NS_IsMainThread()) {
-    return do_GetIOService(&rv);
-  }
-  return do_ProxiedGetService(NS_IOSERVICE_CONTRACTID, &rv);
+  MOZ_ASSERT(NS_IsMainThread());
+  return do_GetIOService(&rv);
 }
 
 nsresult

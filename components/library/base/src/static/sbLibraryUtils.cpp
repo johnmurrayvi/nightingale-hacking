@@ -31,7 +31,6 @@
 
 #include <nsIFile.h>
 #include <nsIFileURL.h>
-#include <nsIProxyObjectManager.h>
 #include <nsIThread.h>
 #include <nsIURI.h>
 
@@ -55,7 +54,8 @@
 #include <sbArrayUtils.h>
 #include <sbFileUtils.h>
 #include <sbPropertiesCID.h>
-#include <sbProxiedComponentManager.h>
+//#include <sbProxiedComponentManager.h>
+
 #include "sbMediaListEnumSingleItemHelper.h"
 #include <sbStandardProperties.h>
 #include <sbStringUtils.h>
@@ -394,6 +394,7 @@ nsresult sbLibraryUtils::GetContentLength(/* in */  sbIMediaItem * aItem,
     // try to get the length from disk
     nsCOMPtr<sbIMediaItem> item(aItem);
 
+/*
     if (!NS_IsMainThread()) {
       // Proxy item to get contentURI.
       // Note that we do *not* call do_GetProxyForObject if we're already on
@@ -408,6 +409,8 @@ nsresult sbLibraryUtils::GetContentLength(/* in */  sbIMediaItem * aItem,
                                 getter_AddRefs(item));
       NS_ENSURE_SUCCESS(rv, rv);
     }
+*/
+    MOZ_ASSERT(NS_IsMainThread());
 
     nsCOMPtr<nsIURI> contentURI;
     rv = item->GetContentSrc(getter_AddRefs(contentURI));
@@ -502,10 +505,8 @@ inline
 nsCOMPtr<nsIIOService> GetIOService(nsresult & rv)
 {
   // Get the IO service.
-  if (NS_IsMainThread()) {
-    return do_GetIOService(&rv);
-  }
-  return do_ProxiedGetService(NS_IOSERVICE_CONTRACTID, &rv);
+  MOZ_ASSERT(NS_IsMainThread());
+  return do_GetIOService(&rv);
 }
 
 /* static */

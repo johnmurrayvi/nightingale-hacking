@@ -847,8 +847,7 @@ sbLibraryConstraintGroup::ToString(nsAString& _retval)
 nsresult
 sbLibraryConstraintGroup::Init()
 {
-  bool success = mConstraintGroup.Init();
-  NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
+  mConstraintGroup.Init();
 
   mInitialized = PR_TRUE;
 
@@ -876,8 +875,7 @@ sbLibraryConstraintGroup::Add(const nsAString& aProperty,
     // in to the hashtable
   }
   else {
-    bool success = mConstraintGroup.Put(aProperty, array);
-    NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
+    mConstraintGroup.Put(aProperty, array);
 
     // We've transfered ownership to the hashtable so forget it
     array.forget();
@@ -922,8 +920,7 @@ sbLibraryConstraintGroup::Read(nsIObjectInputStream* aStream)
       NS_ENSURE_TRUE(added, NS_ERROR_OUT_OF_MEMORY);
     }
 
-    bool success = mConstraintGroup.Put(property, array);
-    NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
+    mConstraintGroup.Put(property, array);
   }
 
   return NS_OK;

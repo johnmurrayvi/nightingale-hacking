@@ -54,7 +54,7 @@
 #include <sbLibraryUtils.h>
 #include <sbDebugUtils.h>
 #include <sbThreadUtils.h>
-#include <sbProxiedComponentManager.h>
+//#include <sbProxiedComponentManager.h>
 
 /* for sbILibraryUtils::GetCanonicalPath */
 #if XP_WIN
@@ -107,11 +107,9 @@ sbLibraryManager::Init()
 
   nsresult rv;
 
-  bool success = mLibraryTable.Init();
-  NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
+  mLibraryTable.Init();
 
-  success = mListeners.Init();
-  NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
+  mListeners.Init();
 
   // Get the thread manager.  This is used so that main thread checks work
   // during XPCOM shutdown.
@@ -646,8 +644,7 @@ sbLibraryManager::RegisterLibrary(sbILibrary* aLibrary,
   {
     mozilla::MutexAutoLock lock(mLock);
 
-    bool success = mLibraryTable.Put(libraryGUID, newLibraryInfo);
-    NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
+    mLibraryTable.Put(libraryGUID, newLibraryInfo);
 
     newLibraryInfo.forget();
   }
@@ -747,8 +744,7 @@ sbLibraryManager::SetLibraryLoadsAtStartup(sbILibrary* aLibrary,
     return NS_ERROR_UNEXPECTED;
   }
 
-  bool success = mLibraryTable.Put(libraryGUID, libraryInfo);
-  NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
+  mLibraryTable.Put(libraryGUID, libraryInfo);
   
   libraryInfo.forget();
   return NS_OK;
@@ -832,8 +828,7 @@ sbLibraryManager::AddListener(sbILibraryManagerListener* aListener)
   mozilla::MutexAutoLock lock(mLock);
 
   // Add the proxy to the hash table, using the listener as the key.
-  bool success = mListeners.Put(aListener, proxy);
-  NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
+  mListeners.Put(aListener, proxy);
 
   return NS_OK;
 }
