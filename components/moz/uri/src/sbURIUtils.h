@@ -35,7 +35,53 @@
 #include <nsStringAPI.h>
 #include <nsThreadUtils.h>
 
-#include <sbProxiedComponentManager.h>
+#include <mozilla/Services.h>
+#include <nsXPCOMCIDInternal.h>
+
+typedef void (*GetIOServiceCallback)(const nsCString& result); // Callback function
+void GetIOServiceAsync();
+
+class GetIOServiceResultTask : public nsRunnable
+{
+  public:
+    GetIOServiceResultTask(GetIOServiceCallback callback, const nsACString& result)
+      : mCallback(callback), mResult(result), mWorkerThread(do_GetCurrentThread())
+    {
+      MOZ_ASSERT(!NS_IsMainThread());
+    }
+
+    NS_IMETHOD Run() 
+    {
+      MOZ_ASSERT(NS_IsMainThread());
+      mCallback(mResult);
+      mWorkerThread->Shutdown();
+      return NS_OK;
+    }
+
+  private:
+    GetIOServiceCallback mCallback;
+    nsCString mResult;
+    nsCOMPtr<nsIThread> mWorkerThread;
+};
+
+class GetIOServiceTask : public nsRunnable
+{
+  public:
+    GetIOServiceTask(GetIOServiceCallback callback) : mCallback(callback)
+    { }
+
+    NS_IMETHOD Run()
+    {
+      nsCString result;
+      nsCOMPtr<nsIRunnable> resultRunnable = new 
+          GetIOServiceResultTask(mCallback, result);
+      NS_DispatchToMainThread(resultRunnable);
+      return NS_OK;
+    }
+
+  private:
+    GetIOServiceCallback mCallback;
+};
 
 static inline nsresult
 sbGetFileExtensionFromURI(nsIURI* aURI, nsACString& _retval)
@@ -107,14 +153,11 @@ SB_GetIOService(nsIIOService** aIOService)
 
   // Get the IO service.
   nsCOMPtr<nsIIOService> ioService;
-  if (NS_IsMainThread()) {
-    ioService = do_GetService(NS_IOSERVICE_CONTRACTID, &rv);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-  else {
-    ioService = do_ProxiedGetService(NS_IOSERVICE_CONTRACTID, &rv);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
+
+  MOZ_ASSERT(NS_IsMainThread());
+
+  ioService = do_GetService(NS_IOSERVICE_CONTRACTID, &rv);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   // Return results.
   ioService.forget(aIOService);

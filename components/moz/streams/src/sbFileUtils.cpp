@@ -38,7 +38,6 @@
 #include <nsNetUtil.h>
 
 #include <sbMemoryUtils.h>
-#include <sbProxiedComponentManager.h>
 #include <sbURIUtils.h>
 
 /**
@@ -222,8 +221,9 @@ sbNewFileURI(nsIFile* aFile,
   nsresult rv;
 
   // Get the IO service.
-  nsCOMPtr<nsIIOService> ioService = GetIOService(rv);
-  NS_ENSURE_SUCCESS(rv, rv);
+  // nsCOMPtr<nsIIOService> ioService = GetIOService(rv);
+  // NS_ENSURE_SUCCESS(rv, rv);
+  nsCOMPtr<nsIIOService> ioService = mozilla::services::GetIOService();
 
   // Note that NewFileURI is broken on Linux when dealing with
   // file names not in the filesystem charset; see bug 6227
@@ -262,7 +262,8 @@ sbNewFileURI(nsIFile* aFile,
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Get a main thread URI.
-  nsCOMPtr<nsIURI> mainThreadURI = do_MainThreadQueryInterface(uri, &rv);
+  // nsCOMPtr<nsIURI> mainThreadURI = do_MainThreadQueryInterface(uri, &rv);
+  nsCOMPtr<nsIURI> mainThreadURI = do_QueryInterface(uri, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Return results.
