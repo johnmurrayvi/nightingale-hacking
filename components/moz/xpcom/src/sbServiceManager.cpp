@@ -150,8 +150,7 @@ sbServiceManager::SetServiceReady(const char* aServiceContractID,
   nsAutoString serviceContractID = NS_ConvertUTF8toUTF16(aServiceContractID);
   if (aServiceReady) {
     // Add the service to the ready service table.
-    success = mReadyServiceTable.Put(serviceContractID, PR_TRUE);
-    NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
+    mReadyServiceTable.Put(serviceContractID, PR_TRUE);
 
     // Send notification that the service is ready.
     rv = mObserverService->NotifyObservers(this,
@@ -234,8 +233,7 @@ sbServiceManager::Initialize()
     return NS_OK;
 
   // Initialize the table of ready services.
-  bool success = mReadyServiceTable.Init();
-  NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
+  mReadyServiceTable.Init();
 
   // Get a proxied observer service.
   mObserverService = do_GetService("@mozilla.org/observer-service;1",
