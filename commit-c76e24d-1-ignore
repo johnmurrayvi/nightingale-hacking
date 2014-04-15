@@ -1,0 +1,94 @@
+commit c76e24d28458c7590ca1ccfa1f2dfbd0c76c99e1
+Author: John Murray <johnmurrayvi@gmail.com>
+Date:   Sat Aug 31 16:37:01 2013 -0400
+
+    ignore return values that are supposed to be ignored
+
+diff --git a/components/property/src/sbImageLabelLinkPropertyBuilder.cpp b/components/property/src/sbImageLabelLinkPropertyBuilder.cpp
+index 6434c29..103ad54 100644
+--- a/components/property/src/sbImageLabelLinkPropertyBuilder.cpp
++++ b/components/property/src/sbImageLabelLinkPropertyBuilder.cpp
+@@ -112,8 +112,7 @@ sbImageLabelLinkPropertyBuilder::AddImage(const nsACString & aKey,
+                                           const nsACString & aImageUrl)
+ {
+   NS_ENSURE_TRUE(mImages, NS_ERROR_NOT_INITIALIZED);
+-  bool success = mImages->Put(aKey, new nsCString(aImageUrl));
+-  NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
++  mImages->Put(aKey, new nsCString(aImageUrl));
+   return NS_OK;
+ }
+ 
+@@ -157,8 +156,7 @@ sbImageLabelLinkPropertyBuilder::AddLabel(const nsACString & aKey,
+     value = SBLocalizedString(Substring(aLabel, 1, aLabel.Length() - 2));
+   }
+ 
+-  bool success = mLabels->Put(aKey, new nsString(value));
+-  NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
++  mLabels->Put(aKey, new nsString(value));
+   return NS_OK;
+ }
+ 
+diff --git a/components/property/src/sbImageLabelLinkPropertyInfo.cpp b/components/property/src/sbImageLabelLinkPropertyInfo.cpp
+index b6ea7ce..401da2d 100644
+--- a/components/property/src/sbImageLabelLinkPropertyInfo.cpp
++++ b/components/property/src/sbImageLabelLinkPropertyInfo.cpp
+@@ -191,8 +191,7 @@ sbImageLabelLinkPropertyInfo::AddImage(const nsACString & aKey,
+     return NS_OK;
+   }
+ 
+-  bool success = mImages->Put(aKey, new nsCString(aImageUrl));
+-  NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
++  mImages->Put(aKey, new nsCString(aImageUrl));
+   return NS_OK;
+ }
+ 
+@@ -217,8 +216,7 @@ sbImageLabelLinkPropertyInfo::AddLabel(const nsACString & aKey,
+     value = SBLocalizedString(Substring(aLabel, 1, aLabel.Length() - 2));
+   }
+ 
+-  bool success = mLabels->Put(aKey, new nsString(value));
+-  NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
++  mLabels->Put(aKey, new nsString(value));
+   return NS_OK;
+ }
+ 
+diff --git a/components/property/src/sbPropertyManager.cpp b/components/property/src/sbPropertyManager.cpp
+index fafe83d..a8a3be8 100644
+--- a/components/property/src/sbPropertyManager.cpp
++++ b/components/property/src/sbPropertyManager.cpp
+@@ -114,13 +114,8 @@ sbPropertyManager::sbPropertyManager()
+   }
+ #endif
+ 
+-  bool success = mPropInfoHashtable.Init(100);
+-  NS_ASSERTION(success,
+-    "sbPropertyManager::mPropInfoHashtable failed to initialize!");
+-
+-  success = mPropDependencyMap.Init(100);
+-  NS_ASSERTION(success,
+-    "sbPropertyManager::mPropInfoHashtable failed to initialize!");
++  mPropInfoHashtable.Init(100);
++  mPropDependencyMap.Init(100);
+ 
+   mPropIDsLock = PR_NewLock();
+   NS_ASSERTION(mPropIDsLock,
+@@ -187,8 +182,7 @@ NS_IMETHODIMP sbPropertyManager::AddPropertyInfo(sbIPropertyInfo *aPropertyInfo)
+   rv = aPropertyInfo->GetId(id);
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+-  success = mPropInfoHashtable.Put(id, aPropertyInfo);
+-  NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
++  mPropInfoHashtable.Put(id, aPropertyInfo);
+ 
+   PR_Lock(mPropIDsLock);
+   mPropIDs.AppendElement(id);
+@@ -321,8 +315,7 @@ NS_IMETHODIMP sbPropertyManager::GetDependentProperties(const nsAString & aId,
+       rv = deps->SetStrict(PR_FALSE);
+       NS_ENSURE_SUCCESS(rv, rv);
+ 
+-      success = mPropDependencyMap.Put(mPropIDs.ElementAt(i), deps);
+-      NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
++      mPropDependencyMap.Put(mPropIDs.ElementAt(i), deps);
+     }
+ 
+     // Now populate the dependency arrays using the property infos

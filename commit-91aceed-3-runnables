@@ -1,0 +1,150 @@
+commit 91aceedd078fc5e85c6346d7570195d350002a64
+Author: John Murray <johnmurrayvi@gmail.com>
+Date:   Sat Aug 31 16:41:43 2013 -0400
+
+    initial/brief hacking on making runnables
+
+diff --git a/components/moz/streams/src/sbFileUtils.cpp b/components/moz/streams/src/sbFileUtils.cpp
+index d16443d..2e69caf 100644
+--- a/components/moz/streams/src/sbFileUtils.cpp
++++ b/components/moz/streams/src/sbFileUtils.cpp
+@@ -205,10 +205,10 @@ inline
+ nsCOMPtr<nsIIOService> GetIOService(nsresult & rv)
+ {
+   // Get the IO service.
+-  if (NS_IsMainThread()) {
++   if (NS_IsMainThread()) {
+     return do_GetIOService(&rv);
+-  }
+-  return do_ProxiedGetService(NS_IOSERVICE_CONTRACTID, &rv);
++   }
++   return do_ProxiedGetService(NS_IOSERVICE_CONTRACTID, &rv);
+ }
+ 
+ nsresult
+@@ -221,8 +221,7 @@ sbNewFileURI(nsIFile* aFile,
+   nsresult rv;
+ 
+   // Get the IO service.
+-  nsCOMPtr<nsIIOService> ioService = GetIOService(rv);
+-  NS_ENSURE_SUCCESS(rv, rv);
++  nsCOMPtr<nsIIOService> ioService = mozilla::services::GetIOService();
+ 
+   // Note that NewFileURI is broken on Linux when dealing with
+   // file names not in the filesystem charset; see bug 6227
+@@ -261,7 +260,8 @@ sbNewFileURI(nsIFile* aFile,
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+   // Get a main thread URI.
+-  nsCOMPtr<nsIURI> mainThreadURI = do_MainThreadQueryInterface(uri, &rv);
++  // nsCOMPtr<nsIURI> mainThreadURI = do_MainThreadQueryInterface(uri, &rv);
++  nsCOMPtr<nsIURI> mainThreadURI = do_QueryInterface(uri, &rv);
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+   // Return results.
+diff --git a/components/moz/uri/src/sbURIUtils.h b/components/moz/uri/src/sbURIUtils.h
+index b12cb13..4a7575e 100644
+--- a/components/moz/uri/src/sbURIUtils.h
++++ b/components/moz/uri/src/sbURIUtils.h
+@@ -34,8 +34,53 @@
+ #include <nsNetError.h>
+ #include <nsStringAPI.h>
+ #include <nsThreadUtils.h>
++#include <mozilla/Services.h>
++#include <nsXPCOMCIDInternal.h>
++
++
++typedef void (*GetIOServiceCallback)(const nsCString& result); // Callback function
++void GetIOServiceAsync();
++
++class GetIOServiceResultTask : public nsRunnable
++{
++  public:
++    GetIOServiceResultTask(GetIOServiceCallback callback, const nsACString& result);
++      : mCallback(callback), mResult(result), mWorkerThread(do_GetCurrentThread())
++    {
++      MOZ_ASSERT(!NS_IsMainThread());
++    }
++
++    NS_IMETHOD Run() 
++    {
++      MOZ_ASSERT(NS_IsMainThread());
++      mCallback(mResult);
++      mWorkerThread->Shutdown();
++    }
++
++  private:
++    GetIOServiceCallback mCallback;
++    nsCString mResult;
++    nsCOMPtr<nsIThread> mWorkerThread;
++};
++
++class GetIOServiceTask : public nsRunnable
++{
++  public:
++    GetIOServiceTask(GetIOServiceCallback callback) : mCallback(callback)
++    { }
++
++    NS_IMETHOD Run()
++    {
++      nsCString result;
++      nsCOMPtr<nsIRunnable> resultRunnable = new 
++          GetIOServiceResultTask(mCallback, result);
++      NS_DispatchToMainThread(resultRunnable)
++    }
++
++  private:
++    GetIOServiceCallback callback;
++};
+ 
+-#include <sbProxiedComponentManager.h>
+ 
+ static inline nsresult
+ sbGetFileExtensionFromURI(nsIURI* aURI, nsACString& _retval)
+@@ -112,7 +157,8 @@ SB_GetIOService(nsIIOService** aIOService)
+     NS_ENSURE_SUCCESS(rv, rv);
+   }
+   else {
+-    ioService = do_ProxiedGetService(NS_IOSERVICE_CONTRACTID, &rv);
++    ioService = mozilla::services::GetIOService();
++    // ioService = do_ProxiedGetService(NS_IOSERVICE_CONTRACTID, &rv);
+     NS_ENSURE_SUCCESS(rv, rv);
+   }
+ 
+@@ -122,6 +168,25 @@ SB_GetIOService(nsIIOService** aIOService)
+   return NS_OK;
+ }
+ 
++static inline nsresult
++SB_GetIOServiceAsync(nsIIOService** aIOService, GetIOServiceCallback callback)
++{
++  nsresult rv;
++  nsCOMPtr<nsIIOService> ioService;
++
++  nsCOMPtr<nsIThreadManager> tm = do_GetService(NS_THREADMANAGER_CONTRACTID);
++  nsCOMPtr<nsIThread> getterThread;
++
++  rv = tm->NewThread(0, 0, 0, getter_AddRefs(getterThread));
++  if (NS_FAILED(rv)) {
++    callback(EmptyCString());
++    return;
++  }
++  nsCOMPtr<nsIRunnable> aRunnable = new GetIOServiceTask(callback);
++
++  getterThread->Dispatch(aRunnable);
++}
++
+ 
+ /**
+  * Return in aURI a new URI, created using the URI spec, character set, and base
+@@ -154,7 +219,9 @@ SB_NewURI(nsIURI**          aURI,
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+   // Get a main thread URI.
+-  nsCOMPtr<nsIURI> mainThreadURI = do_MainThreadQueryInterface(uri, &rv);
++  // nsCOMPtr<nsIURI> mainThreadURI = do_MainThreadQueryInterface(uri, &rv);
++  // XXX Create runnable and NS_DispatchToMainThread as SYNC, then continue
++  nsCOMPtr<nsIURI> mainThreadURI = do_QueryInterface(uri, &rv);
+   NS_ENSURE_SUCCESS(rv, rv);
+ 
+   // Return results.

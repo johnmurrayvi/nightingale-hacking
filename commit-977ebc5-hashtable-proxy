@@ -1,0 +1,251 @@
+commit 977ebc5d73fa55ce97f1f5dbd3262a0b433317c8
+Author: John Murray <johnmurrayvi@gmail.com>
+Date:   Fri Aug 16 18:23:05 2013 -0500
+
+    trying to figure out the hashtable/hashkey crap since nsHashtable can't
+    be used outside of the mozilla tree
+
+diff --git a/components/moz/proxy/src/nsProxyEventObject.cpp b/components/moz/proxy/src/nsProxyEventObject.cpp
+index ca11b38..acf9ebf 100644
+--- a/components/moz/proxy/src/nsProxyEventObject.cpp
++++ b/components/moz/proxy/src/nsProxyEventObject.cpp
+@@ -216,7 +216,7 @@ nsProxyEventObject::CallMethod(PRUint16 methodIndex,
+         return rv;
+ 
+     bool callDirectly = false;
+-    if (GetProxyType() & NS_PROXY_SYNC &&
++    if ((GetProxyType() & NS_PROXY_SYNC) &&
+         NS_SUCCEEDED(GetTarget()->IsOnCurrentThread(&callDirectly)) &&
+         callDirectly) {
+ 
+@@ -242,8 +242,8 @@ nsProxyEventObject::CallMethod(PRUint16 methodIndex,
+ 
+     // Post synchronously
+ 
+-    nsIThread **thread;
+-    NS_GetCurrentThread(thread);
++    nsIThread *thread;
++    NS_GetCurrentThread(&thread);
+     
+     nsCOMPtr<nsIThreadInternal> threadInt = do_QueryInterface(thread);
+     NS_ENSURE_STATE(threadInt);
+@@ -261,7 +261,7 @@ nsProxyEventObject::CallMethod(PRUint16 methodIndex,
+     rv = GetTarget()->Dispatch(proxyInfo, NS_DISPATCH_NORMAL);
+     if (NS_SUCCEEDED(rv)) {
+         while (!proxyInfo->GetCompleted()) {
+-            if (!NS_ProcessNextEvent(thread)) {
++            if (!NS_ProcessNextEvent(thread, true)) {
+                 rv = NS_ERROR_UNEXPECTED;
+                 break;
+             }
+diff --git a/components/moz/proxy/src/nsProxyEventPrivate.h b/components/moz/proxy/src/nsProxyEventPrivate.h
+index d4a61fb..245615a 100644
+--- a/components/moz/proxy/src/nsProxyEventPrivate.h
++++ b/components/moz/proxy/src/nsProxyEventPrivate.h
+@@ -147,6 +147,8 @@ private:
+     };
+ 
+     friend class nsProxyObjectDestructorEvent;
++    // let nsAutoPtr call our destructor
++    friend class nsAutoPtr<nsProxyObject>;
+ };
+ 
+ NS_DEFINE_STATIC_IID_ACCESSOR(nsProxyObject, NS_PROXYOBJECT_CLASS_IID)
+@@ -265,6 +267,86 @@ private:
+ 
+ NS_DEFINE_STATIC_IID_ACCESSOR(nsProxyObjectCallInfo, NS_PROXYEVENT_IID)
+ 
++
++class nsProxyEventKey : public PLDHashEntryHdr
++{
++public:
++    // KeyType is what we use when Get()ing or Put()ing this entry
++    // this should either be a simple datatype (PRUint32, nsISupports*) or
++    // a const reference (const nsAString&)
++    typedef nsProxyObject* KeyType;
++
++    // KeyTypePointer is the pointer-version of KeyType, because pldhash.h
++    // requires keys to cast to <code>const void*</code>
++    typedef const PRInt32* KeyTypePointer;
++
++    nsProxyEventKey(KeyTypePointer aKey);
++
++    // the copy constructor must be defined, even if AllowMemMove() == true
++    // or you will cause link errors!
++    nsProxyEventKey(const nsProxyEventKey& aEnt);
++
++    // the destructor must be defined... or you will cause link errors!
++    ~nsProxyEventKey();
++
++    // KeyEquals(): does this entry match this key?
++    bool KeyEquals(KeyTypePointer aKey) const
++    {
++        const nsProxyEventKey* other = (const nsProxyEventKey*)aKey;
++        return mRootObjectKey == other->mRootObjectKey
++            && mTargetKey == other->mTargetKey
++            && mProxyType == other->mProxyType;
++    }
++
++    // KeyToPointer(): Convert KeyType to KeyTypePointer
++    static KeyTypePointer KeyToPointer(KeyType aKey);
++
++    // HashKey(): calculate the hash number
++    PLDHashNumber HashKey(KeyTypePointer aKey)
++    {
++        return NS_PTR_TO_INT32(mRootObjectKey) ^
++            NS_PTR_TO_INT32(mTargetKey) ^ mProxyType;
++    }
++
++    // ALLOW_MEMMOVE can we move this class with memmove(), or do we have
++    // to use the copy constructor?
++    enum { ALLOW_MEMMOVE = false };
++
++    nsProxyEventKey(void* rootObjectKey, void* targetKey, PRInt32 proxyType)
++        : mRootObjectKey(rootObjectKey), mTargetKey(targetKey), mProxyType(proxyType)
++    {
++
++    }
++
++    PRInt32 operator*(nsProxyEventKey &aPKey)
++    {
++        return NS_PTR_TO_INT32(aPKey.mRootObjectKey) ^
++            NS_PTR_TO_INT32(aPKey.mTargetKey) ^ aPKey.mProxyType;
++    }
++    PRUint32 HashCode(void) const {
++        return NS_PTR_TO_INT32(mRootObjectKey) ^
++            NS_PTR_TO_INT32(mTargetKey) ^ mProxyType;
++    }
++
++    bool KeyEquals(const KeyTypePointer aKey) {
++        const nsProxyEventKey* other = (const nsProxyEventKey*)aKey;
++        return mRootObjectKey == other->mRootObjectKey
++            && mTargetKey == other->mTargetKey
++            && mProxyType == other->mProxyType;
++    }
++
++//    nsHashKey *Clone() const {
++//        return new nsProxyEventKey(mRootObjectKey, mTargetKey, mProxyType);
++//    }
++
++protected:
++    void*        mRootObjectKey;
++    void*        mTargetKey;
++    PRInt32      mProxyType;
++    friend class nsTHashtable<nsProxyEventKey>;
++};
++
++
+ ////////////////////////////////////////////////////////////////////////////////
+ // nsProxyObjectManager
+ ////////////////////////////////////////////////////////////////////////////////
+@@ -300,7 +382,8 @@ private:
+     ~nsProxyObjectManager();
+ 
+     static nsProxyObjectManager* gInstance;
+-    nsTHashtable<nsStringHashKey> mProxyObjectMap;
++    nsTHashtable<nsProxyEventKey> mProxyObjectMap;
++    // nsClassHashtable<nsProxyEventKey, nsProxyObject> mProxyObjectMap;
+     nsClassHashtable<nsIDHashKey, nsProxyEventClass> mProxyClassMap;
+     Mutex mProxyCreationLock;
+ };
+diff --git a/components/moz/proxy/src/nsProxyObjectManager.cpp b/components/moz/proxy/src/nsProxyObjectManager.cpp
+index 4ffb206..797f8af 100644
+--- a/components/moz/proxy/src/nsProxyObjectManager.cpp
++++ b/components/moz/proxy/src/nsProxyObjectManager.cpp
+@@ -54,7 +54,7 @@
+ #include <nsIThread.h>
+ #include <nsCOMPtr.h>
+ #include <nsThreadUtils.h>
+-#include <xptiprivate.h>
++#include <nsServiceManagerUtils.h>
+ 
+ using namespace mozilla;
+ 
+@@ -62,35 +62,6 @@ using namespace mozilla;
+ PRLogModuleInfo *nsProxyObjectManager::sLog = PR_NewLogModule("xpcomproxy");
+ #endif
+ 
+-class nsProxyEventKey : public nsHashKey
+-{
+-public:
+-    nsProxyEventKey(void* rootObjectKey, void* targetKey, PRInt32 proxyType)
+-        : mRootObjectKey(rootObjectKey), mTargetKey(targetKey), mProxyType(proxyType) {
+-    }
+-  
+-    PRUint32 HashCode(void) const {
+-        return NS_PTR_TO_INT32(mRootObjectKey) ^ 
+-            NS_PTR_TO_INT32(mTargetKey) ^ mProxyType;
+-    }
+-
+-    bool Equals(const nsHashKey *aKey) const {
+-        const nsProxyEventKey* other = (const nsProxyEventKey*)aKey;
+-        return mRootObjectKey == other->mRootObjectKey
+-            && mTargetKey == other->mTargetKey
+-            && mProxyType == other->mProxyType;
+-    }
+-
+-    nsHashKey *Clone() const {
+-        return new nsProxyEventKey(mRootObjectKey, mTargetKey, mProxyType);
+-    }
+-
+-protected:
+-    void*       mRootObjectKey;
+-    void*       mTargetKey;
+-    PRInt32     mProxyType;
+-};
+-
+ /////////////////////////////////////////////////////////////////////////
+ // nsProxyObjectManager
+ /////////////////////////////////////////////////////////////////////////
+@@ -112,9 +83,9 @@ nsProxyObjectManager::Release()
+ }
+ 
+ nsProxyObjectManager::nsProxyObjectManager()
+-    : mProxyObjectMap(256, false)
+-    , mProxyCreationLock("nsProxyObjectManager.mProxyCreationLock")
++    :mProxyCreationLock("nsProxyObjectManager.mProxyCreationLock")
+ {
++    mProxyObjectMap.Init(256);
+     mProxyClassMap.Init(256);
+ }
+ 
+@@ -199,9 +170,9 @@ nsProxyObjectManager::GetProxyForObject(nsIEventTarget* aTarget,
+     *aProxyObject = nsnull;
+ 
+     // handle special values
+-    nsCOMPtr<nsIThread> thread;
++    nsCOMPtr<nsIThread> *thread;
+     if (aTarget == NS_PROXY_TO_CURRENT_THREAD) {
+-      aTarget = NS_GetCurrentThread();
++      aTarget = NS_GetCurrentThread(&thread);
+     } else if (aTarget == NS_PROXY_TO_MAIN_THREAD) {
+       thread = do_GetMainThread();
+       aTarget = thread.get();
+@@ -235,7 +206,7 @@ nsProxyObjectManager::GetProxyForObject(nsIEventTarget* aTarget,
+     {
+         MutexAutoLock lock(mProxyCreationLock);
+         nsProxyLockedRefPtr root =
+-            (nsProxyObject*) mProxyObjectMap.Get(&rootKey);
++            (nsProxyObject*) mProxyObjectMap.GetEntry(&rootKey);
+         if (root)
+             return root->LockedFind(aIID, aProxyObject);
+     }
+@@ -248,8 +219,7 @@ nsProxyObjectManager::GetProxyForObject(nsIEventTarget* aTarget,
+     // lock again, and check for a race putting into mProxyObjectMap
+     {
+         MutexAutoLock lock(mProxyCreationLock);
+-        nsProxyLockedRefPtr root = 
+-            (nsProxyObject*) mProxyObjectMap.Get(&rootKey);
++        nsProxyLockedRefPtr root(mProxyObjectMap.Get(&rootKey));
+         if (root) {
+             delete newRoot;
+             return root->LockedFind(aIID, aProxyObject);
+@@ -269,7 +239,7 @@ nsProxyObjectManager::LockedRemove(nsProxyObject *aProxy)
+ 
+     nsProxyEventKey rootKey(aProxy->GetRealObject(), realEQ, aProxy->GetProxyType());
+ 
+-    if (!mProxyObjectMap.Remove(&rootKey)) {
++    if (!mProxyObjectMap.RemoveEntry(&rootKey)) {
+         NS_ERROR("nsProxyObject not found in global hash.");
+     }
+ }
