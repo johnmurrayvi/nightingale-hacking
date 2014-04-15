@@ -76,7 +76,7 @@ sbLocalDatabaseResourcePropertyBag::Init()
 {
   nsresult rv;
 
-  PRBool success = mValueMap.Init(BAG_HASHTABLE_SIZE);
+  bool success = mValueMap.Init(BAG_HASHTABLE_SIZE);
   NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
   success = mDirty.Init(BAG_HASHTABLE_SIZE);
@@ -137,7 +137,7 @@ sbLocalDatabaseResourcePropertyBag::GetIds(nsIStringEnumerator **aIDs)
   nsTArray<nsString> propertyIDs;
   for (PRUint32 i = 0; i < len; i++) {
     nsString propertyID;
-    PRBool success = mCache->GetPropertyID(propertyDBIDs[i], propertyID);
+    bool success = mCache->GetPropertyID(propertyDBIDs[i], propertyID);
     NS_ENSURE_TRUE(success, NS_ERROR_UNEXPECTED);
     propertyIDs.AppendElement(propertyID);
   }
@@ -191,7 +191,7 @@ sbLocalDatabaseResourcePropertyBag::GetSortablePropertyByID(PRUint32 aPropertyDB
       // only when needed
       if (data->sortableValue.IsEmpty()) {
         nsString propertyID;
-        PRBool success = mCache->GetPropertyID(aPropertyDBID, propertyID);
+        bool success = mCache->GetPropertyID(aPropertyDBID, propertyID);
         NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
         nsCOMPtr<sbIPropertyInfo> propertyInfo;
         nsresult rv = mPropertyManager->GetPropertyInfo(propertyID,
@@ -226,7 +226,7 @@ sbLocalDatabaseResourcePropertyBag::
       // only when needed
       if (data->searchableValue.IsEmpty()) {
         nsString propertyID;
-        PRBool success = mCache->GetPropertyID(aPropertyDBID, propertyID);
+        bool success = mCache->GetPropertyID(aPropertyDBID, propertyID);
         NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
         nsCOMPtr<sbIPropertyInfo> propertyInfo;
         nsresult rv = mPropertyManager->GetPropertyInfo(propertyID,
@@ -263,7 +263,7 @@ sbLocalDatabaseResourcePropertyBag::SetProperty(const nsAString & aPropertyID,
                                          getter_AddRefs(propertyInfo));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool valid = PR_FALSE;
+  bool valid = PR_FALSE;
   rv = propertyInfo->Validate(aValue, &valid);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -335,7 +335,7 @@ sbLocalDatabaseResourcePropertyBag::SetProperty(const nsAString & aPropertyID,
   // set the updated timestamp.  We only
   // track updates to user editable properties
   // since that's all the user cares about.
-  PRBool userEditable = PR_FALSE;
+  bool userEditable = PR_FALSE;
   rv = propertyInfo->GetUserEditable(&userEditable);
   NS_ENSURE_SUCCESS(rv, rv);
   if (userEditable) {
@@ -354,7 +354,7 @@ sbLocalDatabaseResourcePropertyBag::SetProperty(const nsAString & aPropertyID,
   // If this property is one that may be used in the metadata
   // hash identity and it was set, then we need to recalculate
   // the identity for this item.
-  PRBool usedInIdentity = PR_FALSE;
+  bool usedInIdentity = PR_FALSE;
   rv = propertyInfo->GetUsedInIdentity(&usedInIdentity);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -397,14 +397,14 @@ sbLocalDatabaseResourcePropertyBag::PutValue(PRUint32 aPropertyID,
                                                     EmptyString(),
                                                     EmptyString()));
   mozilla::ReentrantMonitorAutoEnter mon(mCache->mMonitor);
-  PRBool success = mValueMap.Put(aPropertyID, data);
+  bool success = mValueMap.Put(aPropertyID, data);
   NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
   data.forget();
 
   return NS_OK;
 }
 
-PRBool
+bool
 sbLocalDatabaseResourcePropertyBag::IsPropertyDirty(PRUint32 aPropertyDBID)
 {
   if(mDirty.IsInitialized() && mDirty.GetEntry(aPropertyDBID)) {

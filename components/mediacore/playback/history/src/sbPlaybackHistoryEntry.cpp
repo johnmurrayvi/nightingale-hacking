@@ -144,7 +144,7 @@ sbPlaybackHistoryEntry::GetAnnotation(const nsAString & aAnnotationId,
 
 NS_IMETHODIMP 
 sbPlaybackHistoryEntry::HasAnnotation(const nsAString & aAnnotationId, 
-                                      PRBool *_retval)
+                                      bool *_retval)
 {
   *_retval = PR_FALSE;
 

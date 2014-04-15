@@ -87,7 +87,7 @@ private:
    */
   nsresult GetImportPref(sbIDevice * aDevice,
                          PRUint32 aMediaType,
-                         PRBool & aImport);
+                         bool & aImport);
 
   static nsresult ReadAString(sbIDevice * aDevice,
                               nsAString const & aPrefKey,

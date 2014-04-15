@@ -70,7 +70,7 @@ public:
                             JSObject *obj,
                             jsid id,
                             jsval *vp,
-                            PRBool *_retval NS_OUTPARAM)
+                            bool *_retval NS_OUTPARAM)
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -80,7 +80,7 @@ public:
                             JSObject *obj,
                             jsid id,
                             jsval *vp,
-                            PRBool *_retval NS_OUTPARAM)
+                            bool *_retval NS_OUTPARAM)
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -94,7 +94,7 @@ public:
                             JSObject *obj,
                             jsid id,
                             jsval *vp,
-                            PRBool *_retval NS_OUTPARAM)
+                            bool *_retval NS_OUTPARAM)
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -104,7 +104,7 @@ public:
                             JSObject *obj,
                             jsid id,
                             jsval *vp,
-                            PRBool *_retval NS_OUTPARAM)
+                            bool *_retval NS_OUTPARAM)
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -112,7 +112,7 @@ public:
   NS_IMETHOD Enumerate(nsIXPConnectWrappedNative *wrapper,
                           JSContext *cx,
                           JSObject *obj,
-                          PRBool *_retval NS_OUTPARAM)
+                          bool *_retval NS_OUTPARAM)
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -127,7 +127,7 @@ public:
                              JSObject *obj,
                              PRUint32 enum_op,
                              jsval *statep, jsid *idp NS_OUTPARAM,
-                             PRBool *_retval NS_OUTPARAM)
+                             bool *_retval NS_OUTPARAM)
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -138,7 +138,7 @@ public:
                            jsid id,
                            PRUint32 flags,
                            JSObject **objp NS_OUTPARAM,
-                           PRBool *_retval NS_OUTPARAM)
+                           bool *_retval NS_OUTPARAM)
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -148,7 +148,7 @@ public:
                         JSObject *obj,
                         PRUint32 type,
                         jsval *vp,
-                        PRBool *_retval NS_OUTPARAM)
+                        bool *_retval NS_OUTPARAM)
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -166,7 +166,7 @@ public:
                             jsid id,
                             PRUint32 mode,
                             jsval *vp,
-                            PRBool *_retval NS_OUTPARAM)
+                            bool *_retval NS_OUTPARAM)
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -177,7 +177,7 @@ public:
                      PRUint32 argc,
                      jsval *argv,
                      jsval *vp,
-                     PRBool *_retval NS_OUTPARAM)
+                     bool *_retval NS_OUTPARAM)
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -188,7 +188,7 @@ public:
                           PRUint32 argc,
                           jsval *argv,
                           jsval *vp,
-                          PRBool *_retval NS_OUTPARAM)
+                          bool *_retval NS_OUTPARAM)
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -197,8 +197,8 @@ public:
                             JSContext *cx,
                             JSObject *obj,
                             const jsval & val,
-                            PRBool *bp NS_OUTPARAM,
-                            PRBool *_retval NS_OUTPARAM)
+                            bool *bp NS_OUTPARAM,
+                            bool *_retval NS_OUTPARAM)
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -214,7 +214,7 @@ public:
                          JSContext *cx,
                          JSObject *obj,
                          const jsval & val,
-                         PRBool *_retval NS_OUTPARAM)
+                         bool *_retval NS_OUTPARAM)
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }

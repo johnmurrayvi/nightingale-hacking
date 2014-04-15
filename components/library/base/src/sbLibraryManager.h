@@ -68,7 +68,7 @@ class sbLibraryManager : public sbILibraryManager,
                          public sbSupportsWeakReference
 {
   struct sbLibraryInfo {
-    sbLibraryInfo(PRBool aLoadAtStartup = PR_FALSE)
+    sbLibraryInfo(bool aLoadAtStartup = PR_FALSE)
     : loader(nsnull),
        loadAtStartup(aLoadAtStartup)
     { }
@@ -79,7 +79,7 @@ class sbLibraryManager : public sbILibraryManager,
     // mLoaderCache.
     sbILibraryLoader* loader;
 
-    PRBool loadAtStartup;
+    bool loadAtStartup;
   };
 
 public:
@@ -130,7 +130,7 @@ private:
   void InvokeLoaders();
 
   nsresult SetLibraryLoadsAtStartupInternal(sbILibrary* aLibrary,
-                                            PRBool aLoadAtStartup,
+                                            bool aLoadAtStartup,
                                             sbLibraryInfo** aInfo);
 
 private:

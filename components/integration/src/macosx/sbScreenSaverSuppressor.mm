@@ -42,7 +42,7 @@ sbScreenSaverSuppressor::~sbScreenSaverSuppressor()
 }
 
 /*virtual*/ nsresult
-sbScreenSaverSuppressor::OnSuppress(PRBool aSuppress)
+sbScreenSaverSuppressor::OnSuppress(bool aSuppress)
 {
   nsresult rv;
 

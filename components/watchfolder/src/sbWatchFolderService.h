@@ -213,7 +213,7 @@ protected:
   //        If found, decrements the times-to-ignore count as appropriate.
   //
   nsresult DecrementIgnoredPathCount(const nsAString & aFilePath,
-                                     PRBool *aIsIgnoredPath);
+                                     bool *aIsIgnoredPath);
 
   //----------------------------------------------------------------------------
   // Pref Changes
@@ -238,7 +238,7 @@ protected:
   //
   // \brief Callback method when the watch folder enable pref has changed.
   //
-  nsresult OnEnableWatchFolderChanged(PRBool aShouldEnable);
+  nsresult OnEnableWatchFolderChanged(bool aShouldEnable);
 
 private:
   nsCOMPtr<sbIFileSystemWatcher> mFileSystemWatcher;
@@ -258,11 +258,11 @@ private:
   nsString                       mWatchPath;
   nsCString                      mFileSystemWatcherGUID;
   EWatchFolderState              mServiceState;
-  PRBool                         mHasWatcherStarted;
-  PRBool                         mShouldReinitWatcher;
-  PRBool                         mEventPumpTimerIsSet;
-  PRBool                         mShouldProcessEvents;
-  PRBool                         mChangeDelayTimerIsSet;
+  bool                         mHasWatcherStarted;
+  bool                         mShouldReinitWatcher;
+  bool                         mEventPumpTimerIsSet;
+  bool                         mShouldProcessEvents;
+  bool                         mChangeDelayTimerIsSet;
   EProcessType                   mCurrentProcessType;
 };
 

@@ -72,7 +72,7 @@ public:
 
   // sbMediaExportPrefListener
   NS_IMETHOD OnBoolPrefChanged(const nsAString & aPrefName,
-                               const PRBool aNewPrefValue);
+                               const bool aNewPrefValue);
 
   NS_DECL_ISUPPORTS
   NS_DECL_SBIMEDIAEXPORTSERVICE
@@ -96,7 +96,7 @@ protected:
   // Media list listening utility methods
   nsresult ListenToMediaList(sbIMediaList *aMediaList);
   nsresult GetShouldWatchMediaList(sbIMediaList *aMediaList,
-                                   PRBool *aShouldWatch);
+                                   bool *aShouldWatch);
 
   // Background thread method to Write export data to disk.
   void WriteExportData();
@@ -122,7 +122,7 @@ protected:
 
   // Returns true if there is some observed changes that have not been
   // exported yet.
-  PRBool GetHasRecordedChanges();
+  bool GetHasRecordedChanges();
 
   NS_DECL_RUNNABLEMETHOD(sbMediaExportService, ProxyNotifyListeners);
   NS_DECL_RUNNABLEMETHOD(sbMediaExportService, WriteExportData);
@@ -144,7 +144,7 @@ private:
   sbStringList                           mRemovedMediaLists;
   // a list of <media list guid>s of updated <smart media list>s
   sbStringList                           mUpdatedSmartMediaLists;
-  PRBool                                 mIsRunning;
+  bool                                 mIsRunning;
 
   // Exporting stuff:
   nsRefPtr<sbMediaExportTaskWriter>  mTaskWriter;

@@ -67,14 +67,14 @@ public:
   struct FilterSpec {
     nsString property;
     nsTArray<nsString> values;
-    PRBool isSearch;
+    bool isSearch;
   };
 
   struct SortSpec {
     nsString property;
     PRUint32 propertyId;
-    PRBool ascending;
-    PRBool secondary;
+    bool ascending;
+    bool secondary;
   };
 
 private:
@@ -152,16 +152,16 @@ private:
   nsresult SortRows(PRUint32 aStartIndex,
                     PRUint32 aEndIndex,
                     const nsAString& aKey,
-                    PRBool aIsFirst,
-                    PRBool aIsLast,
-                    PRBool aIsOnly,
-                    PRBool isNull);
+                    bool aIsFirst,
+                    bool aIsLast,
+                    bool aIsOnly,
+                    bool isNull);
 
   nsresult ReadRowRange(sbIDatabasePreparedStatement *aStatement,
                         PRUint32 aStartIndex,
                         PRUint32 aCount,
                         PRUint32 aDestIndexOffset,
-                        PRBool isNull);
+                        bool isNull);
 
   nsresult GetByIndexInternal(PRUint32 aIndex, ArrayItem** _retval);
 
@@ -170,8 +170,8 @@ private:
   static int SortBags(const void* a, const void* b, void* closure);
 
   nsresult AddSortInternal(const nsAString& aProperty,
-                           PRBool aAscending,
-                           PRBool aSecondary);
+                           bool aAscending,
+                           bool aSecondary);
   nsresult ClearSecondarySorts();
 
   nsresult GetMTListener(sbILocalDatabaseGUIDArrayListener ** aListener);

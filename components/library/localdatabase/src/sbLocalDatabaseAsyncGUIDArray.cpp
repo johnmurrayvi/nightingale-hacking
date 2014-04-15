@@ -414,14 +414,14 @@ sbLocalDatabaseAsyncGUIDArray::SetFetchSize(PRUint32 aFetchSize)
 }
 
 NS_IMETHODIMP
-sbLocalDatabaseAsyncGUIDArray::GetIsDistinct(PRBool* aIsDistinct)
+sbLocalDatabaseAsyncGUIDArray::GetIsDistinct(bool* aIsDistinct)
 {
   mozilla::ReentrantMonitorAutoEnter autoMonitor(mSyncMonitor);
 
   return mInner->GetIsDistinct(aIsDistinct);
 }
 NS_IMETHODIMP
-sbLocalDatabaseAsyncGUIDArray::SetIsDistinct(PRBool aIsDistinct)
+sbLocalDatabaseAsyncGUIDArray::SetIsDistinct(bool aIsDistinct)
 {
   mozilla::ReentrantMonitorAutoEnter autoMonitor(mSyncMonitor);
 
@@ -429,7 +429,7 @@ sbLocalDatabaseAsyncGUIDArray::SetIsDistinct(PRBool aIsDistinct)
 }
 
 NS_IMETHODIMP
-sbLocalDatabaseAsyncGUIDArray::GetIsValid(PRBool *aIsValid)
+sbLocalDatabaseAsyncGUIDArray::GetIsValid(bool *aIsValid)
 {
   mozilla::ReentrantMonitorAutoEnter autoMonitor(mSyncMonitor);
 
@@ -437,14 +437,14 @@ sbLocalDatabaseAsyncGUIDArray::GetIsValid(PRBool *aIsValid)
 }
 
 NS_IMETHODIMP
-sbLocalDatabaseAsyncGUIDArray::GetDistinctWithSortableValues(PRBool *aDistinctWithSortableValues)
+sbLocalDatabaseAsyncGUIDArray::GetDistinctWithSortableValues(bool *aDistinctWithSortableValues)
 {
   mozilla::ReentrantMonitorAutoEnter autoMonitor(mSyncMonitor);
 
   return mInner->GetDistinctWithSortableValues(aDistinctWithSortableValues);
 }
 NS_IMETHODIMP
-sbLocalDatabaseAsyncGUIDArray::SetDistinctWithSortableValues(PRBool aDistinctWithSortableValues)
+sbLocalDatabaseAsyncGUIDArray::SetDistinctWithSortableValues(bool aDistinctWithSortableValues)
 {
   mozilla::ReentrantMonitorAutoEnter autoMonitor(mSyncMonitor);
 
@@ -518,7 +518,7 @@ sbLocalDatabaseAsyncGUIDArray::MayInvalidate(PRUint32 * aDirtyPropIDs,
 
 NS_IMETHODIMP
 sbLocalDatabaseAsyncGUIDArray::AddSort(const nsAString& aProperty,
-                                       PRBool aAscending)
+                                       bool aAscending)
 {
   mozilla::ReentrantMonitorAutoEnter autoMonitor(mSyncMonitor);
 
@@ -544,7 +544,7 @@ sbLocalDatabaseAsyncGUIDArray::GetCurrentSort(sbIPropertyArray** aCurrentSort)
 NS_IMETHODIMP
 sbLocalDatabaseAsyncGUIDArray::AddFilter(const nsAString& aProperty,
                                          nsIStringEnumerator* aValues,
-                                         PRBool aIsSearch)
+                                         bool aIsSearch)
 {
   mozilla::ReentrantMonitorAutoEnter autoMonitor(mSyncMonitor);
 
@@ -561,7 +561,7 @@ sbLocalDatabaseAsyncGUIDArray::ClearFilters()
 
 NS_IMETHODIMP
 sbLocalDatabaseAsyncGUIDArray::IsIndexCached(PRUint32 aIndex,
-                                             PRBool* _retval)
+                                             bool* _retval)
 {
   mozilla::ReentrantMonitorAutoEnter autoMonitor(mSyncMonitor);
 
@@ -623,7 +623,7 @@ sbLocalDatabaseAsyncGUIDArray::GetViewItemUIDByIndex(PRUint32 aIndex,
 }
 
 NS_IMETHODIMP
-sbLocalDatabaseAsyncGUIDArray::Invalidate(PRBool aInvalidateLength)
+sbLocalDatabaseAsyncGUIDArray::Invalidate(bool aInvalidateLength)
 {
   mozilla::ReentrantMonitorAutoEnter autoMonitor(mSyncMonitor);
 
@@ -676,7 +676,7 @@ sbLocalDatabaseAsyncGUIDArray::GetIndexByViewItemUID
 
 NS_IMETHODIMP
 sbLocalDatabaseAsyncGUIDArray::ContainsGuid(const nsAString& aGuid,
-                                            PRBool* _retval)
+                                            bool* _retval)
 {
   mozilla::ReentrantMonitorAutoEnter autoMonitor(mSyncMonitor);
 
@@ -684,7 +684,7 @@ sbLocalDatabaseAsyncGUIDArray::ContainsGuid(const nsAString& aGuid,
 }
 
 NS_IMETHODIMP
-sbLocalDatabaseAsyncGUIDArray::SuppressInvalidation(PRBool aSuppress)
+sbLocalDatabaseAsyncGUIDArray::SuppressInvalidation(bool aSuppress)
 {
   mozilla::ReentrantMonitorAutoEnter autoMonitor(mSyncMonitor);
 
@@ -704,7 +704,7 @@ sbLocalDatabaseAsyncGUIDArray::SendOnGetLength(PRUint32 aLength,
                                                nsresult aResult)
 {
   nsresult rv;
-  PRBool listenSucceeded = PR_TRUE;
+  bool listenSucceeded = PR_TRUE;
 
   PRUint32 length = mAsyncListenerArray.Length();
   for (PRUint32 i = 0; i < length; i++) {
@@ -724,7 +724,7 @@ sbLocalDatabaseAsyncGUIDArray::SendOnGetGuidByIndex(PRUint32 aIndex,
                                                     nsresult aResult)
 {
   nsresult rv;
-  PRBool listenSucceeded = PR_TRUE;
+  bool listenSucceeded = PR_TRUE;
 
   PRUint32 length = mAsyncListenerArray.Length();
   for (PRUint32 i = 0; i < length; i++) {
@@ -746,7 +746,7 @@ sbLocalDatabaseAsyncGUIDArray::SendOnGetSortPropertyValueByIndex
                                                          nsresult aResult)
 {
   nsresult rv;
-  PRBool listenSucceeded = PR_TRUE;
+  bool listenSucceeded = PR_TRUE;
 
   PRUint32 length = mAsyncListenerArray.Length();
   for (PRUint32 i = 0; i < length; i++) {
@@ -767,7 +767,7 @@ sbLocalDatabaseAsyncGUIDArray::SendOnGetMediaItemIdByIndex
                                                          nsresult aResult)
 {
   nsresult rv;
-  PRBool listenSucceeded = PR_TRUE;
+  bool listenSucceeded = PR_TRUE;
 
   PRUint32 length = mAsyncListenerArray.Length();
   for (PRUint32 i = 0; i < length; i++) {
@@ -785,7 +785,7 @@ nsresult
 sbLocalDatabaseAsyncGUIDArray::SendOnStateChange(PRUint32 aState)
 {
   nsresult rv;
-  PRBool listenSucceeded = PR_TRUE;
+  bool listenSucceeded = PR_TRUE;
 
   PRUint32 length = mAsyncListenerArray.Length();
   for (PRUint32 i = 0; i < length; i++) {

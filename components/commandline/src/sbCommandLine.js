@@ -237,8 +237,8 @@ sbCommandLineHandler.prototype = {
                  getService(Ci.nsIObserverService);
 
         // We don't care if anyone tries to cancel quit...
-        var dummyCancelQuit = Cc["@mozilla.org/supports-PRBool;1"].
-                              createInstance(Ci.nsISupportsPRBool);
+        var dummyCancelQuit = Cc["@mozilla.org/supports-bool;1"].
+                              createInstance(Ci.nsISupportsbool);
         os.notifyObservers(dummyCancelQuit, "quit-application-requested", null);
 
         os.notifyObservers(null, "quit-application-granted", null);

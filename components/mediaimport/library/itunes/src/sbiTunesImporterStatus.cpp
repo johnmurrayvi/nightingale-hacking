@@ -51,9 +51,9 @@ sbiTunesImporterStatus::New(sbiTunesImporterJob * aJobProgress) {
   return new sbiTunesImporterStatus(aJobProgress);
 }
 
-PRBool sbiTunesImporterStatus::CancelRequested() {
+bool sbiTunesImporterStatus::CancelRequested() {
   // If there's no job progress, then we've been canceled
-  PRBool canceled = PR_TRUE;
+  bool canceled = PR_TRUE;
   if (mJobProgress) {
     canceled = mJobProgress->CancelRequested();
   }

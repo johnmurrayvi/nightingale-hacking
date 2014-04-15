@@ -78,7 +78,7 @@
 static nsresult
 CreateDirectory(nsIFile* aDirectory)
 {
-  PRBool exists;
+  bool exists;
   nsresult rv = aDirectory->Exists(&exists);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -92,16 +92,16 @@ CreateDirectory(nsIFile* aDirectory)
   return NS_OK;
 }
 
-static PRBool
+static bool
 IsDirectoryWritable(nsIFile* aDirectory)
 {
-  PRBool isDirectory;
+  bool isDirectory;
   nsresult rv = aDirectory->IsDirectory(&isDirectory);
   NS_ENSURE_SUCCESS(rv, PR_FALSE);
 
   NS_ENSURE_TRUE(isDirectory, PR_FALSE);
 
-  PRBool exists;
+  bool exists;
   rv = aDirectory->Exists(&exists);
   NS_ENSURE_SUCCESS(rv, PR_FALSE);
 
@@ -159,7 +159,7 @@ sbLocalDatabaseLibraryFactory::Init()
 {
   TRACE("sbLocalDatabaseLibraryFactory[0x%x] - Init", this);
 
-  PRBool success = mCreatedLibraries.Init();
+  bool success = mCreatedLibraries.Init();
   NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
 
   return NS_OK;
@@ -268,7 +268,7 @@ sbLocalDatabaseLibraryFactory::CreateLibraryFromDatabase(nsIFile* aDatabase,
   // On Windows, if the file does not exist, its hashcode is different from when it does.
   // If we ever attempt to get the hash code while it doesn't exist, the
   // nsLocalFile caches the hash code and stays incorrect.
-  PRBool exists;
+  bool exists;
   rv = escapedFile->Exists(&exists);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -329,7 +329,7 @@ sbLocalDatabaseLibraryFactory::CreateLibraryFromDatabase(nsIFile* aDatabase,
                                 &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool success = mCreatedLibraries.Put(hashable, weakRef);
+  bool success = mCreatedLibraries.Put(hashable, weakRef);
   NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
 
   NS_ADDREF(*_retval = library);
@@ -349,7 +349,7 @@ sbLocalDatabaseLibraryFactory::InitalizeLibrary(nsIFile* aDatabaseFile,
   rv = aDatabaseFile->GetParent(getter_AddRefs(parentDirectory));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool parentExists;
+  bool parentExists;
   rv = parentDirectory->Exists(&parentExists);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -358,7 +358,7 @@ sbLocalDatabaseLibraryFactory::InitalizeLibrary(nsIFile* aDatabaseFile,
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  PRBool parentIsWritable = IsDirectoryWritable(parentDirectory);
+  bool parentIsWritable = IsDirectoryWritable(parentDirectory);
   NS_ENSURE_TRUE(parentIsWritable, NS_ERROR_FILE_ACCESS_DENIED);
 
   // Now that we know we have appropriate permissions make a new query.

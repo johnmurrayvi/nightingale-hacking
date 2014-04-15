@@ -154,7 +154,7 @@
   rv = wm->GetZOrderDOMWindowEnumerator(nsnull, PR_TRUE,
                                         getter_AddRefs(orderedWindowList));
   NS_ENSURE_SUCCESS(rv, nil);
-  PRBool anyWindows = false;
+  bool anyWindows = false;
   rv = orderedWindowList->HasMoreElements(&anyWindows);
   NS_ENSURE_SUCCESS(rv, nil);
   nsCOMPtr<nsISupports> frontWindow;
@@ -170,7 +170,7 @@
 
   // Iterate through our list of windows to create our menu
   NSMenu *menu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
-  PRBool more;
+  bool more;
   while (NS_SUCCEEDED(windowList->HasMoreElements(&more)) && more) {
     // Get our native window
     nsCOMPtr<nsISupports> curWindow;
@@ -451,7 +451,7 @@
     return;
   }
 
-  PRBool isMuted = PR_FALSE;
+  bool isMuted = PR_FALSE;
   rv = volControl->GetMute(&isMuted);
   if (NS_FAILED(rv)) {
     return;
@@ -483,7 +483,7 @@
   rv = manager->GetVolumeControl(getter_AddRefs(volControl));
   NS_ENSURE_SUCCESS(rv, NO);
 
-  PRBool isMuted = PR_FALSE;
+  bool isMuted = PR_FALSE;
   rv = volControl->GetMute(&isMuted);
   NS_ENSURE_SUCCESS(rv, NO);
 

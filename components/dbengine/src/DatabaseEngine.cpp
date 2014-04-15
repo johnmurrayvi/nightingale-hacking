@@ -643,7 +643,7 @@ protected:
   nsCOMPtr<nsIFile>              mOutputFile;
   nsRefPtr<CDatabaseEngine>      mEngineCallback;
   nsRefPtr<QueryProcessorQueue>  mQueryProcessorQueue;
-  PRBool                         writeableSchema;  // true if PRAGMA writable_schema=on
+  bool                         writeableSchema;  // true if PRAGMA writable_schema=on
 };
 
 
@@ -1021,7 +1021,7 @@ NS_IMETHODIMP CDatabaseEngine::Init()
   m_pDBStorePathLock = PR_NewLock();
   NS_ASSERTION(m_pDBStorePathLock, "Couldn't allocate m_pDBStorePathLock!");
 
-  PRBool success = m_QueuePool.Init();
+  bool success = m_QueuePool.Init();
   NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
   nsresult rv = CreateDBStorePath();
@@ -1572,7 +1572,7 @@ PRInt32 CDatabaseEngine::SubmitQueryPrivate(CDatabaseQuery *pQuery)
 
   // If the query is already executing, do not add it.  This is to prevent
   // the same query from getting executed simultaneously
-  PRBool isExecuting = PR_FALSE;
+  bool isExecuting = PR_FALSE;
   pQuery->IsExecuting(&isExecuting);
   if(isExecuting) {
     //Release grip.
@@ -1594,7 +1594,7 @@ PRInt32 CDatabaseEngine::SubmitQueryPrivate(CDatabaseQuery *pQuery)
   rv = pQueue->RunQueue();
   NS_ENSURE_SUCCESS(rv, 1);
 
-  PRBool bAsyncQuery = PR_FALSE;
+  bool bAsyncQuery = PR_FALSE;
   pQuery->IsAyncQuery(&bAsyncQuery);
 
   PRInt32 result = 0;
@@ -1692,7 +1692,7 @@ NS_IMETHODIMP CDatabaseEngine::ReleaseMemory()
 
 //-----------------------------------------------------------------------------
 already_AddRefed<QueryProcessorQueue> CDatabaseEngine::GetQueueByQuery(CDatabaseQuery *pQuery,
-                                                         PRBool bCreate /*= PR_FALSE*/)
+                                                         bool bCreate /*= PR_FALSE*/)
 {
   NS_ENSURE_TRUE(pQuery, nsnull);
 
@@ -1735,7 +1735,7 @@ already_AddRefed<QueryProcessorQueue> CDatabaseEngine::CreateQueueFromQuery(CDat
   rv = pQueue->Init(this, strGUID, pHandle);
   NS_ENSURE_SUCCESS(rv, nsnull);
 
-  PRBool success = m_QueuePool.Put(strGUID, pQueue);
+  bool success = m_QueuePool.Put(strGUID, pQueue);
   NS_ENSURE_TRUE(success, nsnull);
 
   QueryProcessorQueue *p = pQueue.get();
@@ -2121,7 +2121,7 @@ CDatabaseEngine::RunAnalyze()
         PR_GetCurrentThread(), pQuery);
 
       PRUint32 nQueryCount = 0;
-      PRBool bFirstRow = PR_TRUE;
+      bool bFirstRow = PR_TRUE;
 
       //Default return error.
       pQuery->SetLastError(SQLITE_ERROR);
@@ -2232,7 +2232,7 @@ CDatabaseEngine::RunAnalyze()
         pQuery->GetRollingLimit(&rollingLimit);
         pQuery->GetRollingLimitColumnIndex(&rollingLimitColumnIndex);
 
-        PRBool finishEarly = PR_FALSE;
+        bool finishEarly = PR_FALSE;
         do
         {
           retDB = sqlite3_step(pStmt);
@@ -2484,7 +2484,7 @@ nsresult CDatabaseEngine::CreateDBStorePath()
   rv = f->Append(NS_LITERAL_STRING("db"));
   if(NS_FAILED(rv)) return rv;
 
-  PRBool dirExists = PR_FALSE;
+  bool dirExists = PR_FALSE;
   rv = f->Exists(&dirExists);
   if(NS_FAILED(rv)) return rv;
 
@@ -2541,14 +2541,14 @@ nsresult CDatabaseEngine::GetDBStorePath(const nsAString &dbGUID, CDatabaseQuery
   return NS_OK;
 } //GetDBStorePath
 
-NS_IMETHODIMP CDatabaseEngine::GetLocaleCollationEnabled(PRBool *aEnabled)
+NS_IMETHODIMP CDatabaseEngine::GetLocaleCollationEnabled(bool *aEnabled)
 {
   NS_ENSURE_ARG_POINTER(aEnabled);
-  *aEnabled = (PRBool)gLocaleCollationEnabled;
+  *aEnabled = (bool)gLocaleCollationEnabled;
   return NS_OK;
 }
 
-NS_IMETHODIMP CDatabaseEngine::SetLocaleCollationEnabled(PRBool aEnabled)
+NS_IMETHODIMP CDatabaseEngine::SetLocaleCollationEnabled(bool aEnabled)
 {
   PR_AtomicSet(&gLocaleCollationEnabled, (PRInt32)aEnabled);
   return NS_OK;
@@ -2624,8 +2624,8 @@ PRInt32 CDatabaseEngine::CollateWithLeadingNumbers(collationBuffers *aCollationB
                                                    PRInt32 *number1Length,
                                                    const NATIVE_CHAR_TYPE *aStr2,
                                                    PRInt32 *number2Length) {
-  PRBool hasLeadingNumberA = PR_FALSE;
-  PRBool hasLeadingNumberB = PR_FALSE;
+  bool hasLeadingNumberA = PR_FALSE;
+  bool hasLeadingNumberB = PR_FALSE;
   
   PRFloat64 leadingNumberA;
   PRFloat64 leadingNumberB;

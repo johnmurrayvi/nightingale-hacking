@@ -67,8 +67,8 @@ sbShutdownTestController.prototype = {
 
     // Trick invoke the shutdown service
     shutdownService.QueryInterface(Ci.nsIObserver);
-    var fakeBool = Cc["@mozilla.org/supports-PRBool;1"]
-                     .createInstance(Ci.nsISupportsPRBool);
+    var fakeBool = Cc["@mozilla.org/supports-bool;1"]
+                     .createInstance(Ci.nsISupportsbool);
     shutdownService.observe(fakeBool, 
                             "quit-application-requested", 
                             "is-unit-test");

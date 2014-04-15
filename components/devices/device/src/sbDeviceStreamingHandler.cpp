@@ -164,7 +164,7 @@ sbDeviceStreamingHandler::CheckTransferable()
 // IsComplete
 //
 
-PRBool
+bool
 sbDeviceStreamingHandler::IsComplete()
 {
   return mIsComplete;
@@ -176,7 +176,7 @@ sbDeviceStreamingHandler::IsComplete()
 // IsStreamingItemSupported
 //
 
-PRBool
+bool
 sbDeviceStreamingHandler::IsStreamingItemSupported()
 {
   return mIsSupported;

@@ -242,8 +242,8 @@ private:
   nsCOMArray<sbIJobProgressListener>      mProgressListeners;
   nsCOMPtr<nsITimer>                      mProgressTimer;
 
-  PRBool                                  mPipelineBuilt;
-  PRBool                                  mWaitingForCaps;
+  bool                                  mPipelineBuilt;
+  bool                                  mWaitingForCaps;
 
   GstPad                                 *mAudioSrc;
   GstPad                                 *mVideoSrc;
@@ -251,9 +251,9 @@ private:
   GstPad                                 *mVideoQueueSrc;
 
   // Booleans to track whether we'll use audio/video/muxer
-  PRBool                                  mUseAudio;
-  PRBool                                  mUseVideo;
-  PRBool                                  mUseMuxer;
+  bool                                  mUseAudio;
+  bool                                  mUseVideo;
+  bool                                  mUseMuxer;
 
   // Lock to prevent trying to build the pipeline concurrently from multiple
   // threads.

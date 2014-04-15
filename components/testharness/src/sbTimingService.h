@@ -89,7 +89,7 @@ public:
 
 private:
   PRLock *          mLoggingLock;
-  PRBool            mLoggingEnabled;
+  bool            mLoggingEnabled;
   nsCOMPtr<nsIFile> mLogFile;
 
   // Supplementary lock is required to ensure that a timer of the same name

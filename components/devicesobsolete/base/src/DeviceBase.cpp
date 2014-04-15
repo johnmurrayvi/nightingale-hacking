@@ -159,21 +159,21 @@ sbDeviceBaseLibraryListener::Init(const nsAString &aDeviceIdentifier,
 
   mDeviceIdentifier = aDeviceIdentifier;
   mDevice = aDevice;
-  PRBool success = mBeforeRemoveIndexes.Init();
+  bool success = mBeforeRemoveIndexes.Init();
   NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
   return NS_OK;
 }
 
 nsresult 
-sbDeviceBaseLibraryListener::SetIgnoreListener(PRBool aIgnoreListener)
+sbDeviceBaseLibraryListener::SetIgnoreListener(bool aIgnoreListener)
 {
   mIgnoreListener = aIgnoreListener;
   return NS_OK;
 }
 
 nsresult 
-sbDeviceBaseLibraryListener::SetManagePlaylists(PRBool aManagePlaylists)
+sbDeviceBaseLibraryListener::SetManagePlaylists(bool aManagePlaylists)
 {
   mManagePlaylists = aManagePlaylists;
   return NS_OK;
@@ -183,7 +183,7 @@ NS_IMETHODIMP
 sbDeviceBaseLibraryListener::OnItemAdded(sbIMediaList *aMediaList,
                                          sbIMediaItem *aMediaItem,
                                          PRUint32 aIndex,
-                                         PRBool *aNoMoreForBatch)
+                                         bool *aNoMoreForBatch)
 {
   NS_ENSURE_ARG_POINTER(aMediaList);
   NS_ENSURE_ARG_POINTER(aMediaItem);
@@ -201,12 +201,12 @@ sbDeviceBaseLibraryListener::OnItemAdded(sbIMediaList *aMediaList,
   rv = aMediaList->GetLibrary(getter_AddRefs(library));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool destinationIsLibrary;
+  bool destinationIsLibrary;
   rv = aMediaList->Equals(library, &destinationIsLibrary);
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<sbIMediaList> list = do_QueryInterface(aMediaItem, &rv);
-  PRBool addedIsList = NS_SUCCEEDED(rv);
+  bool addedIsList = NS_SUCCEEDED(rv);
 
   // If we're managing playlists and a list is being added to the library, we
   // need to attach a listener so we can track changes to the list
@@ -225,7 +225,7 @@ sbDeviceBaseLibraryListener::OnItemAdded(sbIMediaList *aMediaList,
     nsAutoPtr<sbRemovedItemIndexes> removedIndexes(new sbRemovedItemIndexes());
     NS_ENSURE_TRUE(removedIndexes, NS_ERROR_OUT_OF_MEMORY);
 
-    PRBool success = removedIndexes->Init();
+    bool success = removedIndexes->Init();
     NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
     success = mBeforeRemoveIndexes.Put(list, removedIndexes);
@@ -301,7 +301,7 @@ NS_IMETHODIMP
 sbDeviceBaseLibraryListener::OnBeforeItemRemoved(sbIMediaList *aMediaList,
                                                  sbIMediaItem *aMediaItem,
                                                  PRUint32 aIndex,
-                                                 PRBool *aNoMoreForBatch)
+                                                 bool *aNoMoreForBatch)
 {
   NS_ENSURE_ARG_POINTER(aMediaList);
   NS_ENSURE_ARG_POINTER(aMediaItem);
@@ -326,7 +326,7 @@ sbDeviceBaseLibraryListener::OnBeforeItemRemoved(sbIMediaList *aMediaList,
   rv = aMediaList->GetLibrary(getter_AddRefs(library));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool fromListIsLibrary;
+  bool fromListIsLibrary;
   rv = aMediaList->Equals(library, &fromListIsLibrary);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -336,7 +336,7 @@ sbDeviceBaseLibraryListener::OnBeforeItemRemoved(sbIMediaList *aMediaList,
     NS_ENSURE_SUCCESS(rv, rv);
 
     sbRemovedItemIndexes* removedIndexes;
-    PRBool success = mBeforeRemoveIndexes.Get(aMediaList, &removedIndexes);
+    bool success = mBeforeRemoveIndexes.Get(aMediaList, &removedIndexes);
     NS_ENSURE_TRUE(success, NS_ERROR_UNEXPECTED);
 
     success = removedIndexes->Put(aMediaItem, index);
@@ -350,7 +350,7 @@ NS_IMETHODIMP
 sbDeviceBaseLibraryListener::OnAfterItemRemoved(sbIMediaList *aMediaList, 
                                                 sbIMediaItem *aMediaItem,
                                                 PRUint32 aIndex,
-                                                PRBool *aNoMoreForBatch)
+                                                bool *aNoMoreForBatch)
 {
   NS_ENSURE_ARG_POINTER(aMediaList);
   NS_ENSURE_ARG_POINTER(aMediaItem);
@@ -364,12 +364,12 @@ sbDeviceBaseLibraryListener::OnAfterItemRemoved(sbIMediaList *aMediaList,
   rv = aMediaList->GetLibrary(getter_AddRefs(library));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool fromListIsLibrary;
+  bool fromListIsLibrary;
   rv = aMediaList->Equals(library, &fromListIsLibrary);
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<sbIMediaList> list = do_QueryInterface(aMediaItem, &rv);
-  PRBool removedIsList = NS_SUCCEEDED(rv);
+  bool removedIsList = NS_SUCCEEDED(rv);
 
   if (mManagePlaylists && fromListIsLibrary && removedIsList) {
     rv = list->RemoveListener(this);
@@ -407,11 +407,11 @@ sbDeviceBaseLibraryListener::OnAfterItemRemoved(sbIMediaList *aMediaList,
       }
       else {
         sbRemovedItemIndexes* removedIndexes;
-        PRBool success = mBeforeRemoveIndexes.Get(aMediaList, &removedIndexes);
+        bool success = mBeforeRemoveIndexes.Get(aMediaList, &removedIndexes);
         NS_ENSURE_TRUE(success, NS_ERROR_UNEXPECTED);
 
         PRUint32 index;
-        PRBool found = removedIndexes->Get(aMediaItem, &index);
+        bool found = removedIndexes->Get(aMediaItem, &index);
         if (found) {
           removedIndexes->Remove(aMediaItem);
           rv = mDevice->RemoveFromPlaylist(mDeviceIdentifier,
@@ -444,7 +444,7 @@ NS_IMETHODIMP
 sbDeviceBaseLibraryListener::OnItemUpdated(sbIMediaList *aMediaList,
                                            sbIMediaItem *aMediaItem,
                                            sbIPropertyArray* aProperties,
-                                           PRBool* aNoMoreForBatch)
+                                           bool* aNoMoreForBatch)
 {
   NS_ENSURE_ARG_POINTER(aMediaItem);
   NS_ENSURE_ARG_POINTER(aMediaList);
@@ -477,7 +477,7 @@ NS_IMETHODIMP
 sbDeviceBaseLibraryListener::OnItemMoved(sbIMediaList *aMediaList,
                                          PRUint32 aFromIndex,
                                          PRUint32 aToIndex,
-                                         PRBool *aNoMoreForBatch)
+                                         bool *aNoMoreForBatch)
 {
   NS_ENSURE_ARG_POINTER(aMediaList);
   NS_ENSURE_ARG_POINTER(aNoMoreForBatch);
@@ -507,8 +507,8 @@ sbDeviceBaseLibraryListener::OnItemMoved(sbIMediaList *aMediaList,
 
 NS_IMETHODIMP 
 sbDeviceBaseLibraryListener::OnBeforeListCleared(sbIMediaList *aMediaList,
-                                                 PRBool aExcludeLists,
-                                                 PRBool* aNoMoreForBatch)
+                                                 bool aExcludeLists,
+                                                 bool* aNoMoreForBatch)
 {
   /* Validate parameters. */
   NS_ENSURE_ARG_POINTER(aNoMoreForBatch);
@@ -519,8 +519,8 @@ sbDeviceBaseLibraryListener::OnBeforeListCleared(sbIMediaList *aMediaList,
 
 NS_IMETHODIMP 
 sbDeviceBaseLibraryListener::OnListCleared(sbIMediaList *aMediaList,
-                                           PRBool aExcludeLists,
-                                           PRBool* aNoMoreForBatch)
+                                           bool aExcludeLists,
+                                           bool* aNoMoreForBatch)
 {
   NS_ENSURE_ARG_POINTER(aMediaList);
   NS_ENSURE_ARG_POINTER(aNoMoreForBatch);
@@ -537,7 +537,7 @@ sbDeviceBaseLibraryListener::OnListCleared(sbIMediaList *aMediaList,
   rv = aMediaList->GetLibrary(getter_AddRefs(library));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool fromListIsLibrary;
+  bool fromListIsLibrary;
   rv = aMediaList->Equals(library, &fromListIsLibrary);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -909,7 +909,7 @@ sbDeviceBase::CreateDeviceLibrary(const nsAString &aDeviceIdentifier,
     rv = libraryFile->Append(NS_LITERAL_STRING("db"));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    PRBool exists = PR_FALSE;
+    bool exists = PR_FALSE;
     rv = libraryFile->Exists(&exists);
     NS_ENSURE_SUCCESS(rv, rv);
     if(!exists) {
@@ -1154,7 +1154,7 @@ sbDeviceBase::ClearTransferQueue(const nsAString &aDeviceIdentifier)
 
 nsresult 
 sbDeviceBase::IsTransferQueueEmpty(const nsAString &aDeviceIdentifier, 
-                                   PRBool &aEmpty)
+                                   bool &aEmpty)
 {
   aEmpty = PR_FALSE;
 

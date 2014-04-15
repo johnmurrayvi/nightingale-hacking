@@ -213,7 +213,7 @@ protected:
   //        If found, decrements the times-to-ignore count as appropriate.
   //
   nsresult DecrementIgnoredPathCount(const nsAString & aFilePath,
-                                     PRBool *aIsIgnoredPath);
+                                     bool *aIsIgnoredPath);
 
 private:
   nsCOMPtr<sbIFileSystemWatcher> mFileSystemWatcher;
@@ -232,15 +232,15 @@ private:
   nsString                       mWatchPath;
   nsCString                      mFileSystemWatcherGUID;
   EWatchFolderState              mServiceState;
-  PRBool                         mHasWatcherStarted;
-  PRBool                         mShouldReinitWatcher;
-  PRBool                         mEventPumpTimerIsSet;
-  PRBool                         mShouldProcessEvents;
-  PRBool                         mChangeDelayTimerIsSet;
+  bool                         mHasWatcherStarted;
+  bool                         mShouldReinitWatcher;
+  bool                         mEventPumpTimerIsSet;
+  bool                         mShouldProcessEvents;
+  bool                         mChangeDelayTimerIsSet;
   EProcessType                   mCurrentProcessType;
   
-  PRBool                                mCanInteract;
-  PRBool                                mShouldSynchronize;
+  bool                                mCanInteract;
+  bool                                mShouldSynchronize;
   nsCOMPtr<sbIDirectoryImportService>   mCustomImporter;
   nsCOMPtr<sbIMediacoreTypeSniffer>     mTypeSniffer;
   nsCOMPtr<sbIFileMetadataService>      mMetadataScanner;

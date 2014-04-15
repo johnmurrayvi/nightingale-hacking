@@ -343,7 +343,7 @@ sbBaseDeviceFirmwareHandler::CreateDeviceEvent(PRUint32 aType,
 
 nsresult
 sbBaseDeviceFirmwareHandler::SendDeviceEvent(sbIDeviceEvent *aEvent,
-                                             PRBool aAsync /*= PR_TRUE*/)
+                                             bool aAsync /*= PR_TRUE*/)
 {
   TRACE(("[%s]", __FUNCTION__));
   NS_ENSURE_ARG_POINTER(aEvent);
@@ -388,7 +388,7 @@ sbBaseDeviceFirmwareHandler::SendDeviceEvent(sbIDeviceEvent *aEvent,
 
   }
 
-  PRBool dispatched = PR_FALSE;
+  bool dispatched = PR_FALSE;
   rv = target->DispatchEvent(aEvent, aAsync, &dispatched);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -405,7 +405,7 @@ sbBaseDeviceFirmwareHandler::SendDeviceEvent(sbIDeviceEvent *aEvent,
 nsresult
 sbBaseDeviceFirmwareHandler::SendDeviceEvent(PRUint32 aType,
                                              nsIVariant *aData,
-                                             PRBool aAsync /*= PR_TRUE*/)
+                                             bool aAsync /*= PR_TRUE*/)
 {
   TRACE(("[%s]", __FUNCTION__));
 
@@ -508,7 +508,7 @@ sbBaseDeviceFirmwareHandler::OnGetCurrentFirmwareReadableVersion(nsAString &aCur
 }
 
 /*virtual*/ nsresult
-sbBaseDeviceFirmwareHandler::OnGetRecoveryMode(PRBool *aRecoveryMode)
+sbBaseDeviceFirmwareHandler::OnGetRecoveryMode(bool *aRecoveryMode)
 {
   /**
    * You should return if the bound device is in recovery mode or not.
@@ -584,7 +584,7 @@ sbBaseDeviceFirmwareHandler::OnGetSupportedDevices(nsISimpleEnumerator **aSuppor
 sbBaseDeviceFirmwareHandler::OnCanUpdate(sbIDevice *aDevice,
                                          PRUint32 aDeviceVendorID,
                                          PRUint32 aDeviceProductID,
-                                         PRBool *_retval)
+                                         bool *_retval)
 {
   TRACE(("[%s]", __FUNCTION__));
   /**
@@ -631,7 +631,7 @@ sbBaseDeviceFirmwareHandler::OnEndRecoveryModeSwitch()
 /*virtual*/ nsresult
 sbBaseDeviceFirmwareHandler::OnRebind(sbIDevice *aDevice,
                                       sbIDeviceEventListener *aListener,
-                                      PRBool *_retval)
+                                      bool *_retval)
 {
   /**
    * When a handler is already active and the device it is bound to
@@ -995,7 +995,7 @@ sbBaseDeviceFirmwareHandler::GetRegisterLocation(nsIURI * *aRegisterLocation)
 }
 
 NS_IMETHODIMP
-sbBaseDeviceFirmwareHandler::GetNeedsRecoveryMode(PRBool *aNeedsRecoveryMode)
+sbBaseDeviceFirmwareHandler::GetNeedsRecoveryMode(bool *aNeedsRecoveryMode)
 {
   TRACE(("[%s]", __FUNCTION__));
   NS_ENSURE_ARG_POINTER(aNeedsRecoveryMode);
@@ -1007,7 +1007,7 @@ sbBaseDeviceFirmwareHandler::GetNeedsRecoveryMode(PRBool *aNeedsRecoveryMode)
 }
 
 NS_IMETHODIMP
-sbBaseDeviceFirmwareHandler::GetRecoveryMode(PRBool *aRecoveryMode)
+sbBaseDeviceFirmwareHandler::GetRecoveryMode(bool *aRecoveryMode)
 {
   TRACE(("[%s]", __FUNCTION__));
   NS_ENSURE_ARG_POINTER(aRecoveryMode);
@@ -1033,12 +1033,12 @@ sbBaseDeviceFirmwareHandler::GetDefaultFirmwareUpdate(sbIDeviceFirmwareUpdate **
   // No default firmware available. Return nsnull.
   NS_ENSURE_TRUE(mDefaultFirmwareLocation, NS_OK);
 
-  PRBool schemeIsChrome = PR_FALSE;
+  bool schemeIsChrome = PR_FALSE;
   nsresult rv = mDefaultFirmwareLocation->SchemeIs("chrome",
                                                    &schemeIsChrome);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool schemeIsFile = PR_FALSE;
+  bool schemeIsFile = PR_FALSE;
   rv = mDefaultFirmwareLocation->SchemeIs("file",
                                           &schemeIsFile);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -1144,7 +1144,7 @@ NS_IMETHODIMP
 sbBaseDeviceFirmwareHandler::CanUpdate(sbIDevice *aDevice,
                                        PRUint32 aDeviceVendorID,
                                        PRUint32 aDeviceProductID,
-                                       PRBool *_retval)
+                                       bool *_retval)
 {
   TRACE(("[%s]", __FUNCTION__));
   NS_ENSURE_ARG_POINTER(_retval);
@@ -1202,7 +1202,7 @@ sbBaseDeviceFirmwareHandler::Bind(sbIDevice *aDevice,
 NS_IMETHODIMP
 sbBaseDeviceFirmwareHandler::Rebind(sbIDevice *aDevice,
                                     sbIDeviceEventListener *aListener,
-                                    PRBool *_retval)
+                                    bool *_retval)
 {
   TRACE(("[%s]", __FUNCTION__));
   NS_ENSURE_ARG_POINTER(aDevice);

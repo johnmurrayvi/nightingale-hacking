@@ -67,7 +67,7 @@
  * \return PR_TRUE              Current thread is main thread.
  */
 
-PRBool
+bool
 SB_IsMainThread(nsIThreadManager* aThreadManager)
 {
   nsresult rv;
@@ -80,7 +80,7 @@ SB_IsMainThread(nsIThreadManager* aThreadManager)
   }
 
   // Check if the current thread is the main thread.
-  PRBool isMainThread;
+  bool isMainThread;
   rv = threadManager->GetIsMainThread(&isMainThread);
   NS_ENSURE_SUCCESS(rv, PR_FALSE);
 
@@ -104,7 +104,7 @@ sbRunnable::Run()
 
 
 
-PRBool
+bool
 sbRunnable::Wait(PRIntervalTime aTimeout)
 {
   // Compute a fixed expiration time that won't drift:
