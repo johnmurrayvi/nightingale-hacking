@@ -1,0 +1,1960 @@
+commit 22fae8d9c9d76d1199c20313e9cfe9ed5f885af8
+Author: John Murray <johnmurrayvi@gmail.com>
+Date:   Sat Aug 31 16:37:50 2013 -0400
+
+    remove proxy
+
+diff --git a/components/moz/Makefile.in b/components/moz/Makefile.in
+index 86db627..520e6d4 100644
+--- a/components/moz/Makefile.in
++++ b/components/moz/Makefile.in
+@@ -39,7 +39,6 @@ SUBDIRS = strings \
+           clipboard \
+           dirprovider \
+           filedownloader \
+-          proxy \
+           fileutils \
+           threads \
+           prompter \
+diff --git a/components/moz/proxy/Makefile.in b/components/moz/proxy/Makefile.in
+deleted file mode 100644
+index 56190c2..0000000
+--- a/components/moz/proxy/Makefile.in
++++ /dev/null
+@@ -1,50 +0,0 @@
+-#
+-# ***** BEGIN LICENSE BLOCK *****
+-# Version: MPL 1.1/GPL 2.0/LGPL 2.1
+-#
+-# The contents of this file are subject to the Mozilla Public License Version
+-# 1.1 (the "License"); you may not use this file except in compliance with
+-# the License. You may obtain a copy of the License at
+-# http://www.mozilla.org/MPL/
+-#
+-# Software distributed under the License is distributed on an "AS IS" basis,
+-# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+-# for the specific language governing rights and limitations under the
+-# License.
+-#
+-# The Original Code is mozilla.org Code.
+-#
+-# The Initial Developer of the Original Code is
+-# Netscape Communications Corporation.
+-# Portions created by the Initial Developer are Copyright (C) 1998
+-# the Initial Developer. All Rights Reserved.
+-#
+-# Contributor(s):
+-#
+-# Alternatively, the contents of this file may be used under the terms of
+-# either of the GNU General Public License Version 2 or later (the "GPL"),
+-# or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+-# in which case the provisions of the GPL or the LGPL are applicable instead
+-# of those above. If you wish to allow use of your version of this file only
+-# under the terms of either the GPL or the LGPL, and not to allow others to
+-# use your version of this file under the terms of the MPL, indicate your
+-# decision by deleting the provisions above and replace them with the notice
+-# and other provisions required by the GPL or the LGPL. If you do not delete
+-# the provisions above, a recipient may use your version of this file under
+-# the terms of any one of the MPL, the GPL or the LGPL.
+-#
+-# ***** END LICENSE BLOCK *****
+-
+-DEPTH = ../../../
+-topsrcdir = @top_srcdir@
+-srcdir = @srcdir@
+-VPATH = @srcdir@
+-
+-SUBDIRS = public \
+-		  src \
+-          $(NULL)
+-
+-include $(DEPTH)/build/autodefs.mk
+-include $(topsrcdir)/build/rules.mk
+-
+-
+diff --git a/components/moz/proxy/public/Makefile.in b/components/moz/proxy/public/Makefile.in
+deleted file mode 100644
+index fdc8581..0000000
+--- a/components/moz/proxy/public/Makefile.in
++++ /dev/null
+@@ -1,55 +0,0 @@
+-#
+-# ***** BEGIN LICENSE BLOCK *****
+-# Version: MPL 1.1/GPL 2.0/LGPL 2.1
+-#
+-# The contents of this file are subject to the Mozilla Public License Version
+-# 1.1 (the "License"); you may not use this file except in compliance with
+-# the License. You may obtain a copy of the License at
+-# http://www.mozilla.org/MPL/
+-#
+-# Software distributed under the License is distributed on an "AS IS" basis,
+-# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+-# for the specific language governing rights and limitations under the
+-# License.
+-#
+-# The Original Code is mozilla.org code.
+-#
+-# The Initial Developer of the Original Code is
+-# Netscape Communications Corporation.
+-# Portions created by the Initial Developer are Copyright (C) 1998
+-# the Initial Developer. All Rights Reserved.
+-#
+-# Contributor(s):
+-#
+-# Alternatively, the contents of this file may be used under the terms of
+-# either of the GNU General Public License Version 2 or later (the "GPL"),
+-# or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+-# in which case the provisions of the GPL or the LGPL are applicable instead
+-# of those above. If you wish to allow use of your version of this file only
+-# under the terms of either the GPL or the LGPL, and not to allow others to
+-# use your version of this file under the terms of the MPL, indicate your
+-# decision by deleting the provisions above and replace them with the notice
+-# and other provisions required by the GPL or the LGPL. If you do not delete
+-# the provisions above, a recipient may use your version of this file under
+-# the terms of any one of the MPL, the GPL or the LGPL.
+-#
+-# ***** END LICENSE BLOCK *****
+-
+-DEPTH = ../../../../
+-topsrcdir = @top_srcdir@
+-srcdir = @srcdir@
+-VPATH = @srcdir@
+-
+-include $(DEPTH)/build/autodefs.mk
+-
+-XPIDL_MODULE	= proxyObject.xpt
+-
+-EXPORTS		= \
+-		nsProxiedService.h \
+-		$(NULL)
+-
+-XPIDL_SRCS	= \
+-		nsIProxyObjectManager.idl  \
+-		$(NULL)
+-
+-include $(topsrcdir)/build/rules.mk
+diff --git a/components/moz/proxy/public/nsIProxyObjectManager.idl b/components/moz/proxy/public/nsIProxyObjectManager.idl
+deleted file mode 100644
+index b37d295..0000000
+--- a/components/moz/proxy/public/nsIProxyObjectManager.idl
++++ /dev/null
+@@ -1,144 +0,0 @@
+-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+-/* ***** BEGIN LICENSE BLOCK *****
+- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
+- *
+- * The contents of this file are subject to the Mozilla Public License Version
+- * 1.1 (the "License"); you may not use this file except in compliance with
+- * the License. You may obtain a copy of the License at
+- * http://www.mozilla.org/MPL/
+- *
+- * Software distributed under the License is distributed on an "AS IS" basis,
+- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+- * for the specific language governing rights and limitations under the
+- * License.
+- *
+- * The Original Code is mozilla.org code.
+- *
+- * The Initial Developer of the Original Code is
+- * Netscape Communications Corporation.
+- * Portions created by the Initial Developer are Copyright (C) 1998
+- * the Initial Developer. All Rights Reserved.
+- *
+- * Contributor(s):
+- *   Doug Turner <dougt@netscape.com> (Original Author)
+- *   Dan Mosedale <dmose@netscape.com>
+- *   Darin Fisher <darin@meer.net>
+- *
+- * Alternatively, the contents of this file may be used under the terms of
+- * either of the GNU General Public License Version 2 or later (the "GPL"),
+- * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+- * in which case the provisions of the GPL or the LGPL are applicable instead
+- * of those above. If you wish to allow use of your version of this file only
+- * under the terms of either the GPL or the LGPL, and not to allow others to
+- * use your version of this file under the terms of the MPL, indicate your
+- * decision by deleting the provisions above and replace them with the notice
+- * and other provisions required by the GPL or the LGPL. If you do not delete
+- * the provisions above, a recipient may use your version of this file under
+- * the terms of any one of the MPL, the GPL or the LGPL.
+- *
+- * ***** END LICENSE BLOCK ***** */
+-
+-#include "nsISupports.idl"
+-
+-interface nsIEventTarget;
+-
+-/**
+- * An interface for the proxy object manager.
+- *
+- * See http://www.mozilla.org/projects/xpcom/Proxies.html
+- */
+-[scriptable, uuid(ee8ce1e3-0319-4bd9-8f70-7258b21c7733)]
+-interface nsIProxyObjectManager : nsISupports 
+-{
+-    /**
+-     * Construct a proxy object that invokes methods on the real object
+-     * synchronously (i.e., the calling thread is blocked until the real method
+-     * call returns).  This flag causes methods invoked on the proxy object to
+-     * emmulate a real method call.
+-     *
+-     * For C++ callers, NS_PROXY_SYNC is a synonym for this flag.
+-     */
+-    const long INVOKE_SYNC = 0x0001; 
+-
+-    /**
+-     * Construct a proxy object that invokes methods on the real object
+-     * asynchronously (i.e., the calling thread does not wait for the real
+-     * method call to occur).
+-     * 
+-     * WARNING: do not pass pointers into the stack when using this flag.
+-     *
+-     * For C++ callers, NS_PROXY_ASYNC is a synonym for this flag.
+-     */
+-    const long INVOKE_ASYNC = 0x0002; 
+-
+-    /**
+-     * Always create the proxy object even if for same thread as current thread.
+-     *
+-     * For C++ callers, NS_PROXY_ALWAYS is a synonym for this flag.
+-     */
+-    const long FORCE_PROXY_CREATION = 0x0004;
+-
+-    /**
+-     * Create a proxy for the given object.  The proxy implements the specified
+-     * interface, but when its methods are invoked, it causes the corresponding
+-     * method on the actual object to be called via the designated event
+-     * target.  Typically, the event target identifies a thread where the
+-     * method call should occur.
+-     *
+-     * @param target
+-     *   If target is null, then the current thread is used as the target.
+-     *   Otherwise, target identifies the nsIEventTarget from which proxy
+-     *   method calls should be executed.
+-     * @param iid
+-     *   Identifies the interface being proxied.  The given object must QI to
+-     *   this type.
+-     * @param object
+-     *   The object being proxied.
+-     * @param proxyType
+-     *   Specifies the type of proxy to construct.  Either INVOKE_SYNC or
+-     *   INVOKE_ASYNC must be specified.  FORCE_PROXY_CREATION may be bit-wise
+-     *   OR'd with either of those flags.
+-     * @param result
+-     *   This param holds the resulting proxy object upon successful return.
+-     */
+-    void getProxyForObject(in nsIEventTarget target, 
+-                           in nsIIDRef iid, 
+-                           in nsISupports object, 
+-                           in PRInt32 proxyType,
+-                           [iid_is(iid),retval] out nsQIResult result);
+-};
+-
+-
+-%{C++
+-/**
+- * convenience macros
+- */
+-#define NS_PROXY_SYNC    nsIProxyObjectManager::INVOKE_SYNC
+-#define NS_PROXY_ASYNC   nsIProxyObjectManager::INVOKE_ASYNC
+-#define NS_PROXY_ALWAYS  nsIProxyObjectManager::FORCE_PROXY_CREATION
+-
+-/**
+- * Pass this value as the target to {NS_}GetProxyForObject to specify the current
+- * thread as the target for the proxy object.
+- */
+-#define NS_PROXY_TO_CURRENT_THREAD  ((nsIEventTarget *) 0)
+-
+-/**
+- * Pass this value as the target to NS_GetProxyForObject to specify the main
+- * thread as the target for the proxy object.
+- */
+-#define NS_PROXY_TO_MAIN_THREAD  ((nsIEventTarget *) 1)
+-
+-#ifdef MOZILLA_INTERNAL_API
+-/**
+- * Helper function for code that already has a link-time dependency on the
+- * internal API (MOZILLA_INTERNAL_API) and needs to get proxies in a bunch of
+- * different places.  This way, the caller isn't forced to get the proxy object
+- * manager themselves every single time, thus making the calling code more
+- * readable.  The parameters are the same as for GetProxyForObject.
+- */
+-extern nsresult
+-NS_GetProxyForObject(nsIEventTarget *target, REFNSIID iid, nsISupports* object,
+-                     PRInt32 proxyType, void** result);
+-#endif
+-%}
+diff --git a/components/moz/proxy/public/nsProxiedService.h b/components/moz/proxy/public/nsProxiedService.h
+deleted file mode 100644
+index 1d160f0..0000000
+--- a/components/moz/proxy/public/nsProxiedService.h
++++ /dev/null
+@@ -1,143 +0,0 @@
+-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+-/* ***** BEGIN LICENSE BLOCK *****
+- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
+- *
+- * The contents of this file are subject to the Mozilla Public License Version
+- * 1.1 (the "License"); you may not use this file except in compliance with
+- * the License. You may obtain a copy of the License at
+- * http://www.mozilla.org/MPL/
+- *
+- * Software distributed under the License is distributed on an "AS IS" basis,
+- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+- * for the specific language governing rights and limitations under the
+- * License.
+- *
+- * The Original Code is mozilla.org code.
+- *
+- * The Initial Developer of the Original Code is
+- * Netscape Communications Corporation.
+- * Portions created by the Initial Developer are Copyright (C) 1998
+- * the Initial Developer. All Rights Reserved.
+- *
+- * Contributor(s):
+- *   Pierre Phaneuf <pp@ludusdesign.com>
+- *
+- * Alternatively, the contents of this file may be used under the terms of
+- * either of the GNU General Public License Version 2 or later (the "GPL"),
+- * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+- * in which case the provisions of the GPL or the LGPL are applicable instead
+- * of those above. If you wish to allow use of your version of this file only
+- * under the terms of either the GPL or the LGPL, and not to allow others to
+- * use your version of this file under the terms of the MPL, indicate your
+- * decision by deleting the provisions above and replace them with the notice
+- * and other provisions required by the GPL or the LGPL. If you do not delete
+- * the provisions above, a recipient may use your version of this file under
+- * the terms of any one of the MPL, the GPL or the LGPL.
+- *
+- * ***** END LICENSE BLOCK ***** */
+-
+-#ifndef nsProxiedService_h__
+-#define nsProxiedService_h__
+-
+-#include "nsServiceManagerUtils.h"
+-#include "nsIProxyObjectManager.h"
+-#include "nsXPCOMCIDInternal.h"
+-
+-////////////////////////////////////////////////////////////////////////////////
+-// NS_WITH_PROXIED_SERVICE: macro to make using services that need to be proxied
+-//                                   before using them easier. 
+-// Now you can replace this:
+-// {
+-//      nsresult rv;
+-//      nsCOMPtr<nsIMyService> pIMyService = 
+-//               do_GetService(kMyServiceCID, &rv);
+-//      if(NS_FAILED(rv))
+-//          return;
+-//      nsCOMPtr<nsIProxyObjectManager> pIProxyObjectManager = 
+-//               do_GetService(kProxyObjectManagerCID, &rv);
+-//      if(NS_FAILED(rv))
+-//          return;
+-//      nsIMyService pIProxiedObject = NULL;
+-//      rv = pIProxyObjectManager->GetProxyForObject(pIDispatchTarget, 
+-//                                                   NS_GET_IID(nsIMyService), 
+-//                                                   pIMyService, NS_PROXY_SYNC,
+-//                                                   (void**)&pIProxiedObject);
+-//      pIProxiedObject->DoIt(...);  // Executed on same thread as pIProxyQueue
+-//      ...
+-//      pIProxiedObject->Release();  // Must be done as not managed for you.
+-//      }
+-//  with this:
+-//      {
+-//      nsresult rv;
+-//      NS_WITH_PROXIED_SERVICE(nsIMyService, pIMyService, kMyServiceCID, 
+-//                              pIDispatchTarget, &rv);
+-//      if(NS_FAILED(rv))
+-//          return;
+-//      pIMyService->DoIt(...);  // Executed on the same thread as pIProxyQueue
+-//      }
+-// and the automatic destructor will take care of releasing the service and
+-// the proxied object for you. 
+-// 
+-// Note that this macro requires you to link with the xpcom DLL to pick up the
+-// static member functions from nsServiceManager.
+-
+-#define NS_WITH_PROXIED_SERVICE(T, var, cid, Q, rvAddr)     \
+-    nsProxiedService _serv##var(cid, NS_GET_IID(T), Q, false, rvAddr);     \
+-    T* var = (T*)(nsISupports*)_serv##var;
+-
+-#define NS_WITH_ALWAYS_PROXIED_SERVICE(T, var, cid, Q, rvAddr)     \
+-    nsProxiedService _serv##var(cid, NS_GET_IID(T), Q, true, rvAddr);       \
+-    T* var = (T*)(nsISupports*)_serv##var;
+-
+-////////////////////////////////////////////////////////////////////////////////
+-// nsProxiedService
+-////////////////////////////////////////////////////////////////////////////////
+-
+-class NS_STACK_CLASS nsProxiedService
+-{
+-public:
+-    nsProxiedService(const nsCID &aClass, const nsIID &aIID, 
+-                     nsIEventTarget* aTarget, bool always, nsresult* rv)
+-    {
+-        nsCOMPtr<nsISupports> svc = do_GetService(aClass, rv);
+-        if (NS_SUCCEEDED(*rv))
+-            InitProxy(svc, aIID, aTarget, always, rv);
+-    }
+-
+-    nsProxiedService(const char* aContractID, const nsIID &aIID, 
+-                     nsIEventTarget* aTarget, bool always, nsresult* rv)
+-    {
+-        nsCOMPtr<nsISupports> svc = do_GetService(aContractID, rv);
+-        if (NS_SUCCEEDED(*rv))
+-            InitProxy(svc, aIID, aTarget, always, rv);
+-    }
+-    
+-    operator nsISupports*() const
+-    {
+-        return mProxiedService;
+-    }
+-
+-private:
+-
+-    void InitProxy(nsISupports *aObj, const nsIID &aIID,
+-                   nsIEventTarget* aTarget, bool always, nsresult*rv)
+-    {
+-        PRInt32 proxyType = NS_PROXY_SYNC;
+-        if (always)
+-            proxyType |= NS_PROXY_ALWAYS;
+-
+-        nsCOMPtr<nsIProxyObjectManager> proxyObjMgr = do_GetService(NS_XPCOMPROXY_CONTRACTID, rv);
+-        if (NS_FAILED(*rv))
+-          return;
+-
+-        *rv = proxyObjMgr->GetProxyForObject(aTarget,
+-                                             aIID,
+-                                             aObj,
+-                                             proxyType,
+-                                             getter_AddRefs(mProxiedService));
+-    }
+-
+-    nsCOMPtr<nsISupports> mProxiedService;
+-};
+-
+-#endif // nsProxiedService_h__
+diff --git a/components/moz/proxy/src/nsIThreadInternal.h b/components/moz/proxy/src/nsIThreadInternal.h
+deleted file mode 100644
+index a96ffb8..0000000
+--- a/components/moz/proxy/src/nsIThreadInternal.h
++++ /dev/null
+@@ -1,391 +0,0 @@
+-/*
+- * FEEL FREE TO EDIT.  THIS FILE IS A NASTY HACK COPIED FROM XUL-1.9.2!
+- */
+-
+-#ifndef __gen_nsIThreadInternal_h__
+-#define __gen_nsIThreadInternal_h__
+-
+-
+-#ifndef __gen_nsIThread_h__
+-#include <nsIThread.h>
+-#endif
+-
+-/* For IDL files that don't want to include root IDL files. */
+-#ifndef NS_NO_VTABLE
+-#define NS_NO_VTABLE
+-#endif
+-class nsIThreadObserver; /* forward declaration */
+-
+-class nsIThreadEventFilter; /* forward declaration */
+-
+-
+-/* starting interface:    nsIThreadInternal */
+-#define NS_ITHREADINTERNAL_IID_STR "f89b5063-b06d-42f8-bf23-4dfcf2d80d6a"
+-
+-#define NS_ITHREADINTERNAL_IID \
+-  {0xf89b5063, 0xb06d, 0x42f8, \
+-    { 0xbf, 0x23, 0x4d, 0xfc, 0xf2, 0xd8, 0x0d, 0x6a }}
+-
+-/**
+- * The XPCOM thread object implements this interface, which allows a consumer
+- * to observe dispatch activity on the thread.
+- */
+-class NS_NO_VTABLE NS_SCRIPTABLE nsIThreadInternal : public nsIThread {
+- public: 
+-
+-  NS_DECLARE_STATIC_IID_ACCESSOR(NS_ITHREADINTERNAL_IID)
+-
+-  /**
+-   * Get/set the current thread observer (may be null).  This attribute may be
+-   * read from any thread, but must only be set on the thread corresponding to
+-   * this thread object.  The observer will be released on the thread
+-   * corresponding to this thread object after all other events have been
+-   * processed during a call to Shutdown.
+-   */
+-  /* attribute nsIThreadObserver observer; */
+-  NS_SCRIPTABLE NS_IMETHOD GetObserver(nsIThreadObserver * *aObserver) = 0;
+-  NS_SCRIPTABLE NS_IMETHOD SetObserver(nsIThreadObserver * aObserver) = 0;
+-
+-  /**
+-   * This method causes any events currently enqueued on the thread to be
+-   * suppressed until PopEventQueue is called.  Additionally, any new events
+-   * dispatched to the thread will only be processed if they are accepted by
+-   * the given filter.  If the filter is null, then new events are accepted.
+-   * Calls to PushEventQueue may be nested and must each be paired with a call
+-   * to PopEventQueue in order to restore the original state of the thread.
+-   *
+-   * @param filter
+-   *   The thread event filter to apply to dispatched events, or null to accept
+-   *   all dispatched events.
+-   */
+-  /* void pushEventQueue (in nsIThreadEventFilter filter); */
+-  NS_SCRIPTABLE NS_IMETHOD PushEventQueue(nsIThreadEventFilter *filter) = 0;
+-
+-  /**
+-   * Revert a call to PushEventQueue.  When an event queue is popped, any
+-   * events remaining in the queue are appended to the elder queue.
+-   */
+-  /* void popEventQueue (); */
+-  NS_SCRIPTABLE NS_IMETHOD PopEventQueue(void) = 0;
+-
+-};
+-
+-  NS_DEFINE_STATIC_IID_ACCESSOR(nsIThreadInternal, NS_ITHREADINTERNAL_IID)
+-
+-/* Use this macro when declaring classes that implement this interface. */
+-#define NS_DECL_NSITHREADINTERNAL \
+-  NS_SCRIPTABLE NS_IMETHOD GetObserver(nsIThreadObserver * *aObserver); \
+-  NS_SCRIPTABLE NS_IMETHOD SetObserver(nsIThreadObserver * aObserver); \
+-  NS_SCRIPTABLE NS_IMETHOD PushEventQueue(nsIThreadEventFilter *filter); \
+-  NS_SCRIPTABLE NS_IMETHOD PopEventQueue(void); 
+-
+-/* Use this macro to declare functions that forward the behavior of this interface to another object. */
+-#define NS_FORWARD_NSITHREADINTERNAL(_to) \
+-  NS_SCRIPTABLE NS_IMETHOD GetObserver(nsIThreadObserver * *aObserver) { return _to GetObserver(aObserver); } \
+-  NS_SCRIPTABLE NS_IMETHOD SetObserver(nsIThreadObserver * aObserver) { return _to SetObserver(aObserver); } \
+-  NS_SCRIPTABLE NS_IMETHOD PushEventQueue(nsIThreadEventFilter *filter) { return _to PushEventQueue(filter); } \
+-  NS_SCRIPTABLE NS_IMETHOD PopEventQueue(void) { return _to PopEventQueue(); } 
+-
+-/* Use this macro to declare functions that forward the behavior of this interface to another object in a safe way. */
+-#define NS_FORWARD_SAFE_NSITHREADINTERNAL(_to) \
+-  NS_SCRIPTABLE NS_IMETHOD GetObserver(nsIThreadObserver * *aObserver) { return !_to ? NS_ERROR_NULL_POINTER : _to->GetObserver(aObserver); } \
+-  NS_SCRIPTABLE NS_IMETHOD SetObserver(nsIThreadObserver * aObserver) { return !_to ? NS_ERROR_NULL_POINTER : _to->SetObserver(aObserver); } \
+-  NS_SCRIPTABLE NS_IMETHOD PushEventQueue(nsIThreadEventFilter *filter) { return !_to ? NS_ERROR_NULL_POINTER : _to->PushEventQueue(filter); } \
+-  NS_SCRIPTABLE NS_IMETHOD PopEventQueue(void) { return !_to ? NS_ERROR_NULL_POINTER : _to->PopEventQueue(); } 
+-
+-#if 0
+-/* Use the code below as a template for the implementation class for this interface. */
+-
+-/* Header file */
+-class nsThreadInternal : public nsIThreadInternal
+-{
+-public:
+-  NS_DECL_ISUPPORTS
+-  NS_DECL_NSITHREADINTERNAL
+-
+-  nsThreadInternal();
+-
+-private:
+-  ~nsThreadInternal();
+-
+-protected:
+-  /* additional members */
+-};
+-
+-/* Implementation file */
+-NS_IMPL_ISUPPORTS1(nsThreadInternal, nsIThreadInternal)
+-
+-nsThreadInternal::nsThreadInternal()
+-{
+-  /* member initializers and constructor code */
+-}
+-
+-nsThreadInternal::~nsThreadInternal()
+-{
+-  /* destructor code */
+-}
+-
+-/* attribute nsIThreadObserver observer; */
+-NS_IMETHODIMP nsThreadInternal::GetObserver(nsIThreadObserver * *aObserver)
+-{
+-    return NS_ERROR_NOT_IMPLEMENTED;
+-}
+-NS_IMETHODIMP nsThreadInternal::SetObserver(nsIThreadObserver * aObserver)
+-{
+-    return NS_ERROR_NOT_IMPLEMENTED;
+-}
+-
+-/* void pushEventQueue (in nsIThreadEventFilter filter); */
+-NS_IMETHODIMP nsThreadInternal::PushEventQueue(nsIThreadEventFilter *filter)
+-{
+-    return NS_ERROR_NOT_IMPLEMENTED;
+-}
+-
+-/* void popEventQueue (); */
+-NS_IMETHODIMP nsThreadInternal::PopEventQueue()
+-{
+-    return NS_ERROR_NOT_IMPLEMENTED;
+-}
+-
+-/* End of implementation class template. */
+-#endif
+-
+-
+-/* starting interface:    nsIThreadObserver */
+-#define NS_ITHREADOBSERVER_IID_STR "81d0b509-f198-4417-8020-08eb4271491f"
+-
+-#define NS_ITHREADOBSERVER_IID \
+-  {0x81d0b509, 0xf198, 0x4417, \
+-    { 0x80, 0x20, 0x08, 0xeb, 0x42, 0x71, 0x49, 0x1f }}
+-
+-class NS_NO_VTABLE NS_SCRIPTABLE nsIThreadObserver : public nsISupports {
+- public: 
+-
+-  NS_DECLARE_STATIC_IID_ACCESSOR(NS_ITHREADOBSERVER_IID)
+-
+-  /**
+- * This interface provides the observer with hooks to implement a layered
+- * event queue.  For example, it is possible to overlay processing events
+- * for a GUI toolkit on top of the events for a thread:
+- *
+- *   var NativeQueue;
+- *   Observer = {
+- *     onDispatchedEvent(thread) {
+- *       NativeQueue.signal();
+- *     }
+- *     onProcessNextEvent(thread, mayWait, recursionDepth) {
+- *       if (NativeQueue.hasNextEvent())
+- *         NativeQueue.processNextEvent();
+- *       while (mayWait && !thread.hasPendingEvent()) {
+- *         NativeQueue.wait();
+- *         NativeQueue.processNextEvent();
+- *       }
+- *     }
+- *   };
+- *
+- * NOTE: The implementation of this interface must be threadsafe.
+- * 
+- * NOTE: It is valid to change the thread's observer during a call to an
+- *       observer method.
+- */
+-/**
+-   * This method is called after an event has been dispatched to the thread.
+-   * This method may be called from any thread. 
+-   *
+-   * @param thread
+-   *   The thread where the event is being dispatched.
+-   */
+-  /* void onDispatchedEvent (in nsIThreadInternal thread); */
+-  NS_SCRIPTABLE NS_IMETHOD OnDispatchedEvent(nsIThreadInternal *thread) = 0;
+-
+-  /**
+-   * This method is called (from nsIThread::ProcessNextEvent) before an event
+-   * is processed.  This method is only called on the target thread.
+-   *
+-   * @param thread
+-   *   The thread being asked to process another event.
+-   * @param mayWait
+-   *   Indicates whether or not the method is allowed to block the calling
+-   *   thread.  For example, this parameter is false during thread shutdown.
+-   * @param recursionDepth
+-   *   Indicates the number of calls to ProcessNextEvent on the call stack in
+-   *   addition to the current call.
+-   */
+-  /* void onProcessNextEvent (in nsIThreadInternal thread, in boolean mayWait, in unsigned long recursionDepth); */
+-  NS_SCRIPTABLE NS_IMETHOD OnProcessNextEvent(nsIThreadInternal *thread, bool mayWait, PRUint32 recursionDepth) = 0;
+-
+-  /**
+-   * This method is called (from nsIThread::ProcessNextEvent) after an event
+-   * is processed.  This method is only called on the target thread.
+-   *
+-   * @param thread
+-   *   The thread that processed another event.
+-   * @param recursionDepth
+-   *   Indicates the number of calls to ProcessNextEvent on the call stack in
+-   *   addition to the current call.
+-   */
+-  /* void afterProcessNextEvent (in nsIThreadInternal thread, in unsigned long recursionDepth); */
+-  NS_SCRIPTABLE NS_IMETHOD AfterProcessNextEvent(nsIThreadInternal *thread, PRUint32 recursionDepth) = 0;
+-
+-};
+-
+-  NS_DEFINE_STATIC_IID_ACCESSOR(nsIThreadObserver, NS_ITHREADOBSERVER_IID)
+-
+-/* Use this macro when declaring classes that implement this interface. */
+-#define NS_DECL_NSITHREADOBSERVER \
+-  NS_SCRIPTABLE NS_IMETHOD OnDispatchedEvent(nsIThreadInternal *thread); \
+-  NS_SCRIPTABLE NS_IMETHOD OnProcessNextEvent(nsIThreadInternal *thread, bool mayWait, PRUint32 recursionDepth); \
+-  NS_SCRIPTABLE NS_IMETHOD AfterProcessNextEvent(nsIThreadInternal *thread, PRUint32 recursionDepth); 
+-
+-/* Use this macro to declare functions that forward the behavior of this interface to another object. */
+-#define NS_FORWARD_NSITHREADOBSERVER(_to) \
+-  NS_SCRIPTABLE NS_IMETHOD OnDispatchedEvent(nsIThreadInternal *thread) { return _to OnDispatchedEvent(thread); } \
+-  NS_SCRIPTABLE NS_IMETHOD OnProcessNextEvent(nsIThreadInternal *thread, bool mayWait, PRUint32 recursionDepth) { return _to OnProcessNextEvent(thread, mayWait, recursionDepth); } \
+-  NS_SCRIPTABLE NS_IMETHOD AfterProcessNextEvent(nsIThreadInternal *thread, PRUint32 recursionDepth) { return _to AfterProcessNextEvent(thread, recursionDepth); } 
+-
+-/* Use this macro to declare functions that forward the behavior of this interface to another object in a safe way. */
+-#define NS_FORWARD_SAFE_NSITHREADOBSERVER(_to) \
+-  NS_SCRIPTABLE NS_IMETHOD OnDispatchedEvent(nsIThreadInternal *thread) { return !_to ? NS_ERROR_NULL_POINTER : _to->OnDispatchedEvent(thread); } \
+-  NS_SCRIPTABLE NS_IMETHOD OnProcessNextEvent(nsIThreadInternal *thread, bool mayWait, PRUint32 recursionDepth) { return !_to ? NS_ERROR_NULL_POINTER : _to->OnProcessNextEvent(thread, mayWait, recursionDepth); } \
+-  NS_SCRIPTABLE NS_IMETHOD AfterProcessNextEvent(nsIThreadInternal *thread, PRUint32 recursionDepth) { return !_to ? NS_ERROR_NULL_POINTER : _to->AfterProcessNextEvent(thread, recursionDepth); } 
+-
+-#if 0
+-/* Use the code below as a template for the implementation class for this interface. */
+-
+-/* Header file */
+-class nsThreadObserver : public nsIThreadObserver
+-{
+-public:
+-  NS_DECL_ISUPPORTS
+-  NS_DECL_NSITHREADOBSERVER
+-
+-  nsThreadObserver();
+-
+-private:
+-  ~nsThreadObserver();
+-
+-protected:
+-  /* additional members */
+-};
+-
+-/* Implementation file */
+-NS_IMPL_ISUPPORTS1(nsThreadObserver, nsIThreadObserver)
+-
+-nsThreadObserver::nsThreadObserver()
+-{
+-  /* member initializers and constructor code */
+-}
+-
+-nsThreadObserver::~nsThreadObserver()
+-{
+-  /* destructor code */
+-}
+-
+-/* void onDispatchedEvent (in nsIThreadInternal thread); */
+-NS_IMETHODIMP nsThreadObserver::OnDispatchedEvent(nsIThreadInternal *thread)
+-{
+-    return NS_ERROR_NOT_IMPLEMENTED;
+-}
+-
+-/* void onProcessNextEvent (in nsIThreadInternal thread, in boolean mayWait, in unsigned long recursionDepth); */
+-NS_IMETHODIMP nsThreadObserver::OnProcessNextEvent(nsIThreadInternal *thread, bool mayWait, PRUint32 recursionDepth)
+-{
+-    return NS_ERROR_NOT_IMPLEMENTED;
+-}
+-
+-/* void afterProcessNextEvent (in nsIThreadInternal thread, in unsigned long recursionDepth); */
+-NS_IMETHODIMP nsThreadObserver::AfterProcessNextEvent(nsIThreadInternal *thread, PRUint32 recursionDepth)
+-{
+-    return NS_ERROR_NOT_IMPLEMENTED;
+-}
+-
+-/* End of implementation class template. */
+-#endif
+-
+-
+-/* starting interface:    nsIThreadEventFilter */
+-#define NS_ITHREADEVENTFILTER_IID_STR "a0605c0b-17f5-4681-b8cd-a1cd75d42559"
+-
+-#define NS_ITHREADEVENTFILTER_IID \
+-  {0xa0605c0b, 0x17f5, 0x4681, \
+-    { 0xb8, 0xcd, 0xa1, 0xcd, 0x75, 0xd4, 0x25, 0x59 }}
+-
+-class NS_NO_VTABLE NS_SCRIPTABLE nsIThreadEventFilter : public nsISupports {
+- public: 
+-
+-  NS_DECLARE_STATIC_IID_ACCESSOR(NS_ITHREADEVENTFILTER_IID)
+-
+-  /**
+- * Interface passed to the nsIThreadInternal::PushEventQueue method.
+- */
+-/**
+-   * This method is called to determine whether or not an event may be accepted
+-   * by a "nested" event queue (see nsIThreadInternal::PushEventQueue).
+-   *
+-   * @param event
+-   *   The event being dispatched.
+-   *
+-   * WARNING: This method must not make any calls on the thread object.
+-   */
+-  /* [notxpcom] boolean acceptEvent (in nsIRunnable event); */
+-  NS_IMETHOD_(bool) AcceptEvent(nsIRunnable *event) = 0;
+-
+-};
+-
+-  NS_DEFINE_STATIC_IID_ACCESSOR(nsIThreadEventFilter, NS_ITHREADEVENTFILTER_IID)
+-
+-/* Use this macro when declaring classes that implement this interface. */
+-#define NS_DECL_NSITHREADEVENTFILTER \
+-  NS_IMETHOD_(bool) AcceptEvent(nsIRunnable *event); 
+-
+-/* Use this macro to declare functions that forward the behavior of this interface to another object. */
+-#define NS_FORWARD_NSITHREADEVENTFILTER(_to) \
+-  NS_IMETHOD_(bool) AcceptEvent(nsIRunnable *event) { return _to AcceptEvent(event); } 
+-
+-/* Use this macro to declare functions that forward the behavior of this interface to another object in a safe way. */
+-#define NS_FORWARD_SAFE_NSITHREADEVENTFILTER(_to) \
+-  NS_IMETHOD_(bool) AcceptEvent(nsIRunnable *event) { return !_to ? NS_ERROR_NULL_POINTER : _to->AcceptEvent(event); } 
+-
+-#if 0
+-/* Use the code below as a template for the implementation class for this interface. */
+-
+-/* Header file */
+-class nsThreadEventFilter : public nsIThreadEventFilter
+-{
+-public:
+-  NS_DECL_ISUPPORTS
+-  NS_DECL_NSITHREADEVENTFILTER
+-
+-  nsThreadEventFilter();
+-
+-private:
+-  ~nsThreadEventFilter();
+-
+-protected:
+-  /* additional members */
+-};
+-
+-/* Implementation file */
+-NS_IMPL_ISUPPORTS1(nsThreadEventFilter, nsIThreadEventFilter)
+-
+-nsThreadEventFilter::nsThreadEventFilter()
+-{
+-  /* member initializers and constructor code */
+-}
+-
+-nsThreadEventFilter::~nsThreadEventFilter()
+-{
+-  /* destructor code */
+-}
+-
+-/* [notxpcom] boolean acceptEvent (in nsIRunnable event); */
+-NS_IMETHODIMP_(bool) nsThreadEventFilter::AcceptEvent(nsIRunnable *event)
+-{
+-    return NS_ERROR_NOT_IMPLEMENTED;
+-}
+-
+-/* End of implementation class template. */
+-#endif
+-
+-
+-#endif /* __gen_nsIThreadInternal_h__ */
+diff --git a/components/moz/proxy/src/nsProxyError.h b/components/moz/proxy/src/nsProxyError.h
+deleted file mode 100644
+index 6d0f688..0000000
+--- a/components/moz/proxy/src/nsProxyError.h
++++ /dev/null
+@@ -1,69 +0,0 @@
+-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+-/* ***** BEGIN LICENSE BLOCK *****
+- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
+- *
+- * The contents of this file are subject to the Mozilla Public License Version
+- * 1.1 (the "License"); you may not use this file except in compliance with
+- * the License. You may obtain a copy of the License at
+- * http://www.mozilla.org/MPL/
+- *
+- * Software distributed under the License is distributed on an "AS IS" basis,
+- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+- * for the specific language governing rights and limitations under the
+- * License.
+- *
+- * The Original Code is mozilla.org code.
+- *
+- * The Initial Developer of the Original Code is
+- * Netscape Communications Corporation.
+- * Portions created by the Initial Developer are Copyright (C) 1998
+- * the Initial Developer. All Rights Reserved.
+- *
+- * Contributor(s):
+- *
+- * Alternatively, the contents of this file may be used under the terms of
+- * either of the GNU General Public License Version 2 or later (the "GPL"),
+- * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+- * in which case the provisions of the GPL or the LGPL are applicable instead
+- * of those above. If you wish to allow use of your version of this file only
+- * under the terms of either the GPL or the LGPL, and not to allow others to
+- * use your version of this file under the terms of the MPL, indicate your
+- * decision by deleting the provisions above and replace them with the notice
+- * and other provisions required by the GPL or the LGPL. If you do not delete
+- * the provisions above, a recipient may use your version of this file under
+- * the terms of any one of the MPL, the GPL or the LGPL.
+- *
+- * ***** END LICENSE BLOCK ***** */
+-
+-#ifndef nsProxyError_h__
+-#define nsProxyError_h__
+-
+-
+-#include <nsError.h>
+-
+-/* For COM compatibility reasons, we want to use exact error code numbers
+-   for NS_ERROR_PROXY_INVALID_IN_PARAMETER and NS_ERROR_PROXY_INVALID_OUT_PARAMETER.
+-   The first matches:
+-
+-     #define RPC_E_INVALID_PARAMETER          _HRESULT_TYPEDEF_(0x80010010L)
+-
+-   Errors returning this mean that the xpcom proxy code could not create a proxy for
+-   one of the in paramaters.
+-
+-   Because of this, we are ignoring the convention if using a base and offset for
+-   error numbers.
+-
+-*/
+-
+-/* Returned when a proxy could not be create a proxy for one of the IN parameters
+-   This is returned only when the "real" method has NOT been invoked.
+-*/
+-
+-#define NS_ERROR_PROXY_INVALID_IN_PARAMETER        ((nsresult) 0x80010010L)
+-
+-/* Returned when a proxy could not be create a proxy for one of the OUT parameters
+-   This is returned only when the "real" method has ALREADY been invoked.
+-*/
+-
+-#define NS_ERROR_PROXY_INVALID_OUT_PARAMETER       ((nsresult) 0x80010011L)
+-#endif
+diff --git a/components/moz/proxy/src/nsProxyEvent.cpp b/components/moz/proxy/src/nsProxyEvent.cpp
+deleted file mode 100644
+index 6e7a3cc..0000000
+--- a/components/moz/proxy/src/nsProxyEvent.cpp
++++ /dev/null
+@@ -1,512 +0,0 @@
+-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+-/* vim:set ts=4 sw=4 sts=4 ci et: */
+-/*
+- *
+- * ***** BEGIN LICENSE BLOCK *****
+- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
+- *
+- * The contents of this file are subject to the Mozilla Public License Version
+- * 1.1 (the "License"); you may not use this file except in compliance with
+- * the License. You may obtain a copy of the License at
+- * http://www.mozilla.org/MPL/
+- *
+- * Software distributed under the License is distributed on an "AS IS" basis,
+- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+- * for the specific language governing rights and limitations under the
+- * License.
+- *
+- * The Original Code is mozilla.org code.
+- *
+- * The Initial Developer of the Original Code is
+- * Netscape Communications Corporation.
+- * Portions created by the Initial Developer are Copyright (C) 1998
+- * the Initial Developer. All Rights Reserved.
+- *
+- * Contributor(s):
+- *
+- * Alternatively, the contents of this file may be used under the terms of
+- * either of the GNU General Public License Version 2 or later (the "GPL"),
+- * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+- * in which case the provisions of the GPL or the LGPL are applicable instead
+- * of those above. If you wish to allow use of your version of this file only
+- * under the terms of either the GPL or the LGPL, and not to allow others to
+- * use your version of this file under the terms of the MPL, indicate your
+- * decision by deleting the provisions above and replace them with the notice
+- * and other provisions required by the GPL or the LGPL. If you do not delete
+- * the provisions above, a recipient may use your version of this file under
+- * the terms of any one of the MPL, the GPL or the LGPL.
+- *
+- * ***** END LICENSE BLOCK *****
+- *
+- * This Original Code has been modified by IBM Corporation.
+- * Modifications made by IBM described herein are
+- * Copyright (c) International Business Machines
+- * Corporation, 2000
+- *
+- * Modifications to Mozilla code or documentation
+- * identified per MPL Section 3.3
+- *
+- * Date             Modified by     Description of modification
+- * 04/20/2000       IBM Corp.      Added PR_CALLBACK for Optlink use in OS2
+- */
+-
+-#include "nsProxyEventPrivate.h"
+-#include "nsProxyRelease.h"
+-#include "nsIProxyObjectManager.h"
+-
+-#include <nsCRT.h>
+-#include <pratom.h>
+-#include <prmem.h>
+-#include <xptcall.h>
+-#include <nsXPCOMCID.h>
+-#include <nsServiceManagerUtils.h>
+-#include <nsIComponentManager.h>
+-#include <nsThreadUtils.h>
+-#include <nsEventQueue.h>
+-#include <nsMemory.h>
+-
+-using namespace mozilla;
+-
+-/**
+- * Map the nsAUTF8String, nsUTF8String classes to the nsACString and
+- * nsCString classes respectively for now.  These defines need to be removed
+- * once Jag lands his nsUTF8String implementation.
+- */
+-#define nsAUTF8String nsACString
+-#define nsUTF8String nsCString
+-
+-class nsProxyCallCompletedEvent : public nsRunnable
+-{
+-public:
+-    nsProxyCallCompletedEvent(nsProxyObjectCallInfo *info)
+-        : mInfo(info)
+-    {}
+-
+-    NS_DECL_NSIRUNNABLE
+-
+-    NS_IMETHOD QueryInterface(REFNSIID aIID, void **aResult);
+-
+-private:
+-    nsProxyObjectCallInfo *mInfo;
+-};
+-
+-NS_IMETHODIMP
+-nsProxyCallCompletedEvent::Run()
+-{
+-    NS_ASSERTION(mInfo, "no info");
+-    mInfo->SetCompleted();
+-    return NS_OK;
+-}
+-
+-NS_DEFINE_IID(kFilterIID, NS_PROXYEVENT_FILTER_IID);
+-
+-NS_IMETHODIMP
+-nsProxyCallCompletedEvent::QueryInterface(REFNSIID aIID, void **aResult)
+-{
+-    // We are explicitly breaking XPCOM rules here by returning a different
+-    // object from QueryInterface. We do this so that
+-    // nsProxyThreadFilter::AcceptEvent can know whether we are an event that
+-    // needs to be allowed through during a synchronous proxy call.
+-    if (aIID.Equals(kFilterIID)) {
+-        *aResult = mInfo;
+-        mInfo->AddRef();
+-        return NS_OK;
+-    }
+-    return nsRunnable::QueryInterface(aIID, aResult);
+-}
+-
+-//-----------------------------------------------------------------------------
+-
+-NS_IMETHODIMP
+-nsProxyObject::nsProxyObjectDestructorEvent::Run()
+-{
+-    delete mDoomed;
+-    return NS_OK;
+-}
+-
+-//-----------------------------------------------------------------------------
+-
+-nsProxyObjectCallInfo::nsProxyObjectCallInfo(nsProxyEventObject* owner,
+-                                             const XPTMethodDescriptor *methodInfo,
+-                                             PRUint32 methodIndex, 
+-                                             nsXPTCVariant* parameterList, 
+-                                             PRUint32 parameterCount) :
+-    mResult(NS_ERROR_FAILURE),
+-    mMethodInfo(methodInfo),
+-    mMethodIndex(methodIndex),
+-    mParameterList(parameterList),
+-    mParameterCount(parameterCount),
+-    mCompleted(0),
+-    mOwner(owner)
+-{
+-    NS_ASSERTION(owner, "No nsProxyObject!");
+-    NS_ASSERTION(methodInfo, "No nsXPTMethodInfo!");
+-
+-    RefCountInInterfacePointers(true);
+-    if (mOwner->GetProxyType() & NS_PROXY_ASYNC)
+-        CopyStrings(true);
+-}
+-
+-nsProxyObjectCallInfo::~nsProxyObjectCallInfo()
+-{
+-    RefCountInInterfacePointers(false);
+-    if (mOwner->GetProxyType() & NS_PROXY_ASYNC)
+-        CopyStrings(false);
+-
+-    mOwner = nsnull;
+-    
+-    if (mParameterList)  
+-        free(mParameterList);
+-}
+-
+-NS_IMETHODIMP
+-nsProxyObjectCallInfo::QueryInterface(REFNSIID aIID, void **aResult)
+-{
+-    if (aIID.Equals(kFilterIID)) {
+-        *aResult = this;
+-        AddRef();
+-        return NS_OK;
+-    }
+-    return nsRunnable::QueryInterface(aIID, aResult);
+-}
+-
+-NS_IMETHODIMP
+-nsProxyObjectCallInfo::Run()
+-{
+-    PROXY_LOG(("PROXY(%p): Run\n", this));
+-
+-    mResult = NS_InvokeByIndex(mOwner->GetProxiedInterface(),
+-                               mMethodIndex,
+-                               mParameterCount,
+-                               mParameterList);
+-
+-    if (IsSync()) {
+-        PostCompleted();
+-    }
+-
+-    return NS_OK;
+-}
+-
+-void
+-nsProxyObjectCallInfo::RefCountInInterfacePointers(bool addRef)
+-{
+-    for (PRUint32 i = 0; i < mParameterCount; i++)
+-    {
+-        nsXPTParamInfo paramInfo = mMethodInfo->params[i];
+-
+-        if (paramInfo.GetType().IsInterfacePointer() )
+-        {
+-            nsISupports* anInterface = nsnull;
+-
+-            if (paramInfo.IsIn())
+-            {
+-                anInterface = ((nsISupports*)mParameterList[i].val.p);
+-                
+-                if (anInterface)
+-                {
+-                    if (addRef)
+-                        anInterface->AddRef();
+-                    else
+-                        anInterface->Release();
+-            
+-                }
+-            }
+-        }
+-    }
+-}
+-
+-void
+-nsProxyObjectCallInfo::CopyStrings(bool copy)
+-{
+-    for (PRUint32 i = 0; i < mParameterCount; i++)
+-    {
+-        const nsXPTParamInfo paramInfo = mMethodInfo->params[i];
+-
+-        if (paramInfo.IsIn())
+-        {
+-            const nsXPTType& type = paramInfo.GetType();
+-            uint8 type_tag = type.TagPart();
+-            void *ptr = mParameterList[i].val.p;
+-
+-            if (!ptr)
+-                continue;
+-
+-            if (copy)
+-            {                
+-                switch (type_tag) 
+-                {
+-                    case nsXPTType::T_CHAR_STR:                                
+-                        mParameterList[i].val.p =
+-                            PL_strdup((const char *)ptr);
+-                        break;
+-                    case nsXPTType::T_WCHAR_STR:
+-                        mParameterList[i].val.p =
+-                            nsCRT::strdup((const PRUnichar *)ptr);
+-                        break;
+-                    case nsXPTType::T_DOMSTRING:
+-                    case nsXPTType::T_ASTRING:
+-                        mParameterList[i].val.p = 
+-                            new nsString(*((nsAString*) ptr));
+-                        break;
+-                    case nsXPTType::T_CSTRING:
+-                        mParameterList[i].val.p = 
+-                            new nsCString(*((nsACString*) ptr));
+-                        break;
+-                    case nsXPTType::T_UTF8STRING:                        
+-                        mParameterList[i].val.p = 
+-                            new nsUTF8String(*((nsAUTF8String*) ptr));
+-                        break;
+-                    default:
+-                        // Other types are ignored
+-                        break;                    
+-                }
+-            }
+-            else
+-            {
+-                switch (type_tag) 
+-                {
+-                    case nsXPTType::T_CHAR_STR:
+-                        PL_strfree((char*) ptr);
+-                        break;
+-                    case nsXPTType::T_WCHAR_STR:
+-                        nsCRT::free((PRUnichar*)ptr);
+-                        break;
+-                    case nsXPTType::T_DOMSTRING:
+-                    case nsXPTType::T_ASTRING:
+-                        delete (nsString*) ptr;
+-                        break;
+-                    case nsXPTType::T_CSTRING:
+-                        delete (nsCString*) ptr;
+-                        break;
+-                    case nsXPTType::T_UTF8STRING:
+-                        delete (nsUTF8String*) ptr;
+-                        break;
+-                    default:
+-                        // Other types are ignored
+-                        break;
+-                }
+-            }
+-        }
+-    }
+-}
+-
+-bool                  
+-nsProxyObjectCallInfo::GetCompleted()
+-{
+-    return !!mCompleted;
+-}
+-
+-void
+-nsProxyObjectCallInfo::SetCompleted()
+-{
+-    PROXY_LOG(("PROXY(%p): SetCompleted\n", this));
+-    PR_ATOMIC_SET(&mCompleted, 1);
+-}
+-
+-void                
+-nsProxyObjectCallInfo::PostCompleted()
+-{
+-    PROXY_LOG(("PROXY(%p): PostCompleted\n", this));
+-
+-    if (mCallersTarget) {
+-        nsCOMPtr<nsIRunnable> event =
+-                new nsProxyCallCompletedEvent(this);
+-        if (event &&
+-            NS_SUCCEEDED(mCallersTarget->Dispatch(event, NS_DISPATCH_NORMAL)))
+-            return;
+-    }
+-
+-    // OOM?  caller does not have a target?  This is an error!
+-    NS_WARNING("Failed to dispatch nsProxyCallCompletedEvent");
+-    SetCompleted();
+-}
+-  
+-nsIEventTarget*      
+-nsProxyObjectCallInfo::GetCallersTarget() 
+-{ 
+-    return mCallersTarget;
+-}
+-
+-void
+-nsProxyObjectCallInfo::SetCallersTarget(nsIEventTarget* target)
+-{
+-    mCallersTarget = target;
+-}   
+-
+-nsProxyObject::nsProxyObject(nsIEventTarget *target, PRInt32 proxyType,
+-                             nsISupports *realObject) :
+-  mProxyType(proxyType),
+-  mTarget(target),
+-  mRealObject(realObject),
+-  mFirst(nsnull)
+-{
+-    MOZ_COUNT_CTOR(nsProxyObject);
+-
+-#ifdef DEBUG
+-    nsCOMPtr<nsISupports> canonicalTarget = do_QueryInterface(target);
+-    NS_ASSERTION(target == canonicalTarget,
+-                 "Non-canonical nsISupports passed to nsProxyObject constructor");
+-#endif
+-}
+-
+-nsProxyObject::~nsProxyObject()
+-{
+-    // Proxy the release of mRealObject to protect against it being deleted on
+-    // the wrong thread.
+-    nsISupports *doomed = nsnull;
+-    mRealObject.swap(doomed);
+-    NS_ProxyRelease(mTarget, doomed);
+-
+-    MOZ_COUNT_DTOR(nsProxyObject);
+-}
+-
+-NS_IMETHODIMP_(nsrefcnt)
+-nsProxyObject::AddRef()
+-{
+-    MutexAutoLock lock(nsProxyObjectManager::GetInstance()->GetLock());
+-    return LockedAddRef();
+-}
+-
+-NS_IMETHODIMP_(nsrefcnt)
+-nsProxyObject::Release()
+-{
+-    MutexAutoLock lock(nsProxyObjectManager::GetInstance()->GetLock());
+-    return LockedRelease();
+-}
+-
+-nsrefcnt
+-nsProxyObject::LockedAddRef()
+-{
+-    ++mRefCnt;
+-    NS_LOG_ADDREF(this, mRefCnt, "nsProxyObject", sizeof(nsProxyObject));
+-    return mRefCnt;
+-}
+-
+-nsrefcnt
+-nsProxyObject::LockedRelease()
+-{
+-    NS_PRECONDITION(0 != mRefCnt, "dup release");
+-    --mRefCnt;
+-    NS_LOG_RELEASE(this, mRefCnt, "nsProxyObject");
+-    if (mRefCnt)
+-        return mRefCnt;
+-
+-    nsProxyObjectManager *pom = nsProxyObjectManager::GetInstance();
+-    pom->LockedRemove(this);
+-
+-    MutexAutoUnlock unlock(pom->GetLock());
+-    delete this;
+-
+-    return 0;
+-}
+-
+-NS_IMETHODIMP
+-nsProxyObject::QueryInterface(REFNSIID aIID, void **aResult)
+-{
+-    if (aIID.Equals(GetIID())) {
+-        *aResult = this;
+-        AddRef();
+-        return NS_OK;
+-    }
+-
+-    if (aIID.Equals(NS_GET_IID(nsISupports))) {
+-        *aResult = static_cast<nsISupports*>(this);
+-        AddRef();
+-        return NS_OK;
+-    }
+-
+-    nsProxyObjectManager *pom = nsProxyObjectManager::GetInstance();
+-    NS_ASSERTION(pom, "Deleting a proxy without a global proxy-object-manager.");
+-
+-    MutexAutoLock lock(pom->GetLock());
+-    return LockedFind(aIID, aResult);
+-}
+-
+-nsresult
+-nsProxyObject::LockedFind(REFNSIID aIID, void **aResult)
+-{
+-    // This method is only called when the global lock is held.
+-#ifdef DEBUG
+-    nsProxyObjectManager::GetInstance()->GetLock().AssertCurrentThreadOwns();
+-#endif
+-
+-    nsProxyEventObject *peo;
+-
+-    for (peo = mFirst; peo; peo = peo->mNext) {
+-        if (peo->GetClass()->GetProxiedIID().Equals(aIID)) {
+-            *aResult = static_cast<nsISupports*>(peo->mXPTCStub);
+-            peo->LockedAddRef();
+-            return NS_OK;
+-        }
+-    }
+-
+-    nsProxyEventObject *newpeo;
+-
+-    // Both GetClass and QueryInterface call out to XPCOM, so we unlock for them
+-    nsProxyObjectManager* pom = nsProxyObjectManager::GetInstance();
+-    {
+-        MutexAutoUnlock unlock(pom->GetLock());
+-
+-        nsProxyEventClass *pec;
+-        nsresult rv = pom->GetClass(aIID, &pec);
+-        if (NS_FAILED(rv))
+-            return rv;
+-
+-        nsISomeInterface* newInterface;
+-        rv = mRealObject->QueryInterface(aIID, (void**) &newInterface);
+-        if (NS_FAILED(rv))
+-            return rv;
+-
+-        newpeo = new nsProxyEventObject(this, pec, 
+-                       already_AddRefed<nsISomeInterface>(newInterface), &rv);
+-        if (!newpeo) {
+-            NS_RELEASE(newInterface);
+-            return NS_ERROR_OUT_OF_MEMORY;
+-        }
+-
+-        if (NS_FAILED(rv)) {
+-            delete newpeo;
+-            return rv;
+-        }
+-    }
+-
+-    // Now that we're locked again, check for races by repeating the
+-    // linked-list check.
+-    for (peo = mFirst; peo; peo = peo->mNext) {
+-        if (peo->GetClass()->GetProxiedIID().Equals(aIID)) {
+-            // Best to AddRef for our caller before unlocking.
+-            peo->LockedAddRef();
+-
+-            {
+-                // Deleting an nsProxyEventObject can call Release on an
+-                // nsProxyObject, which can only happen when not holding
+-                // the lock.
+-                MutexAutoUnlock unlock(pom->GetLock());
+-                delete newpeo;
+-            }
+-            *aResult = static_cast<nsISupports*>(peo->mXPTCStub);
+-            return NS_OK;
+-        }
+-    }
+-
+-    newpeo->mNext = mFirst;
+-    mFirst = newpeo;
+-
+-    newpeo->LockedAddRef();
+-
+-    *aResult = static_cast<nsISupports*>(newpeo->mXPTCStub);
+-    return NS_OK;
+-}
+-
+-void
+-nsProxyObject::LockedRemove(nsProxyEventObject *peo)
+-{
+-    nsProxyEventObject **i;
+-    for (i = &mFirst; *i; i = &((*i)->mNext)) {
+-        if (*i == peo) {
+-            *i = peo->mNext;
+-            return;
+-        }
+-    }
+-    NS_ERROR("Didn't find nsProxyEventObject in nsProxyObject chain!");
+-}
+diff --git a/components/moz/proxy/src/nsProxyEventClass.cpp b/components/moz/proxy/src/nsProxyEventClass.cpp
+deleted file mode 100644
+index 06deb18..0000000
+--- a/components/moz/proxy/src/nsProxyEventClass.cpp
++++ /dev/null
+@@ -1,87 +0,0 @@
+-/* -*- Mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
+-/* vim:set ts=4 sw=4 sts=4 ci et: */
+-/* ***** BEGIN LICENSE BLOCK *****
+- * Version: MPL 1.1/GPL 2.0/LGPL 2.1
+- *
+- * The contents of this file are subject to the Mozilla Public License Version
+- * 1.1 (the "License"); you may not use this file except in compliance with
+- * the License. You may obtain a copy of the License at
+- * http://www.mozilla.org/MPL/
+- *
+- * Software distributed under the License is distributed on an "AS IS" basis,
+- * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+- * for the specific language governing rights and limitations under the
+- * License.
+- *
+- * The Original Code is mozilla.org code.
+- *
+- * The Initial Developer of the Original Code is
+- * Netscape Communications Corporation.
+- * Portions created by the Initial Developer are Copyright (C) 1998
+- * the Initial Developer. All Rights Reserved.
+- *
+- * Contributor(s):
+- *   Pierre Phaneuf <pp@ludusdesign.com>
+- *
+- * Alternatively, the contents of this file may be used under the terms of
+- * either of the GNU General Public License Version 2 or later (the "GPL"),
+- * or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+- * in which case the provisions of the GPL or the LGPL are applicable instead
+- * of those above. If you wish to allow use of your version of this file only
+- * under the terms of either the GPL or the LGPL, and not to allow others to
+- * use your version of this file under the terms of the MPL, indicate your
+- * decision by deleting the provisions above and replace them with the notice
+- * and other provisions required by the GPL or the LGPL. If you do not delete
+- * the provisions above, a recipient may use your version of this file under
+- * the terms of any one of the MPL, the GPL or the LGPL.
+- *
+- * ***** END LICENSE BLOCK ***** */
+-
+-#include "nsProxyEventPrivate.h"
+-
+-#include <nsIComponentManager.h>
+-#include <nsIServiceManager.h>
+-#include <nsCOMPtr.h>
+-#include <nsMemory.h>
+-#include <nsTHashtable.h>
+-
+-#include <xptcall.h>
+-
+-// LIFETIME_CACHE will cache class for the entire cyle of the application.
+-#define LIFETIME_CACHE
+-
+-static uint32 zero_methods_descriptor;
+-
+-
+-//////////////////////////////////////////////////////////////////////////////////////////////////
+-//  nsProxyEventClass
+-//////////////////////////////////////////////////////////////////////////////////////////////////
+-
+-nsProxyEventClass::nsProxyEventClass(REFNSIID aIID, nsIInterfaceInfo* aInfo)
+-    : mIID(aIID),
+-      mInfo(aInfo),
+-      mDescriptors(NULL)
+-{
+-    uint16 methodCount;
+-    if(NS_SUCCEEDED(mInfo->GetMethodCount(&methodCount)))
+-    {
+-        if(methodCount)
+-        {
+-            int wordCount = (methodCount/32)+1;
+-            if(NULL != (mDescriptors = new uint32[wordCount]))
+-            {
+-                memset(mDescriptors, 0, wordCount * sizeof(uint32));
+-            }
+-        }
+-        else
+-        {
+-            mDescriptors = &zero_methods_descriptor;
+-        }
+-    }
+-}
+-
+-nsProxyEventClass::~nsProxyEventClass()
+-{
+-    if (mDescriptors && mDescriptors != &zero_methods_descriptor)
+-        delete [] mDescriptors;
+-}
+diff --git a/components/moz/threads/src/Makefile.in b/components/moz/threads/src/Makefile.in
+index 8c351c1..8d596fe 100644
+--- a/components/moz/threads/src/Makefile.in
++++ b/components/moz/threads/src/Makefile.in
+@@ -31,20 +31,9 @@ include $(DEPTH)/build/autodefs.mk
+ 
+ STATIC_LIB = sbMozThreads
+ 
+-CPP_SRCS = sbProxiedComponentManager.cpp \
+-           sbThreadUtils.cpp \
++CPP_SRCS = sbThreadUtils.cpp \
+            $(NULL)
+            
+-CPP_EXTRA_INCLUDES = \
+-               $(topsrcdir)/components/moz/proxy/src \
+-               $(DEPTH)/components/moz/proxy/public \
+-               $(NULL)
+-
+-CPP_EXTRA_INCLUDES = \
+-                $(topsrcdir)/components/moz/proxy/src \
+-               	$(DEPTH)/components/moz/proxy/public \
+-                $(NULL)
+-
+ CPP_EXTRA_FLAGS += -std=gnu++0x \
+                    $(NULL)
+ 
+diff --git a/components/moz/threads/src/sbProxiedComponentManager.cpp b/components/moz/threads/src/sbProxiedComponentManager.cpp
+deleted file mode 100644
+index 5908df4..0000000
+--- a/components/moz/threads/src/sbProxiedComponentManager.cpp
++++ /dev/null
+@@ -1,142 +0,0 @@
+-/*
+- *=BEGIN SONGBIRD GPL
+- *
+- * This file is part of the Songbird web player.
+- *
+- * Copyright(c) 2005-2010 POTI, Inc.
+- * http://www.songbirdnest.com
+- *
+- * This file may be licensed under the terms of of the
+- * GNU General Public License Version 2 (the ``GPL'').
+- *
+- * Software distributed under the License is distributed
+- * on an ``AS IS'' basis, WITHOUT WARRANTY OF ANY KIND, either
+- * express or implied. See the GPL for the specific language
+- * governing rights and limitations.
+- *
+- * You should have received a copy of the GPL along with this
+- * program. If not, go to http://www.gnu.org/licenses/gpl.html
+- * or write to the Free Software Foundation, Inc.,
+- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+- *
+- *=END SONGBIRD GPL
+- */
+-
+-#include "sbProxiedComponentManager.h"
+-
+-#include <nsAutoPtr.h>
+-
+-NS_IMPL_THREADSAFE_ISUPPORTS1(sbProxiedComponentManagerRunnable, nsIRunnable)
+-
+-NS_IMETHODIMP
+-sbProxiedComponentManagerRunnable::Run()
+-{
+-  NS_ASSERTION(NS_IsMainThread(), "Not main thread!");
+-
+-  nsCOMPtr<nsIProxyObjectManager> pom =
+-    do_GetService(NS_XPCOMPROXY_CONTRACTID, &mResult);
+-  if (NS_FAILED(mResult)) {
+-    return NS_OK;
+-  }
+-
+-  nsCOMPtr<nsISupports> supports;
+-  if (mIsService) {
+-    if (mContractID) {
+-      supports = do_GetService(mContractID, &mResult);
+-    }
+-    else {
+-      supports = do_GetService(mCID, &mResult);
+-    }
+-  }
+-  else {
+-    if (mContractID) {
+-      supports = do_CreateInstance(mContractID, &mResult);
+-    }
+-    else {
+-      supports = do_CreateInstance(mCID, &mResult);
+-    }
+-  }
+-
+-  if (NS_FAILED(mResult)) {
+-    return NS_OK;
+-  }
+-
+-  mResult = pom->GetProxyForObject(NS_PROXY_TO_MAIN_THREAD,
+-                                   mIID,
+-                                   supports,
+-                                   NS_PROXY_SYNC | NS_PROXY_ALWAYS,
+-                                   getter_AddRefs(mSupports));
+-
+-  return NS_OK;
+-}
+-
+-nsresult
+-sbCreateProxiedComponent::operator()(const nsIID& aIID, void** aInstancePtr) const
+-{
+-  nsRefPtr<sbProxiedComponentManagerRunnable> runnable =
+-    new sbProxiedComponentManagerRunnable(mIsService, mCID, mContractID, aIID);
+-  if (!runnable) {
+-    *aInstancePtr = 0;
+-    if (mErrorPtr)
+-      *mErrorPtr = NS_ERROR_OUT_OF_MEMORY;
+-    return NS_ERROR_OUT_OF_MEMORY;
+-  }
+-
+-  nsresult rv = NS_DispatchToMainThread(runnable, NS_DISPATCH_SYNC);
+-  if (NS_FAILED(rv)) {
+-    *aInstancePtr = 0;
+-    if (mErrorPtr)
+-      *mErrorPtr = rv;
+-    return rv;
+-  }
+-
+-  if (NS_FAILED(runnable->mResult)) {
+-    *aInstancePtr = 0;
+-    if (mErrorPtr)
+-      *mErrorPtr = runnable->mResult;
+-    return runnable->mResult;
+-  }
+-
+-  runnable->mSupports.forget(reinterpret_cast<nsISupports**>(aInstancePtr));
+-
+-  if (mErrorPtr)
+-    *mErrorPtr = runnable->mResult;
+-
+-  return NS_OK;
+-}
+-
+-nsresult
+-sbMainThreadQueryInterface::operator()(const  nsIID& aIID,
+-                                       void** aInstancePtr) const
+-{
+-  nsresult rv;
+-
+-  // Get the main thread QI'd object.
+-  if (NS_IsMainThread()) {
+-    // Already on main thread.  Just QI.
+-    rv = mSupports->QueryInterface(aIID, aInstancePtr);
+-  }
+-  else {
+-    // Not on main thread.  Get a proxy.
+-    nsCOMPtr<nsIThread> mainThread;
+-    rv = NS_GetMainThread(getter_AddRefs(mainThread));
+-    if (NS_SUCCEEDED(rv)) {
+-      rv = do_GetProxyForObject(mainThread,
+-                                aIID,
+-                                mSupports,
+-                                NS_PROXY_SYNC | NS_PROXY_ALWAYS,
+-                                aInstancePtr);
+-    }
+-  }
+-
+-  // Return null on failure.
+-  if (NS_FAILED(rv))
+-    *aInstancePtr = nsnull;
+-
+-  // Return result.
+-  if (mResult)
+-    *mResult = rv;
+-
+-  return rv;
+-}
+-
+diff --git a/components/moz/threads/src/sbProxiedComponentManager.h b/components/moz/threads/src/sbProxiedComponentManager.h
+deleted file mode 100644
+index 19577fd..0000000
+--- a/components/moz/threads/src/sbProxiedComponentManager.h
++++ /dev/null
+@@ -1,263 +0,0 @@
+-/*
+- *=BEGIN SONGBIRD GPL
+- *
+- * This file is part of the Songbird web player.
+- *
+- * Copyright(c) 2005-2010 POTI, Inc.
+- * http://www.songbirdnest.com
+- *
+- * This file may be licensed under the terms of of the
+- * GNU General Public License Version 2 (the ``GPL'').
+- *
+- * Software distributed under the License is distributed
+- * on an ``AS IS'' basis, WITHOUT WARRANTY OF ANY KIND, either
+- * express or implied. See the GPL for the specific language
+- * governing rights and limitations.
+- *
+- * You should have received a copy of the GPL along with this
+- * program. If not, go to http://www.gnu.org/licenses/gpl.html
+- * or write to the Free Software Foundation, Inc.,
+- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+- *
+- *=END SONGBIRD GPL
+- */
+-
+-#ifndef __SB_PROXIEDCOMPONENTMANAGER_H__
+-#define __SB_PROXIEDCOMPONENTMANAGER_H__
+-
+-#include <nsIRunnable.h>
+-#include <nsCOMPtr.h>
+-#include <nsComponentManagerUtils.h>
+-#include <nsServiceManagerUtils.h>
+-#include <nsThreadUtils.h>
+-#include <nsIProxyObjectManager.h>
+-#include <nsXPCOMCIDInternal.h>
+-#include <nsProxyRelease.h>
+-
+-class sbProxiedComponentManagerRunnable : public nsIRunnable
+-{
+-public:
+-  NS_DECL_ISUPPORTS
+-  NS_DECL_NSIRUNNABLE
+-
+-  sbProxiedComponentManagerRunnable(bool aIsService,
+-                                    const nsCID& aCID,
+-                                    const char* aContractID,
+-                                    const nsIID& aIID) :
+-    mIsService(aIsService),
+-    mCID(aCID),
+-    mContractID(aContractID),
+-    mIID(aIID) {}
+-
+-  bool mIsService;
+-  const nsCID& mCID;
+-  const char* mContractID;
+-  const nsIID& mIID;
+-  nsCOMPtr<nsISupports> mSupports;
+-  nsresult mResult;
+-};
+-
+-class NS_COM_GLUE sbCreateProxiedComponent : public nsCOMPtr_helper
+-{
+-public:
+-  sbCreateProxiedComponent(const nsCID& aCID,
+-                           bool aIsService,
+-                           nsresult* aErrorPtr)
+-    : mCID(aCID),
+-      mContractID(nsnull),
+-      mIsService(aIsService),
+-      mErrorPtr(aErrorPtr)
+-  {
+-  }
+-
+-  sbCreateProxiedComponent(const char* aContractID,
+-                           bool aIsService,
+-                           nsresult* aErrorPtr)
+-    : mCID(NS_GET_IID(nsISupports)),
+-      mContractID(aContractID),
+-      mIsService(aIsService),
+-      mErrorPtr(aErrorPtr)
+-  {
+-  }
+-
+-  virtual nsresult NS_FASTCALL operator()(const nsIID&, void**) const;
+-
+-private:
+-  const nsCID& mCID;
+-  const char*  mContractID;
+-  bool       mIsService;
+-  nsresult*    mErrorPtr;
+-};
+-
+-inline
+-const sbCreateProxiedComponent
+-do_ProxiedCreateInstance(const nsCID& aCID, nsresult* error = 0)
+-{
+-  return sbCreateProxiedComponent(aCID, PR_FALSE, error);
+-}
+-
+-inline
+-const sbCreateProxiedComponent
+-do_ProxiedGetService(const nsCID& aCID, nsresult* error = 0)
+-{
+-  return sbCreateProxiedComponent(aCID, PR_TRUE, error);
+-}
+-
+-inline
+-const sbCreateProxiedComponent
+-do_ProxiedCreateInstance(const char* aContractID, nsresult* error = 0)
+-{
+-  return sbCreateProxiedComponent(aContractID, PR_FALSE, error);
+-}
+-
+-inline
+-const sbCreateProxiedComponent
+-do_ProxiedGetService(const char* aContractID, nsresult* error = 0)
+-{
+-  return sbCreateProxiedComponent(aContractID, PR_TRUE, error);
+-}
+-
+-/* Get a proxy using a proxied nsIProxyObjectManager (acquired with
+-   do_ProxiedGetService()).
+-   This is useful because though USING a proxy may spin the event loop,
+-   acquiring one via this function does not (assuming you've acquired the
+-   proxy object manager earlier, where spinning the event loop is acceptable).
+- */
+-inline nsresult
+-do_GetProxyForObjectWithManager(nsIProxyObjectManager *aProxyObjMgr,
+-                                nsIEventTarget *aTarget,
+-                                REFNSIID aIID,
+-                                nsISupports* aObj,
+-                                PRInt32 aProxyType,
+-                                void** aProxyObject)
+-{
+-  nsresult rv;
+-  /* The proxied aProxyObjMgr can only actually proxy real target objects, so
+-     the special magic values available for 'target' must be resolved here.
+-   */
+-  nsCOMPtr<nsIThread> thread;
+-  nsCOMPtr<nsIEventTarget> target;
+-  if (aTarget == NS_PROXY_TO_CURRENT_THREAD) {
+-    rv = NS_GetCurrentThread(getter_AddRefs(thread));
+-    NS_ENSURE_SUCCESS(rv, rv);
+-
+-    target = thread;
+-  }
+-  else if (aTarget == NS_PROXY_TO_MAIN_THREAD) {
+-    rv = NS_GetMainThread(getter_AddRefs(thread));
+-    NS_ENSURE_SUCCESS(rv, rv);
+-
+-    target = thread;
+-  }
+-  else {
+-    target = aTarget;
+-  }
+-
+-  rv = aProxyObjMgr->GetProxyForObject(target,
+-                                       aIID,
+-                                       aObj,
+-                                       aProxyType,
+-                                       aProxyObject);
+-  return rv;
+-}
+-
+-inline nsresult
+-do_GetProxyForObject(nsIEventTarget *aTarget,
+-                     REFNSIID aIID,
+-                     nsISupports* aObj,
+-                     PRInt32 aProxyType,
+-                     void** aProxyObject)
+-{
+-  nsresult rv;
+-  nsCOMPtr<nsIProxyObjectManager> proxyObjMgr =
+-    do_ProxiedGetService(NS_XPCOMPROXY_CONTRACTID, &rv);
+-  NS_ENSURE_SUCCESS(rv, rv);
+-
+-  rv = do_GetProxyForObjectWithManager(proxyObjMgr,
+-                                       aTarget,
+-                                       aIID,
+-                                       aObj,
+-                                       aProxyType,
+-                                       aProxyObject);
+-  NS_ENSURE_SUCCESS(rv, rv);
+-
+-  return NS_OK;
+-}
+-
+-template <class T>
+-inline nsresult
+-do_GetProxyForObject(nsIEventTarget * aTarget,
+-                     T * aObj,
+-                     PRInt32 aProxyType,
+-                     void ** aProxyObject)
+-{
+-  return do_GetProxyForObject(aTarget,
+-                              NS_GET_TEMPLATE_IID(T),
+-                              aObj,
+-                              aProxyType,
+-                              aProxyObject);
+-}
+-
+-
+-/**
+- * Class used by do_MainThreadQueryInterface.
+- */
+-
+-class NS_COM_GLUE sbMainThreadQueryInterface : public nsCOMPtr_helper
+-{
+-public:
+-  sbMainThreadQueryInterface(nsISupports* aSupports,
+-                             nsresult*    aResult) :
+-    mSupports(aSupports),
+-    mResult(aResult)
+-  {
+-  }
+-
+-  virtual nsresult NS_FASTCALL operator()(const nsIID&, void**) const;
+-
+-private:
+-  nsISupports* mSupports;
+-  nsresult*    mResult;
+-};
+-
+-
+-/**
+- * Return a QI'd version of the object specified by aSupports whose methods will
+- * execute on the main thread.  If this function is called on the main thread,
+- * the returned object will simply be the QI'd version of aSupports.  Otherwise,
+- * the returned object will by a main thread synchronous proxy QI'd version of
+- * aSupports.  The result code may optionally be returned in aResult.
+- *
+- * \param aSupports             Object for which to get QI'd main thread object.
+- * \param aResult               Optional returned result.
+- *
+- * \return                      QI'd main thread object.
+- *
+- * Example:
+- *
+- *   nsresult rv;
+- *   nsCOMPtr<nsIURI> mainThreadURI = do_MainThreadQueryInterface(uri, &rv);
+- *   NS_ENSURE_SUCCESS(rv, rv);
+- */
+-
+-inline sbMainThreadQueryInterface
+-do_MainThreadQueryInterface(nsISupports* aSupports,
+-                            nsresult*    aResult = nsnull)
+-{
+-  return sbMainThreadQueryInterface(aSupports, aResult);
+-}
+-
+-
+-template <class T> inline void
+-do_MainThreadQueryInterface(already_AddRefed<T>& aSupports,
+-                            nsresult*            aResult = nsnull)
+-{
+-  // This signature exists solely to _stop_ you from doing the bad thing.
+-  // Saying |do_MainThreadQueryInterface()| on a pointer that is not otherwise
+-  // owned by someone else is an automatic leak.  See
+-  // <http://bugzilla.mozilla.org/show_bug.cgi?id=8221>.
+-}
+-
+-
+-#endif /* __SB_PROXIEDCOMPONENTMANAGER_H__ */
+-
