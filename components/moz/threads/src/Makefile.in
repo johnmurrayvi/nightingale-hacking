@@ -31,14 +31,8 @@ include $(DEPTH)/build/autodefs.mk
 
 STATIC_LIB = sbMozThreads
 
-CPP_SRCS = sbProxiedComponentManager.cpp \
-           sbThreadUtils.cpp \
+CPP_SRCS = sbThreadUtils.cpp \
            $(NULL)
-
-CPP_EXTRA_INCLUDES = \
-                $(topsrcdir)/components/moz/proxy/src \
-               	$(DEPTH)/components/moz/proxy/public \
-                $(NULL)
 
 ifneq (,$(filter-out macosx windows,$(SB_PLATFORM)))
   CPP_EXTRA_FLAGS += -std=gnu++0x \
