@@ -173,8 +173,7 @@ SB_StringEnumeratorEquals(nsIStringEnumerator* aLeft,
   nsresult rv;
 
   nsDataHashtable<nsStringHashKey, PRUint32> leftValues;
-  bool success = leftValues.Init();
-  NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
+  leftValues.Init();
 
   bool hasMore;
   while (NS_SUCCEEDED(aLeft->HasMore(&hasMore)) && hasMore) {
@@ -187,8 +186,8 @@ SB_StringEnumeratorEquals(nsIStringEnumerator* aLeft,
       count++;
     }
 
-    bool success = leftValues.Put(value, count);
-    NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
+    leftValues.Put(value, count);
+
   }
 
   while (NS_SUCCEEDED(aRight->HasMore(&hasMore)) && hasMore) {
@@ -204,8 +203,7 @@ SB_StringEnumeratorEquals(nsIStringEnumerator* aLeft,
 
     count--;
     if (count) {
-      bool success = leftValues.Put(value, count);
-      NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
+      leftValues.Put(value, count);
     }
     else {
       leftValues.Remove(value);

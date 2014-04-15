@@ -114,13 +114,8 @@ sbPropertyManager::sbPropertyManager()
   }
 #endif
 
-  bool success = mPropInfoHashtable.Init(100);
-  NS_ASSERTION(success,
-    "sbPropertyManager::mPropInfoHashtable failed to initialize!");
-
-  success = mPropDependencyMap.Init(100);
-  NS_ASSERTION(success,
-    "sbPropertyManager::mPropInfoHashtable failed to initialize!");
+  mPropInfoHashtable.Init(100);
+  mPropDependencyMap.Init(100);
 
   mPropIDsLock = PR_NewLock();
   NS_ASSERTION(mPropIDsLock,
@@ -187,8 +182,7 @@ NS_IMETHODIMP sbPropertyManager::AddPropertyInfo(sbIPropertyInfo *aPropertyInfo)
   rv = aPropertyInfo->GetId(id);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  success = mPropInfoHashtable.Put(id, aPropertyInfo);
-  NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
+  mPropInfoHashtable.Put(id, aPropertyInfo);
 
   PR_Lock(mPropIDsLock);
   mPropIDs.AppendElement(id);
@@ -321,8 +315,7 @@ NS_IMETHODIMP sbPropertyManager::GetDependentProperties(const nsAString & aId,
       rv = deps->SetStrict(PR_FALSE);
       NS_ENSURE_SUCCESS(rv, rv);
 
-      success = mPropDependencyMap.Put(mPropIDs.ElementAt(i), deps);
-      NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
+      mPropDependencyMap.Put(mPropIDs.ElementAt(i), deps);
     }
 
     // Now populate the dependency arrays using the property infos
