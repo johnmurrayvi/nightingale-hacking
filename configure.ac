@@ -163,6 +163,72 @@ fi
 AC_SUBST(SB_UPDATE_CHANNEL)
 
 #
+# Check for --enable-cross
+#
+
+AC_ARG_ENABLE(cross,
+              [ --enable-cross    cross compile from linux to windows (default=no) ])
+
+if test "$enable_cross" == "yes" ; then
+  NG_CROSS_COMP=1
+  AC_DEFINE(NG_CROSS)
+fi
+AC_SUBST(NG_CROSS_COMP)
+
+#
+# Check for --with-cross-triplet
+#
+
+AC_ARG_WITH(cross-triplet,
+            [ --with-cross-triplet, if cross compiling, use this triplet prefix ],
+            [ NG_WITH_CROSS_TRIPLET=$withval ],
+            [ NG_WITH_CROSS_TRIPLET= ])
+
+if test "$NG_CROSS_COMP" == "1" -a "$NG_WITH_CROSS_TRIPLET" != "" ; then
+  # hardcode this for now
+  case "$NG_WITH_CROSS_TRIPLET" in
+    i686-*-mingw32)
+      NG_CROSS_TRIPLET=$NG_WITH_CROSS_TRIPLET
+    ;;
+
+    *)
+      AC_MSG_ERROR([Currently, only MXE and MinGW-w64 cross compilation set ups are supported])
+    ;;
+  esac
+elif "$NG_CROSS_COMP" != "1" -a "$NG_WITH_CROSS_TRIPLET" != "" ; then
+  AC_MSG_ERROR([You specified a cross-triplet, but didn't pass --enable-cross!])
+elif "$NG_CROSS_COMP" == "1" -a "$NG_WITH_CROSS_TRIPLET" == "" ; then
+  AC_MSG_ERROR([You passed --enable-cross, but didn't pass --with-cross-triplet])
+fi
+
+AC_SUBST(NG_CROSS_TRIPLET)
+
+#
+# Check for --with-cross-libtype
+#
+
+AC_ARG_WITH(cross-libtype,
+            [ --with-cross-libtype, if cross compiling, use this lib typ ],
+            [ NG_WITH_CROSS_LIBTYPE=$withval ],
+            [ NG_WITH_CROSS_LIBTYPE= ])
+
+if test "$NG_CROSS_COMP" == "1" -a "$NG_WITH_CROSS_LIBTYPE" != "" ; then
+  case "$NG_WITH_CROSS_LIBTYPE" in
+    static|shared)
+      NG_CROSS_LIBTYPE=$NG_WITH_CROSS_LIBTYPE
+    ;;
+
+    *)
+      AC_MSG_ERROR([You can only specify static or shared])
+    ;;
+  esac
+elif "$NG_CROSS_COMP" != "1" -a "$NG_WITH_CROSS_LIBTYPE" != "" ; then
+  AC_MSG_ERROR([You specified a cross-libtype, but didn't pass --enable-cross!])
+fi
+
+AC_SUBST(NG_CROSS_LIBTYPE)
+
+#
 # Check for --with-deadly-warnings
 #
 
@@ -286,6 +352,18 @@ case "$target" in
       ;;
       x86_64)
         SB_ARCH="$target_cpu"
+
+        if test "$NG_CROSS_COMP" == "1" ; then
+          NG_BUILD_ARCH="x86_64-linux-gnu"
+          NG_HOST_ARCH="$NG_CROSS_TRIPLET"
+          NG_TARGET_ARCH="windows"
+          if test "$NG_CROSS_LIBTYPE" != "" ; then
+            NG_CROSS_TOOLS="$NG_CROSS_TRIPLET.$NG_CROSS_LIBTYPE-"
+          else 
+            NG_CROSS_TOOLS="$NG_CROSS_TRIPLET-"
+          fi
+        fi
+
       ;;
       powerpc | ppc)
         SB_ARCH="ppc"
@@ -321,6 +399,10 @@ case "$target" in
 esac
 AC_SUBST(SB_PLATFORM)
 AC_SUBST(SB_ARCH)
+AC_SUBST(NG_BUILD_ARCH)
+AC_SUBST(NG_HOST_ARCH)
+AC_SUBST(NG_TARGET_ARCH)
+AC_SUBST(NG_CROSS_TOOLS)
 
 #
 #  Check for --enable-installer
@@ -718,14 +800,31 @@ case "$SB_PLATFORM" in
     AC_DEFINE(NO_X11)
   ;;
   linux|solaris)
-    BIN_SUFFIX=
-    OBJ_SUFFIX=".o"
-    LIB_PREFIX="lib"
-    LIB_SUFFIX=".a"
-    DLL_SUFFIX=".so"
-    INSTALLER_SUFFIX=".tar.gz"
-    AC_DEFINE(XP_UNIX)
-    AC_DEFINE(_REENTRANT)
+    if test "$NG_CROSS_COMP" == "1" ; then
+      BIN_SUFFIX=".exe"
+      OBJ_SUFFIX=".obj"
+      LIB_PREFIX=""
+      LIB_SUFFIX=".lib"
+      DLL_SUFFIX=".dll"
+      INSTALLER_SUFFIX=".exe"
+      AC_DEFINE(UNICODE)
+      AC_DEFINE(_UNICODE)
+      AC_DEFINE(_WINDOWS)
+      AC_DEFINE(_WIN32)
+      AC_DEFINE(WIN32)
+      AC_DEFINE(XP_WIN)
+      AC_DEFINE(XP_WIN32)
+      AC_DEFINE(SB_USE_JEMALLOC)
+    else
+      BIN_SUFFIX=
+      OBJ_SUFFIX=".o"
+      LIB_PREFIX="lib"
+      LIB_SUFFIX=".a"
+      DLL_SUFFIX=".so"
+      INSTALLER_SUFFIX=".tar.gz"
+      AC_DEFINE(XP_UNIX)
+      AC_DEFINE(_REENTRANT)
+    fi
   ;;
 esac
 AC_SUBST(BIN_SUFFIX)
@@ -1162,7 +1261,15 @@ AC_ARG_WITH(dependencies-dir,
             [  --with-dependencies-dir=DIR          the location of the dependencies directory.],
             SB_DEPENDENCIES_DIR=$withval)
 if test -z "$SB_DEPENDENCIES_DIR"; then
-  DEPS_SUBDIR=$SB_PLATFORM-$SB_ARCH
+  if test "$NG_CROSS_COMP" == "1" ; then
+    if test "$NG_CROSS_LIBTYPE" != "" ; then
+      DEPS_SUBDIR=windows-i686-msvc10-$NG_CROSS_LIBTYPE
+    else
+      DEPS_SUBDIR=windows-i686-mingw32
+    fi
+  else
+    DEPS_SUBDIR=$SB_PLATFORM-$SB_ARCH
+  fi
   SB_DEPENDENCIES_DIR=dependencies/$DEPS_SUBDIR
 fi
 AC_SUBST(SB_DEPENDENCIES_DIR)

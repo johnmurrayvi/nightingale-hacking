@@ -32,7 +32,11 @@ include $(DEPTH)/build/autodefs.mk
 SUBDIRS = vendor/mozbrowser
 
 ifeq (,$(filter-out linux solaris,$(SB_PLATFORM)))
-   SONGBIRD_XR_STUB = $(SONGBIRD_XULRUNNERDIR)/nightingale-bin
+   ifneq (1, $(NG_CROSS_COMP))
+      SONGBIRD_XR_STUB = $(SONGBIRD_XULRUNNERDIR)/nightingale-bin
+   else
+      SONGBIRD_XR_STUB = $(SONGBIRD_XULRUNNERDIR)/nightingale$(BIN_SUFFIX)
+   endif
 else
    SONGBIRD_XR_STUB = $(SONGBIRD_XULRUNNERDIR)/nightingale$(BIN_SUFFIX)
 endif
@@ -398,71 +402,174 @@ ifdef MEDIA_CORE_GST #{
 
    endif #}macosx
    ifneq (,$(filter-out macosx windows,$(SB_PLATFORM))) #{
+      ifneq (1, $(NG_CROSS_COMP)) # { not cross compiling
 
-      GST_PLUGINS_BASE_NAMES += gstalsa \
-                                gstximagesink \
-                                $(NULL)
+         GST_PLUGINS_BASE_NAMES += gstalsa \
+                                   gstximagesink \
+                                   $(NULL)
 
-      GST_PLUGINS_GOOD_NAMES += $(NULL)
+         GST_PLUGINS_GOOD_NAMES += $(NULL)
 
-      GSTREAMER = \
-       $(addprefix $(DEPS_DIR)/gstreamer/$(SB_CONFIGURATION)/lib/lib, \
-       $(addsuffix -$(GST_VERSION)$(DLL_SUFFIX), $(GSTREAMER_NAMES)))
+         GSTREAMER = \
+          $(addprefix $(DEPS_DIR)/gstreamer/$(SB_CONFIGURATION)/lib/lib, \
+          $(addsuffix -$(GST_VERSION)$(DLL_SUFFIX), $(GSTREAMER_NAMES)))
 
-      GST_PLUGINS_BASE_LIBS = \
-       $(addprefix $(DEPS_DIR)/gst-plugins-base/$(SB_CONFIGURATION)/lib/lib, \
-       $(addsuffix -$(GST_VERSION)$(DLL_SUFFIX), $(GST_PLUGINS_BASE_LIBS_NAMES)))
+         GST_PLUGINS_BASE_LIBS = \
+          $(addprefix $(DEPS_DIR)/gst-plugins-base/$(SB_CONFIGURATION)/lib/lib, \
+          $(addsuffix -$(GST_VERSION)$(DLL_SUFFIX), $(GST_PLUGINS_BASE_LIBS_NAMES)))
 
-      OGG = $(addprefix $(DEPS_DIR)/libogg/$(SB_CONFIGURATION)/lib/lib, \
-            $(addsuffix $(DLL_SUFFIX), $(OGG_NAMES)))
+         OGG = $(addprefix $(DEPS_DIR)/libogg/$(SB_CONFIGURATION)/lib/lib, \
+               $(addsuffix $(DLL_SUFFIX), $(OGG_NAMES)))
 
-      VORBIS = $(addprefix $(DEPS_DIR)/libvorbis/$(SB_CONFIGURATION)/lib/lib, \
-               $(addsuffix $(DLL_SUFFIX), $(VORBIS_NAMES)))
+         VORBIS = $(addprefix $(DEPS_DIR)/libvorbis/$(SB_CONFIGURATION)/lib/lib, \
+                  $(addsuffix $(DLL_SUFFIX), $(VORBIS_NAMES)))
 
-      THEORA = $(addprefix $(DEPS_DIR)/libtheora/$(SB_CONFIGURATION)/lib/lib, \
-               $(addsuffix $(DLL_SUFFIX), $(THEORA_NAMES)))
+         THEORA = $(addprefix $(DEPS_DIR)/libtheora/$(SB_CONFIGURATION)/lib/lib, \
+                  $(addsuffix $(DLL_SUFFIX), $(THEORA_NAMES)))
 
-      FLAC = $(addprefix $(DEPS_DIR)/flac/$(SB_CONFIGURATION)/lib/lib, \
-             $(addsuffix $(DLL_SUFFIX), $(FLAC_NAMES)))
+         FLAC = $(addprefix $(DEPS_DIR)/flac/$(SB_CONFIGURATION)/lib/lib, \
+                $(addsuffix $(DLL_SUFFIX), $(FLAC_NAMES)))
 
-      JPEG = $(addprefix $(DEPS_DIR)/libjpeg-turbo/$(SB_CONFIGURATION)/lib/lib, \
-             $(addsuffix $(DLL_SUFFIX), $(JPEG_NAMES)))
+         JPEG = $(addprefix $(DEPS_DIR)/libjpeg-turbo/$(SB_CONFIGURATION)/lib/lib, \
+                $(addsuffix $(DLL_SUFFIX), $(JPEG_NAMES)))
 
-      GST_PLUGINS_CORE = \
-       $(addprefix $(DEPS_DIR)/gstreamer/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
-       $(addsuffix .so, $(GST_PLUGINS_CORE_NAMES)))
+         GST_PLUGINS_CORE = \
+          $(addprefix $(DEPS_DIR)/gstreamer/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
+          $(addsuffix .so, $(GST_PLUGINS_CORE_NAMES)))
 
-      GST_PLUGINS_BASE = \
-       $(addprefix $(DEPS_DIR)/gst-plugins-base/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
-       $(addsuffix .so, $(GST_PLUGINS_BASE_NAMES)))
+         GST_PLUGINS_BASE = \
+          $(addprefix $(DEPS_DIR)/gst-plugins-base/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
+          $(addsuffix .so, $(GST_PLUGINS_BASE_NAMES)))
 
-      GST_PLUGINS_GOOD = \
-       $(addprefix $(DEPS_DIR)/gst-plugins-good/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
-       $(addsuffix .so, $(GST_PLUGINS_GOOD_NAMES)))
+         GST_PLUGINS_GOOD = \
+          $(addprefix $(DEPS_DIR)/gst-plugins-good/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
+          $(addsuffix .so, $(GST_PLUGINS_GOOD_NAMES)))
 
-      GST_PLUGINS_UGLY = \
-       $(addprefix $(DEPS_DIR)/gst-plugins-ugly/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
-       $(addsuffix .so, $(GST_PLUGINS_UGLY_NAMES)))
+         GST_PLUGINS_UGLY = \
+          $(addprefix $(DEPS_DIR)/gst-plugins-ugly/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
+          $(addsuffix .so, $(GST_PLUGINS_UGLY_NAMES)))
 
-      GST_PLUGINS_BAD = \
-       $(addprefix $(DEPS_DIR)/gst-plugins-bad/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
-       $(addsuffix .so, $(GST_PLUGINS_BAD_NAMES)))
+         GST_PLUGINS_BAD = \
+          $(addprefix $(DEPS_DIR)/gst-plugins-bad/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
+          $(addsuffix .so, $(GST_PLUGINS_BAD_NAMES)))
 
-      SONGBIRD_LIB += $(GSTREAMER) \
-                      $(GST_PLUGINS_BASE_LIBS) \
-                      $(OGG) \
-                      $(VORBIS) \
-                      $(THEORA) \
-                      $(FLAC) \
-                      $(JPEG) \
-                      $(NULL)
+         SONGBIRD_LIB += $(GSTREAMER) \
+                         $(GST_PLUGINS_BASE_LIBS) \
+                         $(OGG) \
+                         $(VORBIS) \
+                         $(THEORA) \
+                         $(FLAC) \
+                         $(JPEG) \
+                         $(NULL)
+   
+         ifdef HAVE_FLUENDO_MP3
+            FLUENDO_PLUGIN = $(DEPS_DIR)/private/fluendo-mp3/libgstflump3dec.so
+            SONGBIRD_GST_PLUGINS += $(FLUENDO_PLUGIN)
+         endif
 
-      ifdef HAVE_FLUENDO_MP3
-         FLUENDO_PLUGIN = $(DEPS_DIR)/private/fluendo-mp3/libgstflump3dec.so
-         SONGBIRD_GST_PLUGINS += $(FLUENDO_PLUGIN)
-      endif
+      else # { cross compiling
+
+         # GST_PLUGINS_GOOD_NAMES += gstdirectsoundsink \ # need this for win? is it in gst-1.0?
+         #                           $(NULL)
+
+         # GST_PLUGINS_BAD_NAMES += gstacmmp3dec \
+         #                          gstdmoenc \
+         #                          gstqtaudiowrapper \
+         #                          gstqtvideowrapper \
+         #                          gstdshowdecwrapper \
+         #                          gstdshowvideosink \
+         #                          $(NULL)
+
+         GETTEXT_NAMES = libintl-8 \
+                         $(NULL)
+
+         LIBICONV_NAMES = libcharset-1 \
+                          libiconv-2 \
+                          $(NULL)
+
+         GLIB = $(addprefix $(DEPS_DIR)/glib/$(SB_CONFIGURATION)/bin/lib, \
+                $(addsuffix -$(GLIB_VERSION)-0$(DLL_SUFFIX), $(GLIB_NAMES)))
+
+         LIBICONV = $(addprefix $(DEPS_DIR)/libiconv/$(SB_CONFIGURATION)/bin/, \
+                    $(addsuffix $(DLL_SUFFIX), $(LIBICONV_NAMES)))
+
+         GETTEXT = $(addprefix $(DEPS_DIR)/gettext/$(SB_CONFIGURATION)/bin/, \
+                   $(addsuffix $(DLL_SUFFIX), $(GETTEXT_NAMES)))
+
+         GSTREAMER = \
+          $(addprefix $(DEPS_DIR)/gstreamer/$(SB_CONFIGURATION)/bin/lib, \
+          $(addsuffix -$(GST_VERSION)-0$(DLL_SUFFIX),$(GSTREAMER_NAMES)))
+
+         GST_PLUGINS_BASE_LIBS = \
+          $(addprefix $(DEPS_DIR)/gst-plugins-base/$(SB_CONFIGURATION)/bin/lib, \
+          $(addsuffix -$(GST_VERSION)-0$(DLL_SUFFIX), $(GST_PLUGINS_BASE_LIBS_NAMES)))
+
+         OGG = $(addprefix $(DEPS_DIR)/libogg/$(SB_CONFIGURATION)/bin/lib, \
+               $(addsuffix -0$(DLL_SUFFIX), $(OGG_NAMES)))
+
+         LIBICONV = $(addprefix $(DEPS_DIR)/libiconv/$(SB_CONFIGURATION)/bin/, \
+                    $(addsuffix $(DLL_SUFFIX), $(LIBICONV_NAMES)))
+
+         # XXX We need to append the version numbers of the libraries
+         VORBIS_VERSIONED_NAMES = $(join $(VORBIS_NAMES), -0 -2 -3)
+         VORBIS = $(addprefix $(DEPS_DIR)/libvorbis/$(SB_CONFIGURATION)/bin/lib, \
+                  $(addsuffix $(DLL_SUFFIX), $(VORBIS_VERSIONED_NAMES)))
+
+         THEORA_VERSIONED_NAMES = $(join $(THEORA_NAMES), -0 -1 -1)
+         THEORA = $(addprefix $(DEPS_DIR)/libtheora/$(SB_CONFIGURATION)/bin/lib, \
+                  $(addsuffix $(DLL_SUFFIX), $(THEORA_VERSIONED_NAMES)))
+
+         FLAC_VERSIONED_NAMES = $(join $(FLAC_NAMES), -8)
+         FLAC = $(addprefix $(DEPS_DIR)/flac/$(SB_CONFIGURATION)/bin/lib, \
+                $(addsuffix $(DLL_SUFFIX), $(FLAC_VERSIONED_NAMES)))
+
+         JPEG_VERSIONED_NAMES = $(join $(JPEG_NAMES), -7)
+         JPEG = $(addprefix $(DEPS_DIR)/libjpeg-turbo/$(SB_CONFIGURATION)/bin/lib, \
+                $(addsuffix $(DLL_SUFFIX), $(JPEG_VERSIONED_NAMES)))
+
+         GST_PLUGINS_CORE = \
+          $(addprefix $(DEPS_DIR)/gstreamer/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
+          $(addsuffix $(DLL_SUFFIX), $(GST_PLUGINS_CORE_NAMES)))
+
+         GST_PLUGINS_BASE = \
+          $(addprefix $(DEPS_DIR)/gst-plugins-base/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
+          $(addsuffix $(DLL_SUFFIX), $(GST_PLUGINS_BASE_NAMES)))
+
+         GST_PLUGINS_GOOD = \
+          $(addprefix $(DEPS_DIR)/gst-plugins-good/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
+          $(addsuffix $(DLL_SUFFIX), $(GST_PLUGINS_GOOD_NAMES)))
+
+         GST_PLUGINS_UGLY = \
+          $(addprefix $(DEPS_DIR)/gst-plugins-ugly/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
+          $(addsuffix $(DLL_SUFFIX), $(GST_PLUGINS_UGLY_NAMES)))
+
+         GST_PLUGINS_BAD = \
+          $(addprefix $(DEPS_DIR)/gst-plugins-bad/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
+          $(addsuffix $(DLL_SUFFIX), $(GST_PLUGINS_BAD_NAMES)))
+
+         SONGBIRD_LIB += $(GLIB) \
+                         $(LIBICONV) \
+                         $(GETTEXT) \
+                         $(GSTREAMER) \
+                         $(GST_PLUGINS_BASE_LIBS) \
+                         $(OGG) \
+                         $(VORBIS) \
+                         $(THEORA) \
+                         $(FLAC) \
+                         $(JPEG) \
+                         $(NULL)
+   
+         SONGBIRD_GST_PLUGINS += $(GST_PLUGINS_CORE) \
+                                 $(GST_PLUGINS_BASE) \
+                                 $(GST_PLUGINS_GOOD) \
+                                 $(GST_PLUGINS_UGLY) \
+                                 $(GST_PLUGINS_BAD) \
+                                 $(NULL)
+
+      endif # } cross compiling
+
    endif # } not mac or windows
-
+   
    SONGBIRD_GST_PLUGINS += $(GST_PLUGINS_CORE) \
                            $(GST_PLUGINS_BASE) \
                            $(GST_PLUGINS_GOOD) \
