@@ -74,7 +74,9 @@ struct sbRemoteObserver {
 
 class sbRemoteCommands;
 class sbIDataRemote;
+#ifdef METRICS_ENABLED
 class sbIMetrics;
+#endif
 class sbRemotePlayerDownloadCallback;
 
 class sbRemotePlayer : public sbIRemotePlayer,
@@ -217,7 +219,9 @@ protected:
   nsCOMPtr<nsISecurityCheckedComponent> mSecurityMixin;
 
   nsRefPtr<sbRemoteNotificationManager> mNotificationMgr;
+#ifdef METRICS_ENABLED
   nsCOMPtr<sbIMetrics> mMetrics;
+#endif
   nsCOMPtr<nsPIDOMWindow> mPrivWindow;
 };
 

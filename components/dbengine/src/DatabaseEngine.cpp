@@ -67,7 +67,9 @@
 
 #include <nsCOMArray.h>
 
+#ifdef METRICS_ENABLED
 #include <sbIMetrics.h>
+#endif
 #include <sbIPrompter.h>
 #include <sbMemoryUtils.h>
 #include <sbStringBundle.h>
@@ -1811,7 +1813,9 @@ CDatabaseEngine::PromptToDeleteDatabases()
 
   // "Delete" means delete & restart.  "Continue" means let the app
   // start anyway.
-  if (promptResult == 0) { 
+  if (promptResult == 0) {
+
+#ifdef METRICS_ENABLED
     // metric: user chose to delete corrupt library
     nsCOMPtr<sbIMetrics> metrics =
       do_CreateInstance("@songbirdnest.com/Songbird/Metrics;1", &rv);
@@ -1822,6 +1826,7 @@ CDatabaseEngine::PromptToDeleteDatabases()
                                EmptyString());
       NS_ENSURE_SUCCESS(rv, rv);
     }
+#endif // METRICS_ENABLED
 
     {
       mozilla::ReentrantMonitorAutoEnter mon(m_pThreadMonitor);

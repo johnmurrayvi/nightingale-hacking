@@ -42,7 +42,9 @@
 #include <nsIURL.h>
 #include <sbILibrary.h>
 #include <sbIMediaList.h>
+#ifdef METRICS_ENABLED
 #include <sbIMetrics.h>
+#endif
 
 #include <nsAutoPtr.h>
 #include <nsComponentManagerUtils.h>
@@ -268,6 +270,7 @@ sbLocalDatabaseLibraryLoader::EnsureDefaultLibraries()
     // (see Observe() for the prompt call.)
     m_DetectedCorruptLibrary = PR_TRUE;
 
+#ifdef METRICS_ENABLED
     // metric: corrupt database at startup
     nsCOMPtr<sbIMetrics> metrics =
       do_CreateInstance("@songbirdnest.com/Songbird/Metrics;1", &rv);
@@ -278,8 +281,10 @@ sbLocalDatabaseLibraryLoader::EnsureDefaultLibraries()
       rv = metrics->MetricsInc(metricsCategory, metricsId, EmptyString());
       NS_ASSERTION(NS_SUCCEEDED(rv), "Failed to post metric");
     }
+#endif // METRICS_ENABLED
+
   }
-  
+
   return retval;
 }
 
@@ -589,6 +594,7 @@ sbLocalDatabaseLibraryLoader::PromptToDeleteLibraries()
   if (promptResult == 0) { 
     m_DeleteLibrariesAtShutdown = PR_TRUE;
 
+#ifdef METRICS_ENABLED
     // metric: user chose to delete corrupt library
     nsCOMPtr<sbIMetrics> metrics =
      do_CreateInstance("@songbirdnest.com/Songbird/Metrics;1", &rv);
@@ -601,6 +607,7 @@ sbLocalDatabaseLibraryLoader::PromptToDeleteLibraries()
       rv = metrics->MetricsInc(metricsCategory, metricsId, EmptyString());
       NS_ASSERTION(NS_SUCCEEDED(rv), "Failed to post metric");
     }
+#endif // METRICS_ENABLED
 
     // now attempt to quit/restart.
     nsCOMPtr<nsIAppStartup> appStartup = 
@@ -978,8 +985,6 @@ sbLocalDatabaseLibraryLoader::Observe(nsISupports *aSubject,
       rv = siteDBDir->GetDirectoryEntries(getter_AddRefs(dirEnumerator));
       NS_ENSURE_SUCCESS(rv, rv);
 
-      nsString metricsdb = NS_LITERAL_STRING("metrics.db");
-
       PRBool hasMore;
       dirEnumerator->HasMoreElements(&hasMore);
       while (hasMore && NS_SUCCEEDED(rv)) {
@@ -992,11 +997,16 @@ sbLocalDatabaseLibraryLoader::Observe(nsISupports *aSubject,
         nsString leafName;
         rv = curFile->GetLeafName(leafName);
         if (NS_FAILED(rv)) break;
-       
-        if (leafName.Compare(metricsdb) != 0) {
+
+#ifdef METRICS_ENABLED
+        if (leafName.Compare(NS_LITERAL_STRING("metrics.db")) != 0) {
           rv = curFile->Remove(false);
           NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Unable to delete file");
         }
+#else
+        rv = curFile->Remove(false);
+        NS_WARN_IF_FALSE(NS_SUCCEEDED(rv), "Unable to delete file");
+#endif
        
         dirEnumerator->HasMoreElements(&hasMore);
       }

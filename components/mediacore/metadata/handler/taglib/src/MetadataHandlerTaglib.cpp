@@ -44,7 +44,7 @@
 /* Local file imports. */
 #include "MetadataHandlerTaglib.h"
 #include "tagunion.h" /* a taglib import, but internal use only...
-                         here until taglib2 where it won't be necessary*/
+						 here until taglib2 where it won't be necessary*/
 
 /* Local module imports. */
 #include "TaglibChannelFileIO.h"
@@ -121,8 +121,36 @@
     }                                                       \
   }                                                         \
   PR_END_MACRO
-#define GET_PROPERTY(taglibid)                             \
+#define GET_PROPERTY(taglibid)                              \
   properties[TagLib::String(taglibid)].toString(", ")
+#define TAGLIB1_PROPERTIES_WORKAROUND(pTag)                 \
+  PR_BEGIN_MACRO                                            \
+  if (dynamic_cast<TagLib::APE::Tag*>(pTag)){               \
+    properties.merge(dynamic_cast<TagLib::APE::Tag*>(pTag)  \
+      ->properties());                                      \
+  }                                                         \
+  if (dynamic_cast<TagLib::ASF::Tag*>(pTag)){               \
+    properties.merge(dynamic_cast<TagLib::ASF::Tag*>(pTag)  \
+      ->properties());                                      \
+  }                                                         \
+  if (dynamic_cast<TagLib::ID3v1::Tag*>(pTag)){             \
+    properties.merge(dynamic_cast<TagLib::ID3v1::Tag*>(pTag)\
+      ->properties());                                      \
+  }                                                         \
+  if (dynamic_cast<TagLib::ID3v2::Tag*>(pTag)){             \
+    properties.merge(dynamic_cast<TagLib::ID3v2::Tag*>(pTag)\
+      ->properties());                                      \
+  }                                                         \
+  if (dynamic_cast<TagLib::MP4::Tag*>(pTag)){               \
+    properties.merge(dynamic_cast<TagLib::MP4::Tag*>(pTag)  \
+      ->properties());                                      \
+  }                                                         \
+  if (dynamic_cast<TagLib::Ogg::XiphComment*>(pTag)){       \
+    properties.merge(                                       \
+      dynamic_cast<TagLib::Ogg::XiphComment*>(pTag)         \
+      ->properties());                                      \
+  }                                                         \
+  PR_END_MACRO
 
 // Property namespace for Gracenote properties
 // Note that this must match those used in sbGracenoteDefines.h, so
@@ -614,7 +642,6 @@ nsresult sbMetadataHandlerTaglib::WriteInternal(
         fileExt.Equals(NS_LITERAL_CSTRING("ogv"))
     ) {
       return NS_OK; // don't write, don't warn.
-      // TODO: get rid of this
     }
 
     /* WRITE the metadata. */
@@ -634,18 +661,18 @@ nsresult sbMetadataHandlerTaglib::WriteInternal(
       NS_ENSURE_TRUE(f.file()->isValid(), NS_ERROR_FAILURE);
 
       nsAutoString propertyValue;
-      
-      // TODO: something better than looking at file extensions?!
-      
-      // TODO: write other files' metadata.
-      // TODO: Move all suff here to the WriteXXX methods, for better code
-      // overview.
+
+      // WRITE_PROPERTY is a natty macro
+// Disable writing producer.
+//      WRITE_PROPERTY(result, SB_PROPERTY_PRODUCERNAME, Producer);
+      // todo: Tests!
+
       if (fileExt.Equals(NS_LITERAL_CSTRING("mp3"))) {
         LOG(("Writing MP3 Metadata"));
         TagLib::MPEG::File* MPEGFile =
           static_cast<TagLib::MPEG::File*>(f.file());
-        
-        // Write tags for all possible tag types, if they exist
+      /* Write MP3 specific properties. */
+      // TODO: write other files' metadata.
         if (NS_SUCCEEDED(result) && MPEGFile->APETag()) {
           result = WriteAPE(MPEGFile->APETag());
         }
@@ -655,7 +682,7 @@ nsresult sbMetadataHandlerTaglib::WriteInternal(
         if (NS_SUCCEEDED(result) && MPEGFile->ID3v2Tag()) {
           result = WriteID3v2(MPEGFile->ID3v2Tag());
         }
-        
+
         // Write Image Data
         nsAutoString imageSpec;
         tmp_result = mpMetadataPropertyArray->GetPropertyValue(
@@ -728,11 +755,9 @@ nsresult sbMetadataHandlerTaglib::WriteInternal(
       } else if (fileExt.Equals(NS_LITERAL_CSTRING("ogg")) ||
                  fileExt.Equals(NS_LITERAL_CSTRING("oga"))) {
         LOG(("Write OGG metadata"));
-        // Write ogg specific metadata / TODO: some ogg-expert please check why there is no Ogg::FLAC in here?
+        // Write ogg specific metadata
         TagLib::Ogg::Vorbis::File* oggFile =
                 static_cast<TagLib::Ogg::Vorbis::File*>(f.file());
-        
-        // Write tags for all possible tag types
         if (NS_SUCCEEDED(result) && oggFile->tag()){
           result = WriteXiphComment(oggFile->tag());
         }
@@ -765,8 +790,6 @@ nsresult sbMetadataHandlerTaglib::WriteInternal(
         LOG(("Writing MPEG-4 metadata"));
         // Write MP4 specific metadata
         TagLib::MP4::File* mp4File = static_cast<TagLib::MP4::File*>(f.file());
-        
-        // Write advanced tags for all possible tag types
         if (NS_SUCCEEDED(result) && mp4File->tag()){
           result = WriteMP4(mp4File->tag());
         }
@@ -783,14 +806,14 @@ nsresult sbMetadataHandlerTaglib::WriteInternal(
         }
       }
 
-      // Attempt to save the metadata, if everything worked till here
+      // Attempt to save the metadata
       if (NS_SUCCEEDED(result)){
-        if (f.save()) {
-          result = NS_OK;
-        } else {
-          LOG(("%s: failed to save!", __FUNCTION__));
-          result = NS_ERROR_FAILURE;
-        }
+      if (f.save()) {
+        result = NS_OK;
+      } else {
+        LOG(("%s: failed to save!", __FUNCTION__));
+        result = NS_ERROR_FAILURE;
+      }
       } else {
         LOG(("%s: failed to update tags!", __FUNCTION__));
       }
@@ -1250,18 +1273,20 @@ nsresult sbMetadataHandlerTaglib::RemoveAllImagesOGG(
                                           PRInt32 imageType)
 {
   if (aOGGFile->tag()) {
+    // Create a new FlacPicture object and leave the picture element empty
     StringList s_artworkList = aOGGFile->tag()->fieldListMap()["METADATA_BLOCK_PICTURE"];
     if(!s_artworkList.isEmpty()){
       for (StringList::Iterator it = s_artworkList.begin();
         it != s_artworkList.end();
         ++it)
-      {
+    {
+      // erase all images of this type
         TagLib::FLAC::Picture *picture = new TagLib::FLAC::Picture();
         String encodedData = *it;
         if (encodedData.isNull())
         {
           break;
-        }
+      }
         std::string decodedData = base64_decode(encodedData.to8Bit());
         if (decodedData.empty())
           break;
@@ -1271,8 +1296,9 @@ nsresult sbMetadataHandlerTaglib::RemoveAllImagesOGG(
         {
           delete picture;
           break;
-        }
-        
+    }
+
+    // Add the artwork back to the file
         if (picture->type() == imageType) {
           LOG(("erasing artwork"));
           aOGGFile->tag()->removeField("METADATA_BLOCK_PICTURE", *it);
@@ -1660,7 +1686,7 @@ nsresult sbMetadataHandlerTaglib::ReadImageOgg(TagLib::Ogg::XiphComment  *aTag,
   if(!artworkList.isEmpty()){
     for (StringList::Iterator it = artworkList.begin();
       it != artworkList.end();
-      ++it)
+         ++it)
     {
       TagLib::FLAC::Picture* picture = new TagLib::FLAC::Picture();
       String encodedData = *it;
@@ -1970,6 +1996,7 @@ nsresult sbMetadataHandlerTaglib::Init()
 /* static */
 nsresult sbMetadataHandlerTaglib::ModuleConstructor(nsIModule* aSelf)
 {
+// See comment at ~Ln 160 about lock!
   return NS_OK;
 }
 
@@ -2182,9 +2209,7 @@ void sbMetadataHandlerTaglib::ReadXiphTags(
     TagLib::Ogg::XiphComment    *pTag)
 {
   nsresult result = NS_OK;
-
-  // If this is a local file, cache common album art in order to speed
-  // up any subsequent calls to GetImageData.
+  // nothing to do here. all the xiph properties we're interested in are already being read
   PRBool isFileURI;
   result = mpURL->SchemeIs("file", &isFileURI);
   NS_ENSURE_SUCCESS(result, /* void */);
@@ -2220,6 +2245,32 @@ void sbMetadataHandlerTaglib::ReadXiphTags(
  * Private taglib metadata handler services.
  *
  ******************************************************************************/
+
+
+ /*
+  * OpenTagFile
+  *
+  *   Open and configure the given file instance for
+  * the specified URL.
+  */
+
+ nsresult sbMetadataHandlerTaglib::OpenTagFile(TagLib::File *pTagFile)
+ {
+     NS_ENSURE_ARG_POINTER(pTagFile);
+
+     /* Get the file path in the proper format for the platform. */
+ #if XP_WIN
+     NS_ConvertUTF8toUTF16 filePath(mMetadataPath);
+ #else
+     nsACString &filePath = mMetadataPath;
+ #endif
+
+     pTagFile->setMaxScanBytes(MAX_SCAN_BYTES);
+     pTagFile->open(filePath.BeginReading());
+
+     return NS_OK;
+ }
+
 
  /*
   * CheckChannelRestart
@@ -2397,7 +2448,6 @@ nsresult sbMetadataHandlerTaglib::AddSeparatedNumbers(
   return NS_OK;
 }
 
-
 /*
  * ReadFile
  *
@@ -2427,6 +2477,22 @@ PRBool sbMetadataHandlerTaglib::ReadFile(
   pTag = pTagFile->tag();
   if (pTag) {
     TagLib::PropertyMap properties = pTag->properties();
+    // We need to emulate virtual here, as taglib can't mark them as virtual
+    // for now. The following stuff can be deleted once taglib2 is used.
+    if (dynamic_cast<TagLib::TagUnion*>(pTag)){
+      TagLib::TagUnion* tagUnion = dynamic_cast<TagLib::TagUnion*>(pTag);
+      if (tagUnion->tag(2)){
+        TAGLIB1_PROPERTIES_WORKAROUND(tagUnion->tag(2));
+      }
+      if (tagUnion->tag(1)){
+        TAGLIB1_PROPERTIES_WORKAROUND(tagUnion->tag(1));
+      }
+      if (tagUnion->tag(0)){
+        TAGLIB1_PROPERTIES_WORKAROUND(tagUnion->tag(0));
+      }
+    } else {
+      TAGLIB1_PROPERTIES_WORKAROUND(pTag);
+    }
     
     // Default tags
     AddMetadataValue(SB_PROPERTY_TRACKNAME,       pTag->title(), aCharset);
@@ -2545,7 +2611,6 @@ inline void toMozString(TagLib::String aString, nsAString& aResult)
   CopyUTF8toUTF16(nsDependentCString(aString.toCString(true)), aResult);
 }
 
-// TODO: needed with current taglib?
 void sbMetadataHandlerTaglib::ConvertCharset(
     TagLib::String              aString,
     const char                  *aCharset,
@@ -2639,8 +2704,8 @@ PRBool sbMetadataHandlerTaglib::ReadFLACFile()
     nsAutoPtr<TagLib::FLAC::File>   pTagFile;
     PRBool                          isValid = PR_TRUE;
     nsresult                        result = NS_OK;
-    
-    /* Get the file path in the proper format for the platform. */
+
+    /* Open and read the metadata file. */
  #if XP_WIN
      NS_ConvertUTF8toUTF16 filePath(mMetadataPath);
  #else
@@ -2663,10 +2728,6 @@ PRBool sbMetadataHandlerTaglib::ReadFLACFile()
     /* Read the Xiph comment metadata. */
     if (NS_SUCCEEDED(result) && isValid)
         ReadXiphTags(pTagFile->xiphComment());
-
-    /* FLAC has an additional album cover handler */
-    // If this is a local file, cache common album art in order to speed
-    // up any subsequent calls to GetImageData.
     PRBool isFileURI;
     result = mpURL->SchemeIs("file", &isFileURI);
     NS_ENSURE_SUCCESS(result, PR_FALSE);
@@ -2719,8 +2780,7 @@ PRBool sbMetadataHandlerTaglib::ReadMPCFile()
     nsAutoPtr<TagLib::MPC::File>    pTagFile;
     PRBool                          isValid = PR_TRUE;
     nsresult                        result = NS_OK;
-    
-    /* Get the file path in the proper format for the platform. */
+
  #if XP_WIN
      NS_ConvertUTF8toUTF16 filePath(mMetadataPath);
  #else
@@ -2765,7 +2825,6 @@ PRBool sbMetadataHandlerTaglib::ReadMPEGFile()
     PRBool                          isValid = PR_TRUE;
     nsresult                        result = NS_OK;
 
-    /* Get the file path in the proper format for the platform. */
  #if XP_WIN
      NS_ConvertUTF8toUTF16 filePath(mMetadataPath);
  #else
@@ -2783,7 +2842,6 @@ PRBool sbMetadataHandlerTaglib::ReadMPEGFile()
     /* Guess the charset */
     nsCString charset;
     if (NS_SUCCEEDED(result)) {
-        // We take UTF-8 for now, as the new taglib should handle the encoding
         charset.AssignLiteral("UTF-8");
     }
 
@@ -2821,7 +2879,6 @@ PRBool sbMetadataHandlerTaglib::ReadASFFile()
     PRBool                          isValid = PR_TRUE;
     nsresult                        result = NS_OK;
 
-    /* Get the file path in the proper format for the platform. */
  #if XP_WIN
      NS_ConvertUTF8toUTF16 filePath(mMetadataPath);
  #else
@@ -2861,7 +2918,6 @@ PRBool sbMetadataHandlerTaglib::ReadMP4File()
     PRBool                          isValid = PR_TRUE;
     nsresult                        result = NS_OK;
 
-    /* Get the file path in the proper format for the platform. */
  #if XP_WIN
      NS_ConvertUTF8toUTF16 filePath(mMetadataPath);
  #else
@@ -3000,7 +3056,6 @@ PRBool sbMetadataHandlerTaglib::ReadOGGFile()
     PRBool                          isValid = PR_TRUE;
     nsresult                        result = NS_OK;
 
-    /* Get the file path in the proper format for the platform. */
  #if XP_WIN
      NS_ConvertUTF8toUTF16 filePath(mMetadataPath);
  #else
@@ -3023,6 +3078,39 @@ PRBool sbMetadataHandlerTaglib::ReadOGGFile()
     if (NS_SUCCEEDED(result) && isValid)
         ReadXiphTags(pTagFile->tag());
 
+    if (NS_SUCCEEDED(result) && isValid) {
+      // If this is a local file, cache common album art in order to speed
+      // up any subsequent calls to GetImageData.
+      PRBool isFileURI;
+      result = mpURL->SchemeIs("file", &isFileURI);
+      NS_ENSURE_SUCCESS(result, PR_FALSE);
+      if (isFileURI) {
+        nsAutoPtr<sbAlbumArt> art(new sbAlbumArt());
+        NS_ENSURE_TRUE(art, PR_FALSE);
+        result = ReadImageOgg(
+                        static_cast<TagLib::Ogg::XiphComment*>(pTagFile->tag()),
+                        sbIMetadataHandler::METADATA_IMAGE_TYPE_FRONTCOVER,
+                        art->mimeType, &(art->dataLen), &(art->data));
+        NS_ENSURE_SUCCESS(result, PR_FALSE);
+        art->type = sbIMetadataHandler::METADATA_IMAGE_TYPE_FRONTCOVER;
+        nsAutoPtr<sbAlbumArt>* cacheSlot = mCachedAlbumArt.AppendElement();
+        NS_ENSURE_TRUE(cacheSlot, PR_FALSE);
+        *cacheSlot = art;
+
+        art = new sbAlbumArt();
+        NS_ENSURE_TRUE(art, PR_FALSE);
+        result = ReadImageOgg(
+                        static_cast<TagLib::Ogg::XiphComment*>(pTagFile->tag()),
+                        sbIMetadataHandler::METADATA_IMAGE_TYPE_OTHER,
+                        art->mimeType, &(art->dataLen), &(art->data));
+        NS_ENSURE_SUCCESS(result, PR_FALSE);
+        art->type = sbIMetadataHandler::METADATA_IMAGE_TYPE_OTHER;
+        cacheSlot = mCachedAlbumArt.AppendElement();
+        NS_ENSURE_TRUE(cacheSlot, PR_FALSE);
+        *cacheSlot = art;
+      }
+    }
+
     /* File is invalid on any error. */
     if (NS_FAILED(result))
         isValid = PR_FALSE;
@@ -3044,7 +3132,6 @@ PRBool sbMetadataHandlerTaglib::ReadOGAFile()
     PRBool                          isValid = PR_TRUE;
     nsresult                        result = NS_OK;
 
-    /* Get the file path in the proper format for the platform. */
  #if XP_WIN
      NS_ConvertUTF8toUTF16 filePath(mMetadataPath);
  #else
@@ -3580,7 +3667,7 @@ nsresult sbMetadataHandlerTaglib::WriteXiphComment(
 
 /*
  * base64 encode/decode routines:
- * Copyright (C) 2004-2008 Ren� Nyffenegger
+ * Copyright (C) 2004-2008 René Nyffenegger
  *
  * This source code is provided 'as-is', without any express or implied
  * warranty. In no event will the author be held liable for any damages
@@ -3600,7 +3687,7 @@ nsresult sbMetadataHandlerTaglib::WriteXiphComment(
  *
  * 3. This notice may not be removed or altered from any source distribution.
  *
- * Ren� Nyffenegger rene.nyffenegger@adp-gmbh.ch
+ * René Nyffenegger rene.nyffenegger@adp-gmbh.ch
 */
 
 static const std::string base64_chars = 

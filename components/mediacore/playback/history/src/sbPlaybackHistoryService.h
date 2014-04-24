@@ -51,7 +51,9 @@
 #include <sbIMediacoreEventListener.h>
 #include <sbIMediaItem.h>
 #include <sbIMediaListView.h>
+#ifdef METRICS_ENABLED
 #include <sbIMetrics.h>
+#endif
 #include <sbIPlaybackHistoryListener.h>
 
 class sbPlaybackHistoryService : public sbIPlaybackHistoryService,
@@ -122,8 +124,10 @@ public:
   nsresult VerifyDataAndCreateNewEntry();
   nsresult ResetTrackingData();
 
+#ifdef METRICS_ENABLED
   // metrics
   nsresult UpdateMetrics();
+#endif
 
 protected:
   ~sbPlaybackHistoryService();
@@ -179,7 +183,9 @@ private:
   nsCOMPtr<sbIMediaItem> mCurrentItem;
   nsCOMPtr<sbIMediaListView> mCurrentView;
 
+#ifdef METRICS_ENABLED
   nsCOMPtr<sbIMetrics> mMetrics;
+#endif
 };
 
 #endif /* __SB_PLAYBACKHISTORYSERVICE_H__ */

@@ -20,7 +20,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * END NIGHTINGALE GPL
- */
+*/
 
 #include "sbGStreamerMediacoreFactory.h"
 
@@ -217,7 +217,7 @@ sbGStreamerMediacoreFactory::OnGetCapabilities(
 
     const char *extraAudioExtensions[] = {"m4r", "m4p", "oga",
                                           "ogg", "aac", "3gp"};
-#ifdef XP_WIN
+#if defined(XP_WIN) || defined(XP_UNIX)
     const char *extraWindowsAudioExtensions[] = {"wma" };
 #endif
 
@@ -229,11 +229,17 @@ sbGStreamerMediacoreFactory::OnGetCapabilities(
       //   * ogv (all platforms)
       //   * wmv (windows only)
       //   * mp4/m4v/mov (w/ qtvideowrapper plugin)
-
       //   * divx/avi/mkv (w/ ewmpeg4dec plugin)
-
       videoExtensions.AppendElement(NS_LITERAL_STRING("ogv"));
-
+      videoExtensions.AppendElement(NS_LITERAL_STRING("ogx"));
+      videoExtensions.AppendElement(NS_LITERAL_STRING("divx"));
+      videoExtensions.AppendElement(NS_LITERAL_STRING("avi"));
+      videoExtensions.AppendElement(NS_LITERAL_STRING("mkv"));
+      videoExtensions.AppendElement(NS_LITERAL_STRING("vob"));
+      // must allow mpg/mpeg unconditionally, support is duplicated
+      // in windowsmedia plugin but is expected to be importable on Mac too
+      videoExtensions.AppendElement(NS_LITERAL_STRING("mpg"));
+      videoExtensions.AppendElement(NS_LITERAL_STRING("mpeg"));
 #ifdef XP_WIN
       videoExtensions.AppendElement(NS_LITERAL_STRING("wmv"));
 #endif
@@ -272,6 +278,7 @@ sbGStreamerMediacoreFactory::OnGetCapabilities(
         videoExtensions.AppendElement(NS_LITERAL_STRING("mov"));
         gst_object_unref(plugin);
       }
+
       // Check for the 'ewmpeg4dec' plugin to add divx/avi extensions.
       plugin = gst_registry_find_plugin(gst_registry_get(),
                                         ("ewmpeg4dec"));
@@ -300,7 +307,6 @@ sbGStreamerMediacoreFactory::OnGetCapabilities(
       GstTypeFindFactory *factory = GST_TYPE_FIND_FACTORY (walker->data);
       gboolean blacklisted = FALSE;
       const gchar* factoryName = gst_plugin_feature_get_name (GST_PLUGIN_FEATURE (factory));
-
       gboolean isAudioFactory = g_str_has_prefix(factoryName, "audio/");
       gboolean isVideoFactory = g_str_has_prefix(factoryName, "video/");
 
@@ -309,15 +315,12 @@ sbGStreamerMediacoreFactory::OnGetCapabilities(
         while (*factoryexts) {
           gboolean isAudioExtension = isAudioFactory;
           gboolean isVideoExtension = isVideoFactory;
-
           nsCString extension(*factoryexts);
           nsCString delimitedExtension(extension);
           delimitedExtension.Insert(',', 0);
           delimitedExtension.Append(',');
-
-
+          
           blacklisted = (blacklistExtensions.Find(delimitedExtension) != -1);
-
           #if PR_LOGGING
             if (blacklisted) {
               if (isAudioExtension) {
@@ -326,7 +329,7 @@ sbGStreamerMediacoreFactory::OnGetCapabilities(
                 LOG(("sbGStreamerMediacoreFactory: Ignoring (video) extension '%s'", *factoryexts));
               } else {
                 LOG(("sbGStreamerMediacoreFactory: Ignoring extension '%s'", *factoryexts));
-              }
+            }
             }
           #endif /* PR_LOGGING */
 
@@ -335,10 +338,8 @@ sbGStreamerMediacoreFactory::OnGetCapabilities(
           if (!blacklisted) {
             if (isAudioExtension && !audioExtensions.Contains(ext)) {
               audioExtensions.AppendElement(ext);
-
-              LOG(("sbGStreamerMediacoreFactory: registering audio extension %s\n",
-                    *factoryexts));
-
+            LOG(("sbGStreamerMediacoreFactory: registering audio extension %s\n",
+                  *factoryexts));
             } else {
 
 #ifndef STATIC_VIDEO_EXT_LIST
@@ -366,7 +367,7 @@ sbGStreamerMediacoreFactory::OnGetCapabilities(
         audioExtensions.AppendElement(ext);
     }
 
-#if XP_WIN
+#if defined(XP_WIN) || defined(XP_UNIX)
     for (unsigned int i = 0; i < NS_ARRAY_LENGTH(extraWindowsAudioExtensions); i++) {
       nsString ext = NS_ConvertUTF8toUTF16(extraWindowsAudioExtensions[i]);
       if(!audioExtensions.Contains(ext))

@@ -38,6 +38,7 @@ TIERS = base \
         extensions \
         branding \
         manifests \
+        documentation \
         $(NULL)
 
 ifdef SB_ENABLE_TESTS

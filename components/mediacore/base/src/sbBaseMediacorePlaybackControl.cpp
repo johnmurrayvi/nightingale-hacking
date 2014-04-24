@@ -76,12 +76,14 @@ sbBaseMediacorePlaybackControl::~sbBaseMediacorePlaybackControl()
   TRACE(("%s[%p]", __FUNCTION__, this));
 
   MOZ_COUNT_DTOR(sbBaseMediacorePlaybackControl);
+
 }
 
 nsresult 
 sbBaseMediacorePlaybackControl::InitBaseMediacorePlaybackControl()
 {
   TRACE(("%s[%p]", __FUNCTION__, this));
+
 
   return OnInitBaseMediacorePlaybackControl();
 }
@@ -418,6 +420,14 @@ sbBaseMediacorePlaybackControl::DispatchPlaybackControlEvent(PRUint32 aType)
   NS_ENSURE_SUCCESS(rv, rv);
 
   switch (aType) {
+    case sbIMediacoreEvent::SEEKED:
+      PRUint64 number;
+      rv = GetPosition(&number);
+      if (NS_SUCCEEDED(rv)) {
+        rv = bag->SetPropertyAsUint64(NS_LITERAL_STRING("position"), number);
+        NS_ENSURE_SUCCESS(rv, rv);
+      }
+      break;
     case sbIMediacoreEvent::STREAM_BEFORE_PAUSE:
     case sbIMediacoreEvent::STREAM_BEFORE_STOP:
     {

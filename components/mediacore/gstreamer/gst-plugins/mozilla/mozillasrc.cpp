@@ -91,6 +91,7 @@ struct _GstMozillaSrcClass {
 GST_DEBUG_CATEGORY_STATIC (mozillasrc_debug);
 #define GST_CAT_DEFAULT mozillasrc_debug
 
+
 static GstStaticPadTemplate srctemplate = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
@@ -570,7 +571,6 @@ gst_mozilla_src_class_init (GstMozillaSrcClass * klass)
 {
   GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
   GObjectClass *gobject_class;
-
   GstBaseSrcClass *gstbasesrc_class;
   GstPushSrcClass *gstpushsrc_class;
 
@@ -591,7 +591,6 @@ gst_mozilla_src_class_init (GstMozillaSrcClass * klass)
     (gchar *)"Receive data from a hosting mozilla "
              "application Mozilla's I/O APIs",
     (gchar *)"Pioneers of the Inevitable <songbird@songbirdnest.com");
-
   g_object_class_install_property
       (gobject_class, PROP_LOCATION,
       g_param_spec_string ("location", "Location",
@@ -813,7 +812,6 @@ gst_mozilla_src_create (GstPushSrc * psrc, GstBuffer ** outbuf)
 
   /* And otherwise, we're fine: pop the next buffer and return */
   *outbuf = (GstBuffer *)g_queue_pop_head (src->queue);
-
   gst_buffer_map(*outbuf, &info, GST_MAP_READ);
   src->queue_size -= info.size;
 

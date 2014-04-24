@@ -1363,6 +1363,71 @@ fi
 AC_SUBST(HAVE_FLUENDO_MP3)
 
 #
+#  Check for --enable-unity-integration
+#
+
+AC_ARG_ENABLE(unity-integration,
+            [  --enable-unity-integration  integration with unity (default=no)])
+if test "$SB_PLATFORM" = "linux" -a "$enable_unity_integration" = "yes"; then
+  PKG_CHECK_MODULES(LNTFY, libnotify)
+  AC_SUBST(LNTFY_CFLAGS)
+  AC_SUBST(LNTFY_LIBS)
+
+  PKG_CHECK_MODULES(UNITY, unity)
+  AC_SUBST(UNITY_CFLAGS)
+  AC_SUBST(UNITY_LIBS)
+
+  NIGHTINGALE_UNITY=1
+fi
+AC_SUBST(NIGHTINGALE_UNITY)
+
+#
+#  Check for --enable-libnotify
+#
+
+AC_ARG_ENABLE(libnotify,
+            [  --enable-libnotify  enable libnotify extension (default=no)])
+if test "$SB_PLATFORM" = "linux" -a "$enable_libnotify" = "yes"; then
+  PKG_CHECK_MODULES(LNTFY, libnotify)
+  AC_SUBST(LNTFY_CFLAGS)
+  AC_SUBST(LNTFY_LIBS)
+
+  NIGHTINGALE_LIBNOTIFY=1
+fi
+AC_SUBST(NIGHTINGALE_LIBNOTIFY)
+
+#
+# Check for --enable-metrics
+#
+
+AC_ARG_ENABLE(metrics,
+              [ --enable-metrics  enabling of metrics system (default=no)])
+if test "$enable_metrics" = "yes"; then
+  METRICS_ENABLED=1
+  AC_DEFINE(METRICS_ENABLED)
+else
+  METRICS_ENABLED=
+fi
+AC_SUBST(METRICS_ENABLED)
+
+#
+# Are we going to use system nspr?
+#
+
+AC_ARG_ENABLE(system-nspr,
+      [  --enable-system-nspr  use system's NSPR (default=no)])
+if test "$enable_system_nspr" = "yes"; then
+  PKG_CHECK_MODULES(NSPR, nspr)
+  AC_SUBST(NSPR_CFLAGS)
+  AC_SUBST(NSPR_LIBS)
+  NG_SYSTEM_NSPR=1
+  AC_DEFINE(NG_SYSTEM_NSPR)
+else
+  NG_SYSTEM_NSPR=
+fi
+AC_SUBST(NG_SYSTEM_NSPR)
+
+#
 # Checks for libraries.
 #
 

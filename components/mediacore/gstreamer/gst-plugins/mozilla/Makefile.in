@@ -50,9 +50,6 @@ else
        $(DEPS_DIR)/glib/$(SB_CONFIGURATION)/include/glib-$(GLIB_VERSION) \
        $(DEPS_DIR)/glib/$(SB_CONFIGURATION)/lib/glib-$(GLIB_VERSION)/include \
        $(NULL)
-   else
-      CPP_RAW_INCLUDES += $(GLIB_CFLAGS) \
-                          $(NULL)
    endif
 endif
 
@@ -65,10 +62,11 @@ ifeq (windows,$(SB_PLATFORM))
    GST_LIB_SUFFIX += -0
 endif
 
+ifneq (, $(filter-out macosx windows, $(SB_PLATFORM)))
 DYNAMIC_LIB_EXTRA_FLAGS = -Wl,-R,'$$ORIGIN/../xulrunner'
+endif
 
-DYNAMIC_LIB_EXTRA_IMPORTS = xul \
-                            plds4 \
+DYNAMIC_LIB_EXTRA_IMPORTS = plds4 \
                             gstpbutils-$(GST_VERSION)$(GST_LIB_SUFFIX) \
                             gstbase-$(GST_VERSION)$(GST_LIB_SUFFIX) \
                             gstsdp-$(GST_VERSION)$(GST_LIB_SUFFIX) \
@@ -92,8 +90,8 @@ else
     $(DEPS_DIR)/gst-plugins-base/$(SB_CONFIGURATION)/lib \
     $(NULL)
 
-   ifeq (,$(filter-out macosx windows,$(SB_PLATFORM)))
-      # macosx or windows
+    ifeq (windows,$(SB_PLATFORM))
+        # windows
       DYNAMIC_LIB_EXTRA_IMPORTS += intl \
                                    iconv \
                                    glib-$(GLIB_VERSION) \
@@ -107,10 +105,27 @@ else
        $(DEPS_DIR)/libiconv/$(SB_CONFIGURATION)/lib \
        $(DEPS_DIR)/gettext/$(SB_CONFIGURATION)/lib \
        $(NULL)
-   else
+    endif
+
+    # 1.12 deps don't have libiconv
+    ifeq (macosx, $(SB_PLATFORM))
+        # macosx
+        DYNAMIC_LIB_EXTRA_IMPORTS += intl \
+                                     glib-$(GLIB_VERSION) \
+                                     gmodule-$(GLIB_VERSION) \
+                                     gobject-$(GLIB_VERSION) \
+                                     gthread-$(GLIB_VERSION) \
+                                     $(NULL)
+
+        DYNAMIC_LIB_IMPORT_EXTRA_PATHS += \
+            $(DEPS_DIR)/glib/$(SB_CONFIGURATION)/lib \
+            $(DEPS_DIR)/gettext/$(SB_CONFIGURATION)/lib \
+            $(NULL)
+    endif
+
+    ifneq (, $(filter-out macosx windows, $(SB_PLATFORM)))
        # everything else
        DYNAMIC_LIB_RAW_IMPORTS += $(GTK_LIBS) \
-                                  $(GLIB_LIBS) \
                                   -lX11 \
                                   $(NULL)
    endif

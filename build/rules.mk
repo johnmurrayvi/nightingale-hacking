@@ -171,7 +171,11 @@ ifdef IS_EXTENSION # {
       ifeq (_,$(SONGBIRD_OFFICIAL)_$(SONGBIRD_NIGHTLY))
          OUR_EXTENSION_VER = $(EXTENSION_VER)+dev-$(OUR_EXTENSION_VER_DEVDATE)
       else
-         OUR_EXTENSION_VER = $(EXTENSION_VER).$(SB_BUILD_NUMBER)
+         ifneq ($(strip $(SONGBIRD_NIGHTLY)),)
+            OUR_EXTENSION_VER = $(EXTENSION_VER)pre.$(SB_BUILD_NUMBER)
+         else
+            OUR_EXTENSION_VER = $(EXTENSION_VER).$(SB_BUILD_NUMBER)
+         endif
       endif
    endif
 
@@ -547,11 +551,16 @@ endif
 #
 
 CPP_DEFAULT_INCLUDES = $(MOZSDK_INCLUDE_DIR) \
-                       $(MOZSDK_INCLUDE_DIR)/nspr \
                        $(MOZSDK_INCLUDE_DIR)/xpcom \
                        $(MOZSDK_INCLUDE_DIR)/string \
                        $(MOZSDK_INCLUDE_DIR)/../../../../../components/moz/threads/src \
                        $(NULL)
+
+ifdef (NG_SYSTEM_NSPR)
+   CPP_DEFAULT_INCLUDES += $(MOZSDK_INCLUDE_DIR)/nspr
+else
+   CPP_RAW_INCLUDES += $(NSPR_CFLAGS)
+endif
 
 ifdef CPP_FLAGS
    OUR_CPP_FLAGS = $(CPP_FLAGS)

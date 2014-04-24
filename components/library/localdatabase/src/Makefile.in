@@ -98,7 +98,6 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/dbengine/public \
                      $(DEPTH)/components/library/localdatabase/public \
                      $(DEPTH)/components/mediacore/base/public \
                      $(DEPTH)/components/mediamanager/public \
-                     $(DEPTH)/components/metrics/public \
                      $(DEPTH)/components/moz/strings/components/public \
                      $(DEPTH)/components/playlistplayback/public \
                      $(DEPTH)/components/playqueue/public \
@@ -129,10 +128,14 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/dbengine/public \
                      $(topsrcdir)/components/property/src \
                      $(topsrcdir)/components/sqlbuilder/src \
                      $(NULL)
-
 ifneq (,$(filter-out macosx windows,$(SB_PLATFORM)))
   CPP_EXTRA_FLAGS += -std=gnu++0x \
                      $(NULL)
+endif
+
+ifdef METRICS_ENABLED
+  CPP_EXTRA_INCLUDES += $(DEPTH)/components/metrics/public \
+                        $(NULL)
 endif
 
 ifdef DEBUG
@@ -143,7 +146,7 @@ endif
 
 ifneq (1, $(SYSTEM_SQLITE))
   CPP_EXTRA_INCLUDES += $(DEPS_DIR)/sqlite/$(SB_CONFIGURATION)/include \
-                        $(NULL)
+                         $(NULL)
 endif
 
 DYNAMIC_LIB_EXTRA_IMPORTS = plds4 \
@@ -169,7 +172,6 @@ endif
 
 SONGBIRD_PP_RESOURCES = $(srcdir)/library-localdatabase.manifest.in \
                         $(NULL)
-
 SONGBIRD_COMPONENTS = $(srcdir)/sbSmartMediaListsUpdater.js \
                       $(srcdir)/sbLocalDatabaseMigrationHelper.js \
                       $(CURDIR)/library-localdatabase.manifest \

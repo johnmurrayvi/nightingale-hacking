@@ -41,7 +41,6 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/dbengine/public \
                      $(topsrcdir)/components/include \
                      $(DEPTH)/components/mediacore/base/public \
                      $(DEPTH)/components/mediacore/playback/history/public \
-                     $(DEPTH)/components/metrics/public \
                      $(DEPTH)/components/library/base/public \
                      $(topsrcdir)/components/library/base/src \
                      $(topsrcdir)/components/moz/strings/src \
@@ -55,13 +54,16 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/dbengine/public \
                      $(MOZSDK_INCLUDE_DIR)/pref \
                      $(MOZSDK_IDL_DIR) \
                      $(NULL)
-
 ifneq (,$(filter linux solaris,$(SB_PLATFORM)))
    CPP_EXTRA_FLAGS += -std=gnu++0x
 endif
 
 ifneq (1, $(SYSTEM_SQLITE))
   CPP_EXTRA_INCLUDES += $(DEPS_DIR)/sqlite/$(SB_CONFIGURATION)/include \
+endif
+
+ifdef METRICS_ENABLED
+  CPP_EXTRA_INCLUDES += $(DEPTH)/components/metrics/public \
                         $(NULL)
 endif
 
@@ -71,7 +73,6 @@ DYNAMIC_LIB_EXTRA_IMPORTS = plds4 \
 DYNAMIC_LIB_STATIC_IMPORTS += components/moz/strings/src/sbMozStringUtils \
                               components/moz/threads/src/sbMozThreads \
                               $(NULL)
-
 ifeq (windows, $(SB_PLATFORM))
     DYNAMIC_LIB_EXTRA_FLAGS += -NODEFAULTLIB:libcmt
 endif
