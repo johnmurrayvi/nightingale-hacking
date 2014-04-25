@@ -31,7 +31,7 @@ interface ngIInternalSearchEngine;
 interface ngIInternalSearchEnginesService : nsISupports
 {
   /**
-   * \briefRegister a search engine to be handled as internal search. Shows the engine if it was hidden before.
+   * \brief Register a search engine to be handled as internal search. Shows the engine if it was hidden before.
    * \param searchEngineName Name to register the search engine with
    * \param contractID Part of the ID of the contract implementing sbISearchEngine for the engine. The
    *        contract must be @songbirdnest.com/Songbird/{contractIDPart};1
