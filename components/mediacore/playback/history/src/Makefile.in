@@ -54,12 +54,14 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/dbengine/public \
                      $(MOZSDK_INCLUDE_DIR)/pref \
                      $(MOZSDK_IDL_DIR) \
                      $(NULL)
+
 ifneq (,$(filter linux solaris,$(SB_PLATFORM)))
    CPP_EXTRA_FLAGS += -std=gnu++0x
 endif
 
 ifneq (1, $(SYSTEM_SQLITE))
   CPP_EXTRA_INCLUDES += $(DEPS_DIR)/sqlite/$(SB_CONFIGURATION)/include \
+                        $(NULL)
 endif
 
 ifdef METRICS_ENABLED
@@ -67,12 +69,11 @@ ifdef METRICS_ENABLED
                         $(NULL)
 endif
 
-DYNAMIC_LIB_EXTRA_IMPORTS = plds4 \
-                            $(NULL)
+DYNAMIC_LIB_EXTRA_IMPORTS += components/moz/strings/src/sbMozStringUtils \
+                             components/moz/threads/src/sbMozThreads \
+                             plds4 \
+                             $(NULL)
 
-DYNAMIC_LIB_STATIC_IMPORTS += components/moz/strings/src/sbMozStringUtils \
-                              components/moz/threads/src/sbMozThreads \
-                              $(NULL)
 ifeq (windows, $(SB_PLATFORM))
     DYNAMIC_LIB_EXTRA_FLAGS += -NODEFAULTLIB:libcmt
 endif

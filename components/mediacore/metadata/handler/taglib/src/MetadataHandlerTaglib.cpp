@@ -2246,32 +2246,6 @@ void sbMetadataHandlerTaglib::ReadXiphTags(
  *
  ******************************************************************************/
 
-
- /*
-  * OpenTagFile
-  *
-  *   Open and configure the given file instance for
-  * the specified URL.
-  */
-
- nsresult sbMetadataHandlerTaglib::OpenTagFile(TagLib::File *pTagFile)
- {
-     NS_ENSURE_ARG_POINTER(pTagFile);
-
-     /* Get the file path in the proper format for the platform. */
- #if XP_WIN
-     NS_ConvertUTF8toUTF16 filePath(mMetadataPath);
- #else
-     nsACString &filePath = mMetadataPath;
- #endif
-
-     pTagFile->setMaxScanBytes(MAX_SCAN_BYTES);
-     pTagFile->open(filePath.BeginReading());
-
-     return NS_OK;
- }
-
-
  /*
   * CheckChannelRestart
   *

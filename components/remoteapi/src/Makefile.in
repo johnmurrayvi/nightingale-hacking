@@ -78,6 +78,7 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/remoteapi/public \
                      $(DEPTH)/components/devicesobsolete/manager/public \
                      $(DEPTH)/components/devicesobsolete/base/public \
                      $(DEPTH)/components/devicesobsolete/download/public \
+                     $(DEPTH)/components/moz/strings/components/public \
                      $(DEPTH)/bindings/public \
                      $(topsrcdir)/components/moz/strings/src \
                      $(topsrcdir)/components/library/localdatabase/src \
@@ -104,22 +105,26 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/remoteapi/public \
 
 ifneq (,$(filter-out macosx windows,$(SB_PLATFORM)))
   CPP_EXTRA_FLAGS += -std=gnu++0x \
+                     $(NULL)
 endif
 
 ifdef METRICS_ENABLED
-CPP_EXTRA_INCLUDES += $(DEPTH)/components/metrics/public \
-                     $(NULL)
+  CPP_EXTRA_INCLUDES += $(DEPTH)/components/metrics/public \
+                        $(NULL)
 endif
-DYNAMIC_LIB_STATIC_IMPORTS = components/moz/strings/src/sbMozStringUtils \
-                             $(NULL)
 
-DYNAMIC_LIB_EXTRA_IMPORTS = plds4  \
-                            $(NULL)
+DYNAMIC_LIB_STATIC_IMPORTS += components/moz/strings/src/sbMozStringUtils \
+                              $(NULL)
+
+DYNAMIC_LIB_EXTRA_IMPORTS += plds4 \
+                             $(NULL)
 
 #ifeq (windows,$(SB_PLATFORM))
 #   DYNAMIC_LIB_EXTRA_IMPORTS += js3250
 #else
-DYNAMIC_LIB_EXTRA_IMPORTS += mozjs
+ifneq (windows,$(SB_PLATFORM))
+  DYNAMIC_LIB_EXTRA_IMPORTS += mozjs
+endif
 #endif
 
 IS_COMPONENT = 1
