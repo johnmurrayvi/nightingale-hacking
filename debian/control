@@ -36,7 +36,8 @@ Suggests:
  gstreamer1.0-plugins-ugly,
  gstreamer1.0-ffmpeg,
  gtk2-engines-pixbuf,
- gnome-settings-daemon
+ gnome-settings-daemon,
+ dbus
 Provides: nightingale
 Replaces: nightingale, nightingale-nounity
 Description: Play, manage and organize digital media
