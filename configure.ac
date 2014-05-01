@@ -222,11 +222,39 @@ if test "$NG_CROSS_COMP" == "1" -a "$NG_WITH_CROSS_LIBTYPE" != "" ; then
       AC_MSG_ERROR([You can only specify static or shared])
     ;;
   esac
-elif "$NG_CROSS_COMP" != "1" -a "$NG_WITH_CROSS_LIBTYPE" != "" ; then
+elif test "$NG_CROSS_COMP" != "1" -a "$NG_WITH_CROSS_LIBTYPE" != "" ; then
   AC_MSG_ERROR([You specified a cross-libtype, but didn't pass --enable-cross!])
 fi
 
 AC_SUBST(NG_CROSS_LIBTYPE)
+
+#
+# Check for --with-cross-prefix
+#
+
+AC_ARG_WITH(cross-prefix,
+            [ --with-cross-prefix, if cross compiling, use this dir prefix ],
+            [ NG_WITH_CROSS_PREFIX=$withval ],
+            [ NG_WITH_CROSS_PREFIX= ])
+
+if test "$NG_CROSS_COMP" == "1" -a "$NG_CROSS_TRIPLET" != "" -a "$NG_WITH_CROSS_PREFIX" != "" ; then
+  # hardcode this for now
+  case "$NG_WITH_CROSS_TRIPLET" in
+    i686-*-mingw32)
+      NG_CROSS_PREFIX=$NG_WITH_CROSS_PREFIX
+      NG_CROSS_ROOT_PREFIX=$NG_WITH_CROSS_PREFIX/$NG_WITH_CROSS_TRIPLET
+    ;;
+
+    *)
+      AC_MSG_ERROR([Currently, only MXE and MinGW-w64 cross compilation set ups are supported])
+    ;;
+  esac
+elif "$NG_CROSS_COMP" != "1" -a "$NG_WITH_CROSS_PREFIX" != "" ; then
+  AC_MSG_ERROR([You specified a cross-prefix, but didn't pass --enable-cross!])
+fi
+
+AC_SUBST(NG_CROSS_PREFIX)
+AC_SUBST(NG_CROSS_ROOT_PREFIX)
 
 #
 # Check for --with-deadly-warnings
@@ -312,23 +340,34 @@ AC_SUBST(SB_ENABLE_DEVICE_DRIVERS)
 case "$target" in
   *-cygwin*|*-mingw*|*-msvc*|*-mks*)
     SB_PLATFORM="windows"
-    case "$target_cpu" in
-      *i*86*)
-        SB_ARCH="$target_cpu"
-      ;;
-      *)
-        AC_MSG_ERROR(Unsupported architecture)
-      ;;
-    esac
-    # Check that we're MSYS
-    case "$target" in
-      *-mingw*)
-        # no cygwin wrapper for mingw
-      ;;
-      *)
-        AC_MSG_ERROR(Songbird must be built using MozillaBuild/MSYS)
-      ;;
-    esac
+    if test "$NG_CROSS_COMP" != "1" ; then
+      case "$target_cpu" in
+        *i*86*)
+          SB_ARCH="$target_cpu"
+        ;;
+        *)
+          AC_MSG_ERROR(Unsupported architecture)
+        ;;
+      esac
+      # Check that we're MSYS
+      case "$target" in
+        *-mingw*)
+          # no cygwin wrapper for mingw
+        ;;
+        *)
+          AC_MSG_ERROR(Songbird must be built using MozillaBuild/MSYS)
+        ;;
+      esac
+    else
+      NG_BUILD_ARCH="x86_64-linux-gnu"
+      NG_HOST_ARCH="i686-pc-mingw32"
+      NG_TARGET_ARCH="$NG_CROSS_TRIPLET"
+      if test "$NG_CROSS_LIBTYPE" != "" ; then
+        NG_CROSS_TOOLS="$NG_CROSS_TRIPLET.$NG_CROSS_LIBTYPE-"
+      else
+        NG_CROSS_TOOLS="$NG_CROSS_TRIPLET-"
+      fi
+    fi
   ;;
   *darwin*)
     SB_PLATFORM="macosx"
@@ -355,13 +394,14 @@ case "$target" in
 
         if test "$NG_CROSS_COMP" == "1" ; then
           NG_BUILD_ARCH="x86_64-linux-gnu"
-          NG_HOST_ARCH="$NG_CROSS_TRIPLET"
-          NG_TARGET_ARCH="windows"
+          NG_HOST_ARCH="i686-pc-mingw32"
+          NG_TARGET_ARCH="$NG_CROSS_TRIPLET"
           if test "$NG_CROSS_LIBTYPE" != "" ; then
             NG_CROSS_TOOLS="$NG_CROSS_TRIPLET.$NG_CROSS_LIBTYPE-"
-          else 
+          else
             NG_CROSS_TOOLS="$NG_CROSS_TRIPLET-"
           fi
+          SB_PLATFORM="linux"
         fi
 
       ;;
@@ -580,8 +620,13 @@ _SAVE_CXXFLAGS=$CXXFLAGS
 #
 case "$SB_PLATFORM" in
   windows)
-  AC_PROG_CC(cl gcc)
-  AC_PROG_CXX(cl g++)
+    if test "$NG_CROSS_COMP" != "1" ; then
+      AC_PROG_CC(cl gcc)
+      AC_PROG_CXX(cl g++)
+    else
+      AC_PROG_CC
+      AC_PROG_CXX  
+    fi
   ;;
   solaris)
   AC_PROG_CC(cc gcc)
@@ -678,78 +723,94 @@ AC_SUBST(HAS_EXTRAS)
 
 case "$SB_PLATFORM" in
   windows)
-    AC_CHECK_PROG(LD, link, link)
-    if test -z "$LD"; then AC_MSG_ERROR(Linker not found); fi
-    AC_CHECK_PROG(AR, lib, lib)
-    if test -z "$AR"; then AC_MSG_ERROR(Librarian not found); fi
-    AC_CHECK_PROG(RC, rc, rc)
-    if test -z "$RC"; then AC_MSG_ERROR(Rc not found); fi
-    AC_CHECK_PROG(MIDL, midl, midl)
-    if test -z "$MIDL"; then AC_MSG_ERROR(Midl not found); fi
-    AC_CHECK_PROG(REBASE, rebase, rebase)
-    if test -z "$REBASE"; then AC_MSG_ERROR(Rebase not found); fi
+    if test "$NG_CROSS_COMP" != "1" ; then
+      AC_CHECK_PROG(LD, link, link)
+      if test -z "$LD"; then AC_MSG_ERROR(Linker not found); fi
+      AC_CHECK_PROG(AR, lib, lib)
+      if test -z "$AR"; then AC_MSG_ERROR(Librarian not found); fi
+      AC_CHECK_PROG(RC, rc, rc)
+      if test -z "$RC"; then AC_MSG_ERROR(Rc not found); fi
+      AC_CHECK_PROG(MIDL, midl, midl)
+      if test -z "$MIDL"; then AC_MSG_ERROR(Midl not found); fi
+      AC_CHECK_PROG(REBASE, rebase, rebase)
+      if test -z "$REBASE"; then AC_MSG_ERROR(Rebase not found); fi
 
-    # Check midl version
-    changequote(,)
-    _MIDL_VER_FILTER='s|.* \([0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*|\1|p'
-    changequote([,])
-    
-    _MIDL_FULL_VERSION=`"${MIDL}" -v 2>&1 | sed -ne "$_MIDL_VER_FILTER"`
-    _MIDL_MAJOR_VERSION=`echo ${_MIDL_FULL_VERSION} | $AWK -F\. '{ print $1 }'`
-    _MIDL_MINOR_VERSION=`echo ${_MIDL_FULL_VERSION} | $AWK -F\. '{ print $2 }'`
-    _MIDL_REV_VERSION=`echo ${_MIDL_FULL_VERSION} | $AWK -F\. '{ print $3 }'`
-    
-    # Add flags if necessary
-    AC_MSG_CHECKING([for midl flags])
-    case "$target" in
-    i*86-*)
-        if test \( "$_MIDL_MAJOR_VERSION" = "7" -a "$_MIDL_MINOR_VERSION" = "00" -a "$_MIDL_REV_VERSION" = "0499" \); then
-            # MIDL version 7.00.0499 defaults /env win64 on x64 platforms.
-            # MIDL version 7.00.0500 or later has no problem.
-            DEFAULT_MIDL_FLAGS="${MIDL_FLAGS} -env win32 -Oicf -robust"
-            AC_MSG_RESULT([need -env win32])
-        else
-            AC_MSG_RESULT([none needed])
-        fi
-        ;;
-    *)
-        AC_MSG_RESULT([none needed])
-        ;;
-    esac
+      # Check midl version
+      changequote(,)
+      _MIDL_VER_FILTER='s|.* \([0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*|\1|p'
+      changequote([,])
+      
+      _MIDL_FULL_VERSION=`"${MIDL}" -v 2>&1 | sed -ne "$_MIDL_VER_FILTER"`
+      _MIDL_MAJOR_VERSION=`echo ${_MIDL_FULL_VERSION} | $AWK -F\. '{ print $1 }'`
+      _MIDL_MINOR_VERSION=`echo ${_MIDL_FULL_VERSION} | $AWK -F\. '{ print $2 }'`
+      _MIDL_REV_VERSION=`echo ${_MIDL_FULL_VERSION} | $AWK -F\. '{ print $3 }'`
+      
+      # Add flags if necessary
+      AC_MSG_CHECKING([for midl flags])
+      case "$target" in
+      i*86-*)
+          if test \( "$_MIDL_MAJOR_VERSION" = "7" -a "$_MIDL_MINOR_VERSION" = "00" -a "$_MIDL_REV_VERSION" = "0499" \); then
+              # MIDL version 7.00.0499 defaults /env win64 on x64 platforms.
+              # MIDL version 7.00.0500 or later has no problem.
+              DEFAULT_MIDL_FLAGS="${MIDL_FLAGS} -env win32 -Oicf -robust"
+              AC_MSG_RESULT([need -env win32])
+          else
+              AC_MSG_RESULT([none needed])
+          fi
+          ;;
+      *)
+          AC_MSG_RESULT([none needed])
+          ;;
+      esac
 
-    # Tests for bits of the Windows SDK
-    AC_CHECK_HEADERS(wmsdk.h, [], AC_MSG_ERROR(Missing wmsdk.h; install the Windows SDK))
+      # Tests for bits of the Windows SDK
+      AC_CHECK_HEADERS(wmsdk.h, [], AC_MSG_ERROR(Missing wmsdk.h; install the Windows SDK))
 
-    # Only run this check if we don't have extras; if we do, we'll find it
-    # that way.
-    if test -z "$HAS_EXTRAS"; then
-       AC_CHECK_HEADERS([devioctl.h], [], AC_MSG_ERROR([Missing devioctl.h; install the Windows Driver Kit]))
+      # Only run this check if we don't have extras; if we do, we'll find it
+      # that way.
+      if test -z "$HAS_EXTRAS"; then
+         AC_CHECK_HEADERS([devioctl.h], [], AC_MSG_ERROR([Missing devioctl.h; install the Windows Driver Kit]))
+      fi
+
+      _SAVE_LIBS=$LIBS
+      LIBS="$LIBS wmvcore.lib"
+      AC_MSG_CHECKING([wmvcore.lib])
+      AC_LINK_IFELSE([AC_LANG_SOURCE([#include <wmsdk.h>
+                      int main() { return WMCreateSyncReader(NULL, 0, NULL); }])],
+                      AC_MSG_RESULT([yes]),
+                      AC_MSG_ERROR([Missing wmvcore.lib; install the Windows SDK]))
+      LIBS=$_SAVE_LIBS
+
+      #
+      # Force use of the freely-downloadable MSVC Express compiler
+      #
+
+      AC_LANG_PUSH([C++])
+      AC_ARG_WITH(msvc-express,
+                  [  --with-msvc-express       limit to features buildable with MSVC Express],
+                  [SB_WITH_MSVC_EXPRESS=1
+                   AC_MSG_WARN([Limiting functionality to MSVC Express-compatible])],
+                  [SB_WITH_MSVC_EXPRESS=
+                   AC_CHECK_HEADER([atlbase.h],
+                                   [],
+                                   [AC_MSG_ERROR([Missing altbase.h])])])
+      AC_SUBST([SB_WITH_MSVC_EXPRESS])
+      AC_LANG_POP([C++])
+    else
+      AC_CHECK_PROG(LD, ${CXX}, ${CXX})
+      if test -z "$LD"; then AC_MSG_ERROR(Linker not found); fi
+      AC_CHECK_PROG(AR, ar, ar)
+      if test -z "$AR"; then AC_MSG_ERROR(Archiver not found); fi
+      AC_CHECK_PROG(RANLIB, ranlib, ranlib)
+      if test -z "$RANLIB"; then AC_MSG_ERROR(Ranlib not found); fi
+      if test -z "$GZIP"; then AC_MSG_ERROR(Gzip not found); fi
+      if test -z "$GUNZIP"; then AC_MSG_ERROR(Gunzip not found); fi
+      if test -z "$TAR"; then AC_MSG_ERROR(Tar not found); fi
+      AC_CHECK_PROGS(STRIP, ${STRIP} strip)
+      if test -z "$STRIP"; then AC_MSG_WARN(strip not found); fi
+      AC_CHECK_PROGS(WIDL, widl, widl)
+      if test -z "$WIDL"; then AC_MSG_ERROR(WIDL not found); fi
     fi
-
-    _SAVE_LIBS=$LIBS
-    LIBS="$LIBS wmvcore.lib"
-    AC_MSG_CHECKING([wmvcore.lib])
-    AC_LINK_IFELSE([AC_LANG_SOURCE([#include <wmsdk.h>
-                    int main() { return WMCreateSyncReader(NULL, 0, NULL); }])],
-                    AC_MSG_RESULT([yes]),
-                    AC_MSG_ERROR([Missing wmvcore.lib; install the Windows SDK]))
-    LIBS=$_SAVE_LIBS
-
-    #
-    # Force use of the freely-downloadable MSVC Express compiler
-    #
-
-    AC_LANG_PUSH([C++])
-    AC_ARG_WITH(msvc-express,
-                [  --with-msvc-express       limit to features buildable with MSVC Express],
-                [SB_WITH_MSVC_EXPRESS=1
-                 AC_MSG_WARN([Limiting functionality to MSVC Express-compatible])],
-                [SB_WITH_MSVC_EXPRESS=
-                 AC_CHECK_HEADER([atlbase.h],
-                                 [],
-                                 [AC_MSG_ERROR([Missing altbase.h])])])
-    AC_SUBST([SB_WITH_MSVC_EXPRESS])
-    AC_LANG_POP([C++])
   ;;
   *)
     AC_CHECK_PROG(LD, ${CXX}, ${CXX})
@@ -773,7 +834,6 @@ esac
 case "$SB_PLATFORM" in
   windows)
     BIN_SUFFIX=".exe"
-    OBJ_SUFFIX=".obj"
     LIB_PREFIX=""
     LIB_SUFFIX=".lib"
     DLL_SUFFIX=".dll"
@@ -785,8 +845,15 @@ case "$SB_PLATFORM" in
     AC_DEFINE(WIN32)
     AC_DEFINE(XP_WIN)
     AC_DEFINE(XP_WIN32)
-    AC_DEFINE(WIN32_LEAN_AND_MEAN)
-    AC_DEFINE(SB_USE_JEMALLOC)
+    if test "$NG_CROSS_COMP" != "1" ; then
+      OBJ_SUFFIX=".obj"
+      LIB_SUFFIX=".lib"
+      AC_DEFINE(WIN32_LEAN_AND_MEAN)
+      AC_DEFINE(SB_USE_JEMALLOC)
+    else
+      OBJ_SUFFIX=".o"
+      LIB_SUFFIX=".a"
+    fi
   ;;
   macosx)
     BIN_SUFFIX=
@@ -800,31 +867,14 @@ case "$SB_PLATFORM" in
     AC_DEFINE(NO_X11)
   ;;
   linux|solaris)
-    if test "$NG_CROSS_COMP" == "1" ; then
-      BIN_SUFFIX=".exe"
-      OBJ_SUFFIX=".obj"
-      LIB_PREFIX=""
-      LIB_SUFFIX=".lib"
-      DLL_SUFFIX=".dll"
-      INSTALLER_SUFFIX=".exe"
-      AC_DEFINE(UNICODE)
-      AC_DEFINE(_UNICODE)
-      AC_DEFINE(_WINDOWS)
-      AC_DEFINE(_WIN32)
-      AC_DEFINE(WIN32)
-      AC_DEFINE(XP_WIN)
-      AC_DEFINE(XP_WIN32)
-      AC_DEFINE(SB_USE_JEMALLOC)
-    else
-      BIN_SUFFIX=
-      OBJ_SUFFIX=".o"
-      LIB_PREFIX="lib"
-      LIB_SUFFIX=".a"
-      DLL_SUFFIX=".so"
-      INSTALLER_SUFFIX=".tar.gz"
-      AC_DEFINE(XP_UNIX)
-      AC_DEFINE(_REENTRANT)
-    fi
+    BIN_SUFFIX=
+    OBJ_SUFFIX=".o"
+    LIB_PREFIX="lib"
+    LIB_SUFFIX=".a"
+    DLL_SUFFIX=".so"
+    INSTALLER_SUFFIX=".tar.gz"
+    AC_DEFINE(XP_UNIX)
+    AC_DEFINE(_REENTRANT)
   ;;
 esac
 AC_SUBST(BIN_SUFFIX)
@@ -840,156 +890,201 @@ AC_SUBST(INSTALLER_SUFFIX)
 
 case "$SB_PLATFORM" in
   windows)
-    # We use MSVC8 on Windows
-    _CC_SUPPORTED_MAJOR_VERSION=14
+    if test "$NG_CROSS_COMP" != "1" ; then
+      # We use MSVC8 on Windows
+      _CC_SUPPORTED_MAJOR_VERSION=14
 
-    changequote(,)
-    _MSVC_VER_FILTER='s|.* \([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*|\1|p'
-    changequote([,])
+      changequote(,)
+      _MSVC_VER_FILTER='s|.* \([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*|\1|p'
+      changequote([,])
 
-    # Determine compiler version
-    CC_VERSION=`"${CC}" -v 2>&1 | sed -ne "$_MSVC_VER_FILTER"`
-    _CC_MAJOR_VERSION=`echo ${CC_VERSION} | $AWK -F\. '{ print $1 }'`
-    _CC_MINOR_VERSION=`echo ${CC_VERSION} | $AWK -F\. '{ print $2 }'`
-    _CC_BUILD_VERSION=`echo ${CC_VERSION} | $AWK -F\. '{ print $4 }'`
-    _MSC_VER=${_CC_MAJOR_VERSION}${_CC_MINOR_VERSION}
+      # Determine compiler version
+      CC_VERSION=`"${CC}" -v 2>&1 | sed -ne "$_MSVC_VER_FILTER"`
+      _CC_MAJOR_VERSION=`echo ${CC_VERSION} | $AWK -F\. '{ print $1 }'`
+      _CC_MINOR_VERSION=`echo ${CC_VERSION} | $AWK -F\. '{ print $2 }'`
+      _CC_BUILD_VERSION=`echo ${CC_VERSION} | $AWK -F\. '{ print $4 }'`
+      _MSC_VER=${_CC_MAJOR_VERSION}${_CC_MINOR_VERSION}
 
-    CXX_VERSION=`"${CXX}" -v 2>&1 | sed -ne "$_MSVC_VER_FILTER"`
-    _CXX_MAJOR_VERSION=`echo ${CXX_VERSION} | $AWK -F\. '{ print $1 }'`
+      CXX_VERSION=`"${CXX}" -v 2>&1 | sed -ne "$_MSVC_VER_FILTER"`
+      _CXX_MAJOR_VERSION=`echo ${CXX_VERSION} | $AWK -F\. '{ print $1 }'`
 
-    if test "$_CC_MAJOR_VERSION" != "$_CXX_MAJOR_VERSION"; then
-        if test -z "$SB_ENABLE_COMPILER_ENVIRONMENT_CHECKS"; then
-            AC_MSG_WARN([The major versions of \$CC and \$CXX do not match. Songbird Bugzilla reports should not be filed against builds produced using them.])
-        else
-            AC_MSG_ERROR([The major versions of \$CC and \$CXX do not match.])
-        fi
-    fi
-    case "$_CC_MAJOR_VERSION" in
-        14)
-            _CC_SUITE=8
-            SB_ARCH=$SB_ARCH-msvc8
-            # We need at least SP1 (bug 21339)
-            if test "$_CC_BUILD_VERSION" -lt 762 ; then
-                # SP0 is 14.00.50727.42
-                # SP1 is 14.00.50727.762
-                if test -z "$SB_ENABLE_COMPILER_ENVIRONMENT_CHECKS"; then
-                    AC_MSG_WARN([Visual Studio 8 (2005) without Service Pack 1 detected; your build may not complete.])
-                else
-                    AC_MSG_ERROR([Visual Studio 8 (2005) requires Service Pack 1 to build Songbird. Please install KB926601.])
-                fi
-            fi
-            ;;
-        15)
-            _CC_SUITE=9
-            ;;
-        16)
-            _CC_SUITE=10
-            ;;
-    esac
-    if test "$_CC_MAJOR_VERSION" -lt "$_CC_SUPPORTED_MAJOR_VERSION"; then
-        if test -z "$SB_ENABLE_COMPILER_ENVIRONMENT_CHECKS"; then
-            AC_MSG_WARN([This version of the MSVC compiler, $CC_VERSION, is unsupported. Songbird Bugzilla reports should not be filed against builds produced using it.])
-        else
-            AC_MSG_ERROR([This version of the MSVC compiler, $CC_VERSION, is unsupported.])
-        fi
-    fi
+      if test "$_CC_MAJOR_VERSION" != "$_CXX_MAJOR_VERSION"; then
+          if test -z "$SB_ENABLE_COMPILER_ENVIRONMENT_CHECKS"; then
+              AC_MSG_WARN([The major versions of \$CC and \$CXX do not match. Songbird Bugzilla reports should not be filed against builds produced using them.])
+          else
+              AC_MSG_ERROR([The major versions of \$CC and \$CXX do not match.])
+          fi
+      fi
+      case "$_CC_MAJOR_VERSION" in
+          14)
+              _CC_SUITE=8
+              SB_ARCH=$SB_ARCH-msvc8
+              # We need at least SP1 (bug 21339)
+              if test "$_CC_BUILD_VERSION" -lt 762 ; then
+                  # SP0 is 14.00.50727.42
+                  # SP1 is 14.00.50727.762
+                  if test -z "$SB_ENABLE_COMPILER_ENVIRONMENT_CHECKS"; then
+                      AC_MSG_WARN([Visual Studio 8 (2005) without Service Pack 1 detected; your build may not complete.])
+                  else
+                      AC_MSG_ERROR([Visual Studio 8 (2005) requires Service Pack 1 to build Songbird. Please install KB926601.])
+                  fi
+              fi
+              ;;
+          15)
+              _CC_SUITE=9
+              ;;
+          16)
+              _CC_SUITE=10
+              ;;
+      esac
+      if test "$_CC_MAJOR_VERSION" -lt "$_CC_SUPPORTED_MAJOR_VERSION"; then
+          if test -z "$SB_ENABLE_COMPILER_ENVIRONMENT_CHECKS"; then
+              AC_MSG_WARN([This version of the MSVC compiler, $CC_VERSION, is unsupported. Songbird Bugzilla reports should not be filed against builds produced using it.])
+          else
+              AC_MSG_ERROR([This version of the MSVC compiler, $CC_VERSION, is unsupported.])
+          fi
+      fi
 
-    # mozilla bug #249782
-    # ensure that mt.exe is Microsoft (R) Manifest Tool and not magnetic tape manipulation utility (or something else)
-    if test "$_CC_SUITE" -ge "8"; then
-            changequote(,)
-            _MSMT_VER_FILTER='s|.* \([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*|\1|p'
-            changequote([,])
+      # mozilla bug #249782
+      # ensure that mt.exe is Microsoft (R) Manifest Tool and not magnetic tape manipulation utility (or something else)
+      if test "$_CC_SUITE" -ge "8"; then
+              changequote(,)
+              _MSMT_VER_FILTER='s|.* \([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*|\1|p'
+              changequote([,])
 
-            MSMT_TOOL=`mt 2>&1|grep 'Microsoft (R) Manifest Tool'`
-            if test -n "$MSMT_TOOL"; then
-                    MSMANIFEST_TOOL_VERSION=`echo ${MSMT_TOOL}|sed -ne "$_MSMT_VER_FILTER"`
-                    if test -z "$MSMANIFEST_TOOL_VERSION"; then
-                            AC_MSG_WARN([Unknown version of the Microsoft (R) Manifest Tool.])
-                    fi
-                    MSMANIFEST_TOOL="mt"
-                    unset MSMT_TOOL
-            else
-                    AC_MSG_ERROR([Microsoft (R) Manifest Tool must be in your \$PATH.])
-            fi
-    fi
+              MSMT_TOOL=`mt 2>&1|grep 'Microsoft (R) Manifest Tool'`
+              if test -n "$MSMT_TOOL"; then
+                      MSMANIFEST_TOOL_VERSION=`echo ${MSMT_TOOL}|sed -ne "$_MSMT_VER_FILTER"`
+                      if test -z "$MSMANIFEST_TOOL_VERSION"; then
+                              AC_MSG_WARN([Unknown version of the Microsoft (R) Manifest Tool.])
+                      fi
+                      MSMANIFEST_TOOL="mt"
+                      unset MSMT_TOOL
+              else
+                      AC_MSG_ERROR([Microsoft (R) Manifest Tool must be in your \$PATH.])
+              fi
+      fi
 
-    # Check linker version
-    _LD_FULL_VERSION=`"${LD}" -v 2>&1 | sed -ne "$_MSVC_VER_FILTER"`
-    _LD_MAJOR_VERSION=`echo ${_LD_FULL_VERSION} | $AWK -F\. '{ print $1 }'`
-    if test "$_LD_MAJOR_VERSION" != "$_CC_SUITE"; then
-        AC_MSG_ERROR([The linker major version, $_LD_FULL_VERSION, does not match the compiler suite version, $_CC_SUITE.])
-    fi
+      # Check linker version
+      _LD_FULL_VERSION=`"${LD}" -v 2>&1 | sed -ne "$_MSVC_VER_FILTER"`
+      _LD_MAJOR_VERSION=`echo ${_LD_FULL_VERSION} | $AWK -F\. '{ print $1 }'`
+      if test "$_LD_MAJOR_VERSION" != "$_CC_SUITE"; then
+          AC_MSG_ERROR([The linker major version, $_LD_FULL_VERSION, does not match the compiler suite version, $_CC_SUITE.])
+      fi
 
-    MSVC_COMPILER_FLAGS="-nologo -W3 -WL -GS -EHsc -Zi -c"
+      MSVC_COMPILER_FLAGS="-nologo -W3 -WL -GS -EHsc -Zi -c"
 
-    if test "$_CC_SUITE" -ge "8"; then
-      # MSVC 10 gives linker errors (https://bugzilla.mozilla.org/show_bug.cgi?id=682259)
-      # MSVC 8+ use native wchar_t, but Mozilla builds without it
-      # MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS -Zc:wchar_t"
-      MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS"
-    fi
+      if test "$_CC_SUITE" -ge "8"; then
+        # MSVC 10 gives linker errors (https://bugzilla.mozilla.org/show_bug.cgi?id=682259)
+        # MSVC 8+ use native wchar_t, but Mozilla builds without it
+        # MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS -Zc:wchar_t"
+        MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS"
+      fi
 
-    if test "$enable_debug" = "yes"; then
-      MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS -Od -RTC1 -RTCc"
+      if test "$enable_debug" = "yes"; then
+        MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS -Od -RTC1 -RTCc"
+      else
+        MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS -Ox"
+      fi
+
+      if test "$enable_debug" == "yes"; then
+        CFLAGS_STATIC_LIBC="-MTd"
+      else
+        CFLAGS_STATIC_LIBC="-MT"
+      fi
+      if test "$SB_USE_JEMALLOC" != "1"; then
+        MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS $CFLAGS_STATIC_LIBC"
+      fi
+
+      # We always want to include "mozilla-config.h"
+      MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS -FI \"mozilla-config.h\" -FI \"xpcom-config.h\""
+
+      MSVC_LINKER_FLAGS="-NOLOGO -INCREMENTAL:NO -SUBSYSTEM:WINDOWS -MACHINE:X86 -DEBUG"
+      if test "$enable_debug" != "yes"; then
+        MSVC_LINKER_FLAGS="$MSVC_LINKER_FLAGS -OPT:REF -OPT:ICF"
+      fi
+
+      if test "$SB_USE_JEMALLOC" == "1"; then
+        # MSVC_DLL_LINKER_FLAGS="-NODEFAULTLIB:msvcrt -NODEFAULTLIB:msvcrtd -NODEFAULTLIB:msvcprt -NODEFAULTLIB:msvcprtd -DEFAULTLIB:mozcrt"
+        MSVC_DLL_LINKER_FLAGS="-NODEFAULTLIB:libcmt -NODEFAULTLIB:libcmtd -NODEFAULTLIB:msvcrt -NODEFAULTLIB:msvcrtd -NODEFAULTLIB:msvcprt -NODEFAULTLIB:msvcprtd -DEFAULTLIB:mozcrt"
+      fi
+
+      CFLAGS="$CFLAGS $MSVC_COMPILER_FLAGS -TC"
+      CXXFLAGS="$CXXFLAGS $MSVC_COMPILER_FLAGS -TP"
+      CFLAGS_INCLUDE_PREFIX="-I"
+      CFLAGS_INCLUDE_SUFFIX=""
+      CFLAGS_PREPROCESS="-P"
+      CFLAGS_ASSEMBLER="-FAs"
+      # Always disable warning 4624, because the XPCOM elicits this warning.
+      # Also disable warning 4800, it isn't useful, and using nsString with
+      # std::map causes it
+      CFLAGS_WARNING_IS_ERROR="-wd4624 -wd4800"
+      LDFLAGS="$LDFLAGS $MSVC_LINKER_FLAGS"
+      LDFLAGS_DLL="-DLL $MSVC_DLL_LINKER_FLAGS"
+      LDFLAGS_BIN=""
+      LDFLAGS_LIB=""
+      LDFLAGS_OUT_PREFIX="-OUT:\""
+      LDFLAGS_OUT_SUFFIX="\""
+      LDFLAGS_PATH_PREFIX="-LIBPATH:\""
+      LDFLAGS_PATH_SUFFIX="\""
+      LDFLAGS_IMPORT_PREFIX=""
+      LDFLAGS_IMPORT_SUFFIX="${LIB_SUFFIX}"
+      DEFAULT_LIBS="kernel32 user32 gdi32 winmm wsock32 advapi32 comctl32 ole32 oleaut32"
+      LNFLAGS="-f --symbolic"
+      ARFLAGS="-NOLOGO"
+      ARFLAGS_OUT_PREFIX="-OUT:\""
+      ARFLAGS_OUT_SUFFIX="\""
+      ARFLAGS_PATH_PREFIX=""
+      ARFLAGS_PATH_SUFFIX=""
+      ARFLAGS_LIB=""
+      UNZIPFLAGS="-u -o -q -X"
+      UNZIPFLAGS_EXTRACT="-d"
+      XULRUNNERDIR="/xulrunner"
+      COMPILER_GARBAGE="vc70.pdb vc71.pdb vc80.pdb vc90.pdb vc100.pdb"
     else
-      MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS -Ox"
-    fi
+      # Breakpad needs stabs debugging data, so always explicitly request it with
+      GCC_COMPILER_FLAGS="-c -fPIC -fshort-wchar -fexceptions -fnon-call-exceptions -funwind-tables -fasynchronous-unwind-tables -fno-rtti -fno-strict-aliasing -Wall -Wno-conversion -Wno-attributes -Wpointer-arith -Wcast-align -Wno-long-long -pipe -pthread"
+      if test "$enable_debug" = "yes"; then
+        GCC_COMPILER_FLAGS="$GCC_COMPILER_FLAGS -g -ggdb3 -fno-inline"
+      else
+        # Use -Os on linux, better than -O2 according to moz perf tests
+        GCC_COMPILER_FLAGS="$GCC_COMPILER_FLAGS -gstabs+ -Os"
+      fi
 
-    if test "$enable_debug" == "yes"; then
-      CFLAGS_STATIC_LIBC="-MTd"
-    else
-      CFLAGS_STATIC_LIBC="-MT"
-    fi
-    if test "$SB_USE_JEMALLOC" != "1"; then
-      MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS $CFLAGS_STATIC_LIBC"
-    fi
+      # We always want to include "mozilla-config.h"
+      GCC_COMPILER_FLAGS="$GCC_COMPILER_FLAGS -include \"mozilla-config.h\""
 
-    # We always want to include "mozilla-config.h"
-    MSVC_COMPILER_FLAGS="$MSVC_COMPILER_FLAGS -FI \"mozilla-config.h\" -FI \"xpcom-config.h\""
+      GCC_LINKER_FLAGS="-shared -Wl,-rpath-link,\$(topsrcdir)/$OBJDIRNAME/$DISTDIRNAME$XULRUNNERDIR"
 
-    MSVC_LINKER_FLAGS="-NOLOGO -INCREMENTAL:NO -SUBSYSTEM:WINDOWS -MACHINE:X86 -DEBUG"
-    if test "$enable_debug" != "yes"; then
-      MSVC_LINKER_FLAGS="$MSVC_LINKER_FLAGS -OPT:REF -OPT:ICF"
+      CFLAGS="$CFLAGS -I$NG_CROSS_PREFIX/include -I$NG_CROSS_ROOT_PREFIX/include -DNG_CROSS_COMP=1 $GCC_COMPILER_FLAGS"
+      CXXFLAGS="$CXXFLAGS $GCC_COMPILER_FLAGS -Woverloaded-virtual -Wsynth -Wno-ctor-dtor-privacy -Wno-non-virtual-dtor -DNG_CROSS_COMP=1"
+      CFLAGS_INCLUDE_PREFIX="-I"
+      CFLAGS_INCLUDE_SUFFIX=""
+      CFLAGS_PREPROCESS="-E"
+      CFLAGS_ASSEMBLER="-S"
+      CFLAGS_WARNING_IS_ERROR=""
+      LDFLAGS="$LDFLAGS -L$NG_CROSS_PREFIX/lib -L$NG_CROSS_ROOT_PREFIX/lib $GCC_LINKER_FLAGS"
+      LDFLAGS_DLL="-shared"
+      LDFLAGS_BIN=""
+      LDFLAGS_LIB="-static"
+      LDFLAGS_OUT_PREFIX="-o "
+      LDFLAGS_OUT_SUFFIX=""
+      LDFLAGS_PATH_PREFIX="-L"
+      LDFLAGS_PATH_SUFFIX=""
+      LDFLAGS_IMPORT_PREFIX="-l"
+      LDFLAGS_IMPORT_SUFFIX=""
+      LNFLAGS="-f --symbolic"
+      ARFLAGS="cr"
+      ARFLAGS_OUT_PREFIX=""
+      ARFLAGS_OUT_SUFFIX=""
+      ARFLAGS_PATH_PREFIX=""
+      ARFLAGS_PATH_SUFFIX=""
+      ARFLAGS_LIB=""
+      UNZIPFLAGS="-u -o -q -X"
+      UNZIPFLAGS_EXTRACT="-d"
+      USING_RANLIB=1
+      STRIP_FLAGS="-v"
     fi
-
-    if test "$SB_USE_JEMALLOC" == "1"; then
-      # MSVC_DLL_LINKER_FLAGS="-NODEFAULTLIB:msvcrt -NODEFAULTLIB:msvcrtd -NODEFAULTLIB:msvcprt -NODEFAULTLIB:msvcprtd -DEFAULTLIB:mozcrt"
-      MSVC_DLL_LINKER_FLAGS="-NODEFAULTLIB:libcmt -NODEFAULTLIB:libcmtd -NODEFAULTLIB:msvcrt -NODEFAULTLIB:msvcrtd -NODEFAULTLIB:msvcprt -NODEFAULTLIB:msvcprtd -DEFAULTLIB:mozcrt"
-    fi
-
-    CFLAGS="$CFLAGS $MSVC_COMPILER_FLAGS -TC"
-    CXXFLAGS="$CXXFLAGS $MSVC_COMPILER_FLAGS -TP"
-    CFLAGS_INCLUDE_PREFIX="-I"
-    CFLAGS_INCLUDE_SUFFIX=""
-    CFLAGS_PREPROCESS="-P"
-    CFLAGS_ASSEMBLER="-FAs"
-    # Always disable warning 4624, because the XPCOM elicits this warning.
-    # Also disable warning 4800, it isn't useful, and using nsString with
-    # std::map causes it
-    CFLAGS_WARNING_IS_ERROR="-wd4624 -wd4800"
-    LDFLAGS="$LDFLAGS $MSVC_LINKER_FLAGS"
-    LDFLAGS_DLL="-DLL $MSVC_DLL_LINKER_FLAGS"
-    LDFLAGS_BIN=""
-    LDFLAGS_LIB=""
-    LDFLAGS_OUT_PREFIX="-OUT:\""
-    LDFLAGS_OUT_SUFFIX="\""
-    LDFLAGS_PATH_PREFIX="-LIBPATH:\""
-    LDFLAGS_PATH_SUFFIX="\""
-    LDFLAGS_IMPORT_PREFIX=""
-    LDFLAGS_IMPORT_SUFFIX="${LIB_SUFFIX}"
-    DEFAULT_LIBS="kernel32 user32 gdi32 winmm wsock32 advapi32 comctl32 ole32 oleaut32"
-    LNFLAGS="-f --symbolic"
-    ARFLAGS="-NOLOGO"
-    ARFLAGS_OUT_PREFIX="-OUT:\""
-    ARFLAGS_OUT_SUFFIX="\""
-    ARFLAGS_PATH_PREFIX=""
-    ARFLAGS_PATH_SUFFIX=""
-    ARFLAGS_LIB=""
-    UNZIPFLAGS="-u -o -q -X"
-    UNZIPFLAGS_EXTRACT="-d"
-    XULRUNNERDIR="/xulrunner"
-    COMPILER_GARBAGE="vc70.pdb vc71.pdb vc80.pdb vc90.pdb vc100.pdb"
   ;;
   macosx)
     if ! test -e $SB_MACOSX_SDK/SDKSettings.plist; then
