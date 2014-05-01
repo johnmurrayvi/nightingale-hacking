@@ -51,5 +51,13 @@ CPP_EXTRA_FLAGS += $(CFLAGS_STATIC_LIBC) \
 CPP_EXTRA_DEFS += -DMOZ_NO_MOZALLOC \
                   $(NULL)
 
+ifeq (1, $(NG_CROSS_COMP))
+  CPP_EXTRA_DEFS += -DSTRSAFE_NO_DEPRECATE \
+                    $(NULL)
+
+  CPP_EXTRA_INCLUDES += /opt/cross/mingw-w64/i686-w64-mingw32/include/sec_api \
+                        $(NULL)
+endif
+
 include $(topsrcdir)/build/rules.mk
 

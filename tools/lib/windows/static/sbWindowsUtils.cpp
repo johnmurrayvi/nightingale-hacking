@@ -39,7 +39,6 @@
 // Local imports.
 #include "stringconvert.h"
 
-
 //------------------------------------------------------------------------------
 //
 // Songbird tstring services.
@@ -413,6 +412,11 @@ sbEnvString::sbEnvString(LPCWSTR aEnvVarName,
  * Overloaded wrapper for the getenv_s function.
  */
 
+// # define LPSTR char*
+// # define LPCSTR const char*
+// # define LPWSTR wchar_t*
+// # define LPCWSTR const wchar_t*
+#ifndef NG_CROSS_COMP
 errno_t
 sb_tgetenv_s(size_t* aSize,
              LPSTR   aBuffer,
@@ -422,11 +426,31 @@ sb_tgetenv_s(size_t* aSize,
   return getenv_s(aSize, aBuffer, aNumberOfElements, aVarName);
 }
 
+#else
+
+errno_t
+sb_tgetenv_s(size_t* aSize,
+             char*   aBuffer,
+             size_t  aNumberOfElements,
+             const char*  aVarName)
+{
+  wchar_t *aWBuffer;
+  wcscpy(aWBuffer, std::wstring(aBuffer, aBuffer+strlen(aBuffer)).c_str());
+  const wchar_t* aWVarName = std::wstring(aVarName, aVarName+strlen(aVarName)).c_str();
+  return _tgetenv_s(aSize, 
+                    aWBuffer,
+                    aNumberOfElements,
+                    aWVarName);
+}
+
+#endif
+
 
 /**
  * Overloaded wrapper for the _wgetenv_s function.
  */
 
+#ifndef NG_CROSS_COMP
 errno_t
 sb_tgetenv_s(size_t* aSize,
              LPWSTR  aBuffer,
@@ -436,6 +460,17 @@ sb_tgetenv_s(size_t* aSize,
   return _wgetenv_s(aSize, aBuffer, aNumberOfElements, aVarName);
 }
 
+#else
+
+errno_t
+sb_tgetenv_s(size_t*   aSize,
+             wchar_t*  aBuffer,
+             size_t    aNumberOfElements,
+             const wchar_t* aVarName)
+{
+  return _tgetenv_s(aSize, aBuffer, aNumberOfElements, aVarName);
+}
+#endif
 
 //------------------------------------------------------------------------------
 //
