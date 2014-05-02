@@ -42,9 +42,11 @@ VPATH		= @srcdir@
 
 include $(DEPTH)/build/autodefs.mk
 
-SONGBIRD_COMPONENTS = $(srcdir)/nsSidebar.js \
-                      $(srcdir)/nsSidebar.manifest \
-                      $(NULL)
+SONGBIRD_PP_RESOURCES = $(srcdir)/nsSidebar.js \
+                        $(srcdir)/nsSidebar.manifest \
+                        $(NULL)
+
+SONGBIRD_PP_DIR = $(SONGBIRD_COMPONENTSDIR)
 
 include $(topsrcdir)/build/rules.mk
 
