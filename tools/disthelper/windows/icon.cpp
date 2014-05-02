@@ -115,7 +115,7 @@ int CommandSetIcon(std::string aExecutable, std::string aIconFile, std::string a
   iconfile.assign(ResolvePathName(aIconFile));
   int file = _topen(iconfile.c_str(), _O_BINARY | _O_RDONLY);
   if (file == -1) {
-    DebugMessage("Failed to open icon file %S.", aIconFile);
+    DebugMessage("Failed to open icon file %S.", aIconFile.c_str());
     return DH_ERROR_READ;
   }
 
