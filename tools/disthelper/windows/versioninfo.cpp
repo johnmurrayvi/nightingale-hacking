@@ -338,6 +338,14 @@ int CommandSetVersionInfo(std::string aExecutable, IniEntry_t& aSection) {
 
   std::wstring executableName(ResolvePathName(aExecutable));
 
+  int offset = 0;
+  int totalSize = 0;
+  int newStringTableSize = 0;
+  int followingDataSize = 0;
+  void *followingData;
+  int initialDataSize = 0;
+  void *initialData;
+
   result = GetVersionInfoBlock(executableName, &sourceData, &sourceSize);
   if (result != DH_ERROR_OK) {
     OutputDebugString(_T("Failed to get version info"));
@@ -382,9 +390,9 @@ int CommandSetVersionInfo(std::string aExecutable, IniEntry_t& aSection) {
      updated where needed. Calculate the chunks we're going to
      merely copy around.
    */
-  void *initialData = sourceData;
-  int initialDataSize = reinterpret_cast<char*>(stringTableBuffer) -
-                        reinterpret_cast<char*>(sourceData);
+  initialData = sourceData;
+  initialDataSize = reinterpret_cast<char*>(stringTableBuffer) -
+                    reinterpret_cast<char*>(sourceData);
 
   /* This is a bit tricky. The stringTableLength may (on input) not be a
      multiple of four. So stringTableBuffer + stringTableLength might point
@@ -396,10 +404,10 @@ int CommandSetVersionInfo(std::string aExecutable, IniEntry_t& aSection) {
      including the padding in there, so the string table itself is always a
      multiple of four.
    */
-  void *followingData = reinterpret_cast<char*>(stringTableBuffer) +
-                        ROUND_UP_4 (stringTableLength);
-  int followingDataSize = reinterpret_cast<char*>(sourceData) + sourceSize -
-                          reinterpret_cast<char*>(followingData);
+  followingData = reinterpret_cast<char*>(stringTableBuffer) +
+                  ROUND_UP_4 (stringTableLength);
+  followingDataSize = reinterpret_cast<char*>(sourceData) + sourceSize -
+                      reinterpret_cast<char*>(followingData);
 
   /* Read the original strings */
   result = ReadStringTable(stringTableBuffer,
@@ -418,11 +426,11 @@ int CommandSetVersionInfo(std::string aExecutable, IniEntry_t& aSection) {
     goto CLEANUP;
   }
 
-  int newStringTableSize = GetStringTableSize(stringData);
+  newStringTableSize = GetStringTableSize(stringData);
 
   /* Create our new buffer, copy in the old bits, and zero out the
      bit we're replacing with our new string table */
-  int totalSize = initialDataSize + newStringTableSize + followingDataSize;
+  totalSize = initialDataSize + newStringTableSize + followingDataSize;
   newdata = malloc(totalSize);
   memcpy(newdata, initialData, initialDataSize);
   ZeroMemory((char*)newdata + initialDataSize, newStringTableSize);
@@ -439,7 +447,7 @@ int CommandSetVersionInfo(std::string aExecutable, IniEntry_t& aSection) {
 
   /* Fix up header sizes */
   // VS_VERSIONINFO->wLength;
-  int offset = 0;
+  offset = 0;
   WriteWord(newdata, &offset, totalSize);
   // StringFileInfo->wLength;
   stringFileInfoLength += newStringTableSize - stringTableLength;
