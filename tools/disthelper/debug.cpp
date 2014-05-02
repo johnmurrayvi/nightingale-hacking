@@ -56,7 +56,7 @@ bool gEnableLogging = true;
 
 void vDebugMessage(const char* fmt, va_list args) {
   TCHAR *buffer;
-  #if _MSC_VER
+  #if _MSC_VER || NG_CROSS_COMP
     tstring format = ConvertUTF8toUTFn(fmt);
     int len = _vscwprintf(format.c_str(), args) // _vscprintf doesn't count
                                            + 1; // terminating '\0'
@@ -91,7 +91,7 @@ void vLogMessage(const char* fmt, va_list args) {
     
     // do printf()-style formatting into a string buffer
     TCHAR* buffer = NULL;
-    #if _MSC_VER
+    #if _MSC_VER || defined(NG_CROSS_COMP)
       tstring format = ConvertUTF8toUTFn(fmt);
       int len = _vscwprintf(format.c_str(), args) // _vscwprintf doesn't count
                                              + 1; // terminating '\0'
