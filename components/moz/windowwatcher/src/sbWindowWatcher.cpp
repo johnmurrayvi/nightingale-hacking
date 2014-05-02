@@ -116,7 +116,7 @@ NS_IMPL_THREADSAFE_ISUPPORTS3(sbWindowWatcher,
 NS_IMETHODIMP
 sbWindowWatcher::CallWithWindow(const nsAString&           aWindowType,
                                 sbICallWithWindowCallback* aCallback,
-                                PRBool                     aWait)
+                                bool                     aWait)
 {
   return CallWithWindow_Proxy(aWindowType,aCallback,aWait);
 }
@@ -124,7 +124,7 @@ sbWindowWatcher::CallWithWindow(const nsAString&           aWindowType,
 nsresult
 sbWindowWatcher::CallWithWindow_Proxy(const nsAString&           aWindowType,
                                   sbICallWithWindowCallback* aCallback,
-                                  PRBool                     aWait)
+                                  bool                     aWait)
 {
   // Validate arguments.
   NS_ENSURE_ARG_POINTER(aCallback);
@@ -136,7 +136,7 @@ sbWindowWatcher::CallWithWindow_Proxy(const nsAString&           aWindowType,
   if (!SB_IsMainThread(mThreadManager)) {
     nsRefPtr< sbRunnable_<nsresult> > job =
       new sbRunnableMethod3_<nsresult,sbWindowWatcher,
-      const nsAString&,sbICallWithWindowCallback*,PRBool>(
+      const nsAString&,sbICallWithWindowCallback*,bool>(
           *this,&sbWindowWatcher::CallWithWindow_Proxy,
           aWindowType,aCallback,aWait);
 
@@ -213,7 +213,7 @@ sbWindowWatcher::GetWindow(const nsAString& aWindowType,
 
   // Function variables.
   nsCOMPtr<nsIDOMWindow> retWindow;
-  PRBool                 success;
+  bool                 success;
   nsresult               rv;
 
   // This method may only be called on the main thread.
@@ -233,7 +233,7 @@ sbWindowWatcher::GetWindow(const nsAString& aWindowType,
   // The enumerator enumerates from oldest to youngest (least recently focused
   // to most recently), so the last matching window is the most recently focused
   // one.
-  PRBool hasMoreElements;
+  bool hasMoreElements;
   rv = enumerator->HasMoreElements(&hasMoreElements);
   NS_ENSURE_SUCCESS(rv, rv);
   while (hasMoreElements) {
@@ -319,7 +319,7 @@ sbWindowWatcher::WaitForWindow(const nsAString& aWindowType)
  */
 
 NS_IMETHODIMP
-sbWindowWatcher::GetIsShuttingDown(PRBool* aIsShuttingDown)
+sbWindowWatcher::GetIsShuttingDown(bool* aIsShuttingDown)
 {
   // Validate arguments.
   NS_ENSURE_ARG_POINTER(aIsShuttingDown);
@@ -618,7 +618,7 @@ sbWindowWatcher::AddWindow(nsIDOMWindow* aWindow)
   NS_ASSERTION(aWindow, "aWindow is null");
 
   // Function variables.
-  PRBool success;
+  bool success;
   nsresult rv;
 
   // Operate within the monitor.
@@ -681,7 +681,7 @@ sbWindowWatcher::RemoveWindow(nsIDOMWindow* aWindow)
   NS_ASSERTION(aWindow, "aWindow is null");
 
   // Function variables.
-  PRBool success;
+  bool success;
   nsresult rv;
 
   // Operate within the monitor.
@@ -742,7 +742,7 @@ sbWindowWatcher::OnWindowReady(nsIDOMWindow* aWindow)
   NS_ENSURE_TRUE(aWindow, /* void */);
 
   // Function variables.
-  PRBool   success;
+  bool   success;
   nsresult rv;
 
   // If window is the main Songbird window, notify observers.

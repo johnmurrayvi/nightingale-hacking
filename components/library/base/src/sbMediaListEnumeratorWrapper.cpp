@@ -95,7 +95,7 @@ sbMediaListEnumeratorWrapper::Initialize(
 
 // nsISimpleEnumerator implementation
 NS_IMETHODIMP
-sbMediaListEnumeratorWrapper::HasMoreElements(PRBool *aMore)
+sbMediaListEnumeratorWrapper::HasMoreElements(bool *aMore)
 {
   NS_ENSURE_TRUE(mEnumerator, NS_ERROR_NOT_INITIALIZED);
   

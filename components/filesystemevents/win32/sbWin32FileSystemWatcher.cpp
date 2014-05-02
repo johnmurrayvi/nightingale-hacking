@@ -156,7 +156,7 @@ sbWin32FileSystemWatcher::~sbWin32FileSystemWatcher()
 NS_IMETHODIMP
 sbWin32FileSystemWatcher::Init(sbIFileSystemListener *aListener,
                                const nsAString & aRootPath,
-                               PRBool aIsRecursive)
+                               bool aIsRecursive)
 {
   TRACE("%s: root path = %s", __FUNCTION__,
          NS_ConvertUTF16toUTF8(aRootPath).get());
@@ -172,7 +172,7 @@ sbWin32FileSystemWatcher::Init(sbIFileSystemListener *aListener,
 }
 
 NS_IMETHODIMP
-sbWin32FileSystemWatcher::StopWatching(PRBool aShouldSaveSession)
+sbWin32FileSystemWatcher::StopWatching(bool aShouldSaveSession)
 {
   TRACE("%s", __FUNCTION__);
 
@@ -256,20 +256,20 @@ sbWin32FileSystemWatcher::WatchNextChange()
   }
 }
 
-PRBool
+bool
 sbWin32FileSystemWatcher::GetShouldRunThread()
 {
   return mShouldRunThread;
 }
 
-PRBool
+bool
 sbWin32FileSystemWatcher::GetIsThreadRunning()
 {
   return mIsThreadRunning;
 }
 
 void
-sbWin32FileSystemWatcher::SetIsThreadRunning(PRBool aIsThreadRunning)
+sbWin32FileSystemWatcher::SetIsThreadRunning(bool aIsThreadRunning)
 {
   mIsThreadRunning = aIsThreadRunning;
 }

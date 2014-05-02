@@ -157,7 +157,7 @@ private:
   // mDownloaderList            List of media item downloaders.
   //
 
-  PRBool                        mInitialized;
+  bool                        mInitialized;
   nsCOMPtr<sbIServiceManager>   mServiceManager;
   nsTArray< nsCOMPtr<sbIMediaItemDownloader> >
                                 mDownloaderList;

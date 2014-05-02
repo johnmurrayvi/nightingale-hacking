@@ -80,7 +80,7 @@ interface sbISeekableChannel : nsISupports
   /**
   * \brief If the nsIChannel has finished (by completion or error)
   */
-  readonly attribute PRBool completed;
+  readonly attribute bool completed;
   /**
   * \brief Open the channel and start downloading the file
   *

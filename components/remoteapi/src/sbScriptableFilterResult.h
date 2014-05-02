@@ -67,7 +67,7 @@ public:
                        JSContext * cx,
                        JSObject * obj,
                        jsval val,
-                       PRBool *_retval );
+                       bool *_retval );
 
   sbScriptableFilterResult( sbIFilterableMediaListView *aMediaListView,
                             sbRemotePlayer* aRemotePlayer );

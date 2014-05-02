@@ -179,7 +179,7 @@ NS_IMETHODIMP sbScriptableFilterItems::GetProperty( nsIXPConnectWrappedNative *w
                                                     JSObject * obj,
                                                     jsval id,
                                                     jsval * vp,
-                                                    PRBool *_retval)
+                                                    bool *_retval)
 {
   TRACE(("sbScriptableFilterItems::GetProperty()"));
   NS_ENSURE_ARG_POINTER(_retval);
@@ -247,7 +247,7 @@ NS_IMETHODIMP sbScriptableFilterItems::NewEnumerate( nsIXPConnectWrappedNative *
                                                      PRUint32 enum_op,
                                                      jsval * statep,
                                                      jsid *idp,
-                                                     PRBool *_retval )
+                                                     bool *_retval )
 {
   TRACE(("sbScriptableFilterItems::NewEnumerate()"));
   
@@ -348,7 +348,7 @@ NS_IMETHODIMP sbScriptableFilterItems::NewResolve( nsIXPConnectWrappedNative *wr
                                                    jsval id,
                                                    PRUint32 flags,
                                                    JSObject * *objp,
-                                                   PRBool *_retval)
+                                                   bool *_retval)
 {
   TRACE(("sbScriptableFilterItems::NewResolve()"));
   NS_ENSURE_ARG_POINTER(_retval);
@@ -409,7 +409,7 @@ NS_IMETHODIMP sbScriptableFilterItems::Equality( nsIXPConnectWrappedNative *wrap
                                                  JSContext * cx,
                                                  JSObject * obj,
                                                  jsval val,
-                                                 PRBool *_retval )
+                                                 bool *_retval )
 {
   LOG(("sbScriptableFilterItems::Equality()"));
   nsresult rv;
@@ -493,7 +493,7 @@ NS_IMETHODIMP sbScriptableFilterItems::Equality( nsIXPConnectWrappedNative *wrap
 //
 // ---------------------------------------------------------------------------
 
-NS_IMETHODIMP sbScriptableFilterItems::HasMoreElements(PRBool *_retval)
+NS_IMETHODIMP sbScriptableFilterItems::HasMoreElements(bool *_retval)
 {
   NS_ENSURE_ARG_POINTER(_retval);
   NS_ENSURE_TRUE( mHasItems, NS_ERROR_NOT_INITIALIZED );

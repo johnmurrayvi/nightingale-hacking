@@ -173,7 +173,7 @@ CopyInterfaceHashtableEntry(typename V::KeyType aKey,
 
   NS_ASSERTION(newHash->IsInitialized(), "copying to uninitialized hashtable!");
 
-  PRBool success = newHash->Put(aKey, aData);
+  bool success = newHash->Put(aKey, aData);
 
   return success ? PL_DHASH_NEXT : PL_DHASH_STOP;
 }
@@ -254,7 +254,7 @@ sbLibraryInsertingEnumerationListener::OnEnumeratedItem(sbIMediaList* aMediaList
   NS_ENSURE_ARG_POINTER(aMediaItem);
   NS_ENSURE_ARG_POINTER(_retval);
 
-  PRBool containsCopy;
+  bool containsCopy;
   nsresult rv = mFriendLibrary->ContainsCopy(aMediaItem, &containsCopy);
   NS_ENSURE_SUCCESS(rv, rv);
   if (!containsCopy) {
@@ -274,7 +274,7 @@ sbLibraryInsertingEnumerationListener::OnEnumeratedItem(sbIMediaList* aMediaList
       NS_ENSURE_SUCCESS(rv, rv);
     }
     // Remember this media item for later so we can notify with it
-    PRBool success = mNotificationList.AppendObject(newMediaItem);
+    bool success = mNotificationList.AppendObject(newMediaItem);
     NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
     success = mOriginalItemList.AppendObject(aMediaItem);
@@ -392,7 +392,7 @@ sbLibraryRemovingEnumerationListener::OnEnumeratedItem(sbIMediaList* aMediaList,
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Remember this media item for later so we can notify with it
-  PRBool success = mNotificationList.AppendObject(aMediaItem);
+  bool success = mNotificationList.AppendObject(aMediaItem);
   NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
   PRUint32* added = mNotificationIndexes.AppendElement(index);
@@ -424,7 +424,7 @@ sbLibraryRemovingEnumerationListener::OnEnumerationEnd(sbIMediaList* aMediaList,
 
   // First we notify any simple media lists that contain this item
   sbMediaItemToListsMap map;
-  PRBool success = map.Init();
+  bool success = map.Init();
   NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
   sbMediaListArray lists;
@@ -575,7 +575,7 @@ sbLocalDatabaseLibrary::Init(const nsAString& aDatabaseGuid,
   mDatabaseLocation = aDatabaseLocation;
 
   // Check version and migrate if needed.
-  PRBool needsMigration = PR_FALSE;
+  bool needsMigration = PR_FALSE;
 
   PRUint32 fromVersion = 0;
   PRUint32 toVersion = 0;
@@ -589,7 +589,7 @@ sbLocalDatabaseLibrary::Init(const nsAString& aDatabaseGuid,
   }
 
   // Check locale and reindex collated indices if needed
-  PRBool needsReindexCollations = PR_FALSE;
+  bool needsReindexCollations = PR_FALSE;
   rv = NeedsReindexCollations(&needsReindexCollations);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -598,7 +598,7 @@ sbLocalDatabaseLibrary::Init(const nsAString& aDatabaseGuid,
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  PRBool success = mCopyListeners.Init();
+  bool success = mCopyListeners.Init();
   NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
   // Find our resource GUID. This identifies us within the library (as opposed
@@ -775,7 +775,7 @@ nsresult sbLocalDatabaseLibrary::CreateQueries()
  */
 /* inline */ nsresult
 sbLocalDatabaseLibrary::MakeStandardQuery(sbIDatabaseQuery** _retval,
-                                          PRBool aRunAsync)
+                                          bool aRunAsync)
 {
   TRACE(("LocalDatabaseLibrary[0x%.8x] - MakeStandardQuery()", this));
   nsresult rv;
@@ -977,7 +977,7 @@ sbLocalDatabaseLibrary::SetDefaultItemProperties(sbIMediaItem* aItem,
       do_CreateInstance("@songbirdnest.com/Songbird/Mediacore/TypeSniffer;1", &rv);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    PRBool isVideo = PR_FALSE;
+    bool isVideo = PR_FALSE;
     rv = typeSniffer->IsValidVideoURL(uri, &isVideo);
     if (NS_SUCCEEDED(rv) && isVideo) {
       nsCOMPtr<sbIMutablePropertyArray> mutableProperties =
@@ -1079,7 +1079,7 @@ sbLocalDatabaseLibrary::GetTypeForGUID(const nsAString& aGUID,
     nsAutoPtr<sbMediaItemInfo> newItemInfo(new sbMediaItemInfo());
     NS_ENSURE_TRUE(newItemInfo, NS_ERROR_OUT_OF_MEMORY);
 
-    PRBool success = mMediaItemTable.Put(aGUID, newItemInfo);
+    bool success = mMediaItemTable.Put(aGUID, newItemInfo);
     NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
 
     itemInfo = newItemInfo.forget();
@@ -1184,7 +1184,7 @@ sbLocalDatabaseLibrary::DeleteDatabaseItem(const nsAString& aGuid)
 /**
  * Determins if the library is a device library
  */
-static PRBool
+static bool
 IsDeviceLibrary(sbILibrary * aLibrary)
 {
   nsresult rv;
@@ -1260,12 +1260,12 @@ sbLocalDatabaseLibrary::AddItemToLocalDatabase(sbIMediaItem* aMediaItem,
     nsresult rv = aMediaItem->GetLibrary(getter_AddRefs(itemLibrary));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    PRBool equals;
+    bool equals;
     rv = itemLibrary->Equals(SB_ILIBRESOURCE_CAST(this), &equals);
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsCOMPtr<sbIMediaList> newList;
-    PRBool forceCreateAsSimple = !equals;
+    bool forceCreateAsSimple = !equals;
 
     if (!forceCreateAsSimple) {
       rv = CreateMediaList(type, properties, getter_AddRefs(newList));
@@ -1330,8 +1330,8 @@ sbLocalDatabaseLibrary::AddItemToLocalDatabase(sbIMediaItem* aMediaItem,
 
     // If we're copying from the device, Hide the item till the copy is
     // complete. Code processing the read request will unhide.
-    PRBool const isCopyingFromDevice = IsDeviceLibrary(oldLibrary);
-    PRBool const isCopyingToDevice = IsDeviceLibrary(this);
+    bool const isCopyingFromDevice = IsDeviceLibrary(oldLibrary);
+    bool const isCopyingToDevice = IsDeviceLibrary(this);
     if (isCopyingFromDevice || isCopyingToDevice) {
       mutableProperties->AppendProperty(NS_LITERAL_STRING(SB_PROPERTY_HIDDEN),
                                         NS_LITERAL_STRING("1"));
@@ -1466,7 +1466,7 @@ sbLocalDatabaseLibrary::GetContainingLists(sbMediaItemArray* aItems,
   nsresult rv;
 
   nsTHashtable<nsISupportsHashKey> distinctLists;
-  PRBool success = distinctLists.Init();
+  bool success = distinctLists.Init();
   NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
   nsCOMPtr<sbIDatabaseQuery> query;
@@ -1487,7 +1487,7 @@ sbLocalDatabaseLibrary::GetContainingLists(sbMediaItemArray* aItems,
   for (PRUint32 i = 0; i < count; i++) {
     // The library can never be a member of a simple media list, so skip it.
     // Without this, GetMediaItemId will fail on the library
-    PRBool isLibrary;
+    bool isLibrary;
     rv = this->Equals(aItems->ObjectAt(i), &isLibrary);
     NS_ENSURE_SUCCESS(rv, rv);
     if (isLibrary) {
@@ -1547,7 +1547,7 @@ sbLocalDatabaseLibrary::GetContainingLists(sbMediaItemArray* aItems,
     if (!aMap->Get(containedItem, &lists)) {
       nsAutoPtr<sbMediaItemArray> newLists(new sbMediaItemArray());
       NS_ENSURE_TRUE(newLists, NS_ERROR_OUT_OF_MEMORY);
-      PRBool success = aMap->Put(containedItem, newLists);
+      bool success = aMap->Put(containedItem, newLists);
       NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
       lists = newLists.forget();
     }
@@ -1575,7 +1575,7 @@ sbLocalDatabaseLibrary::GetAllListsByType(const nsAString& aType,
   nsresult rv;
 
   sbMediaListFactoryInfo* factoryInfo;
-  PRBool success = mMediaListFactoryTable.Get(aType, &factoryInfo);
+  bool success = mMediaListFactoryTable.Get(aType, &factoryInfo);
   NS_ENSURE_TRUE(success, NS_ERROR_INVALID_ARG);
 
   nsCOMPtr<sbIDatabaseQuery> query;
@@ -1614,7 +1614,7 @@ sbLocalDatabaseLibrary::GetAllListsByType(const nsAString& aType,
     nsCOMPtr<sbIMediaList> list = do_QueryInterface(item, &rv);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    PRBool success = aArray->AppendObject(list);
+    bool success = aArray->AppendObject(list);
     NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
   }
 
@@ -1683,7 +1683,7 @@ sbLocalDatabaseLibrary::ConvertURIsToStrings(nsIArray* aURIs, nsTArray<nsString>
  */
 nsresult
 sbLocalDatabaseLibrary::ContainsCopy(sbIMediaItem* aMediaItem,
-                                     PRBool*       aContainsCopy)
+                                     bool*       aContainsCopy)
 {
   NS_ENSURE_ARG_POINTER(aMediaItem);
   NS_ENSURE_ARG_POINTER(aContainsCopy);
@@ -1696,7 +1696,7 @@ sbLocalDatabaseLibrary::ContainsCopy(sbIMediaItem* aMediaItem,
   rv = aMediaItem->GetLibrary(getter_AddRefs(itemLibrary));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool equals;
+  bool equals;
   rv = itemLibrary->Equals(SB_ILIBRESOURCE_CAST(this), &equals);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1755,7 +1755,7 @@ sbLocalDatabaseLibrary::FilterExistingItems
   }
 
   nsTHashtable<nsStringHashKey> uniques;
-  PRBool success = uniques.Init(length);
+  bool success = uniques.Init(length);
   NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
   nsresult rv;
@@ -1875,7 +1875,7 @@ sbLocalDatabaseLibrary::FilterExistingItems
       }
 
       nsAutoString *ret = filteredURIs->AppendElement(uriSpec);
-      PRBool success = (ret == nsnull) ? PR_FALSE : PR_TRUE;
+      bool success = (ret == nsnull) ? PR_FALSE : PR_TRUE;
       NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
       if (aPropertyArrayArray && filteredPropertyArrayArray) {
@@ -2017,7 +2017,7 @@ sbLocalDatabaseLibrary::GetContractIdForGuid(const nsAString& aGUID,
   }
 
   sbMediaListFactoryInfo* factoryInfo;
-  PRBool typeRegistered = mMediaListFactoryTable.Get(mediaType, &factoryInfo);
+  bool typeRegistered = mMediaListFactoryTable.Get(mediaType, &factoryInfo);
   NS_ENSURE_TRUE(typeRegistered, NS_ERROR_UNEXPECTED);
 
   NS_ASSERTION(factoryInfo->factory, "Null factory pointer!");
@@ -2046,7 +2046,7 @@ sbLocalDatabaseLibrary::GetMediaItemIdForGuid(const nsAString& aGUID,
     nsAutoPtr<sbMediaItemInfo> newItemInfo(new sbMediaItemInfo());
     NS_ENSURE_TRUE(newItemInfo, NS_ERROR_OUT_OF_MEMORY);
 
-    PRBool success = mMediaItemTable.Put(aGUID, newItemInfo);
+    bool success = mMediaItemTable.Put(aGUID, newItemInfo);
     NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
 
     itemInfo = newItemInfo.forget();
@@ -2167,7 +2167,7 @@ sbLocalDatabaseLibrary::AddCopyListener(sbILocalDatabaseLibraryCopyListener *aCo
                                      getter_AddRefs(proxiedListener));
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool success = mCopyListeners.Put(aCopyListener, proxiedListener);
+  bool success = mCopyListeners.Put(aCopyListener, proxiedListener);
   NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
   return NS_OK;
@@ -2303,7 +2303,7 @@ sbLocalDatabaseLibrary::NotifyListItemUpdated(nsStringHashKey::KeyType aKey,
     // item updated notifications.
 
     // Find out if the list contains the item that has been updated.
-    PRBool containsItem = PR_FALSE;
+    bool containsItem = PR_FALSE;
     nsCOMPtr<sbIMediaList> list = do_QueryInterface(simpleList, &rv);
     NS_ENSURE_SUCCESS(rv, PL_DHASH_STOP);
     rv = list->Contains(info->item, &containsItem);
@@ -2362,7 +2362,7 @@ sbLocalDatabaseLibrary::NotifyListsBeforeItemRemoved(nsISupportsHashKey::KeyType
     NS_ENSURE_SUCCESS(rv, PL_DHASH_STOP);
 
     listGuid.Append(itemGuid);
-    PRBool success = indexMap->Put(listGuid, index);
+    bool success = indexMap->Put(listGuid, index);
     NS_ENSURE_TRUE(success, PL_DHASH_STOP);
 
     rv = simple->NotifyListenersBeforeItemRemoved(list, item, index);
@@ -2406,7 +2406,7 @@ sbLocalDatabaseLibrary::NotifyListsAfterItemRemoved(nsISupportsHashKey::KeyType 
 
     PRUint32 index = 0;
     listGuid.Append(itemGuid);
-    PRBool success = indexMap->Get(listGuid, &index);
+    bool success = indexMap->Get(listGuid, &index);
     NS_ENSURE_TRUE(success, PL_DHASH_STOP);
 
     rv = simple->NotifyListenersAfterItemRemoved(list, item, index);
@@ -2475,7 +2475,7 @@ sbLocalDatabaseLibrary::EntriesToMediaListArray(nsISupportsHashKey* aEntry,
   nsCOMPtr<sbIMediaList> list = do_QueryInterface(aEntry->GetKey(), &rv);
   NS_ENSURE_SUCCESS(rv, PL_DHASH_STOP);
 
-  PRBool success = array->AppendObject(list);
+  bool success = array->AppendObject(list);
   NS_ENSURE_TRUE(success, PL_DHASH_STOP);
 
   return PL_DHASH_NEXT;
@@ -2514,7 +2514,7 @@ sbLocalDatabaseLibrary::GetDevice(sbIDevice** aDevice)
  * See sbILibrary
  */
 NS_IMETHODIMP
-sbLocalDatabaseLibrary::GetSupportsForeignMediaItems(PRBool* aSupportsForeignMediaItems)
+sbLocalDatabaseLibrary::GetSupportsForeignMediaItems(bool* aSupportsForeignMediaItems)
 {
   TRACE(("LocalDatabaseLibrary[0x%.8x] - GetSupportsForeignMediaItems()", this));
   return NS_ERROR_NOT_IMPLEMENTED;
@@ -2572,7 +2572,7 @@ sbLocalDatabaseLibrary::Resolve(nsIURI* aUri,
 NS_IMETHODIMP
 sbLocalDatabaseLibrary::ContainsItemWithSameIdentity
                         (sbIMediaItem* aMediaItem,
-                         PRBool* _retval)
+                         bool* _retval)
 {
   NS_ENSURE_ARG_POINTER(aMediaItem);
   NS_ENSURE_ARG_POINTER(_retval);
@@ -2719,13 +2719,13 @@ sbLocalDatabaseLibrary::GetItemsWithSameIdentity(sbIMediaItem* aMediaItem,
 NS_IMETHODIMP
 sbLocalDatabaseLibrary::CreateMediaItem(nsIURI* aUri,
                                         sbIPropertyArray* aProperties,
-                                        PRBool aAllowDuplicates,
+                                        bool aAllowDuplicates,
                                         sbIMediaItem** _retval)
 {
   NS_ENSURE_ARG_POINTER(aUri);
   NS_ENSURE_ARG_POINTER(_retval);
 
-  PRBool wasCreated; /* ignored */
+  bool wasCreated; /* ignored */
   return CreateMediaItemInternal(aUri,
                                  aProperties,
                                  aAllowDuplicates,
@@ -2740,7 +2740,7 @@ NS_IMETHODIMP
 sbLocalDatabaseLibrary::CreateMediaItemIfNotExist(nsIURI *aContentUri,
                                                   sbIPropertyArray *aProperties,
                                                   sbIMediaItem **aResultItem,
-                                                  PRBool *_retval)
+                                                  bool *_retval)
 {
   NS_ENSURE_ARG_POINTER(aContentUri);
   NS_ENSURE_ARG_POINTER(_retval);
@@ -2764,8 +2764,8 @@ sbLocalDatabaseLibrary::CreateMediaItemIfNotExist(nsIURI *aContentUri,
 nsresult
 sbLocalDatabaseLibrary::CreateMediaItemInternal(nsIURI* aUri,
                                                 sbIPropertyArray* aProperties,
-                                                PRBool aAllowDuplicates,
-                                                PRBool* aWasCreated,
+                                                bool aAllowDuplicates,
+                                                bool* aWasCreated,
                                                 sbIMediaItem** _retval)
 {
   NS_ENSURE_ARG_POINTER(aUri);
@@ -2784,7 +2784,7 @@ sbLocalDatabaseLibrary::CreateMediaItemInternal(nsIURI* aUri,
   if (!aAllowDuplicates) {
     nsAutoPtr< nsTArray<nsString> > strArray(new nsTArray<nsString>());
     nsAutoString *ret = strArray->AppendElement(NS_ConvertUTF8toUTF16(spec));
-    PRBool success = (ret == nsnull) ? PR_FALSE : PR_TRUE;
+    bool success = (ret == nsnull) ? PR_FALSE : PR_TRUE;
     NS_ENSURE_SUCCESS(success, NS_ERROR_OUT_OF_MEMORY);
 
     nsAutoPtr< nsTArray<nsString> > filtered;
@@ -2847,7 +2847,7 @@ sbLocalDatabaseLibrary::CreateMediaItemInternal(nsIURI* aUri,
   NS_ASSERTION(!mMediaItemTable.Get(guid, nsnull),
                "Guid already exists!");
 
-  PRBool success = mMediaItemTable.Put(guid, newItemInfo);
+  bool success = mMediaItemTable.Put(guid, newItemInfo);
   NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
 
   nsCOMPtr<sbIMediaItem> mediaItem;
@@ -2932,7 +2932,7 @@ sbLocalDatabaseLibrary::CreateMediaList(const nsAString& aType,
   NS_ENSURE_ARG_POINTER(_retval);
 
   sbMediaListFactoryInfo* factoryInfo;
-  PRBool validType = mMediaListFactoryTable.Get(aType, &factoryInfo);
+  bool validType = mMediaListFactoryTable.Get(aType, &factoryInfo);
   NS_ENSURE_TRUE(validType, NS_ERROR_INVALID_ARG);
 
   nsCOMPtr<sbIDatabaseQuery> query;
@@ -2963,7 +2963,7 @@ sbLocalDatabaseLibrary::CreateMediaList(const nsAString& aType,
   NS_ASSERTION(!mMediaItemTable.Get(guid, nsnull),
                "Guid already exists!");
 
-  PRBool success = mMediaItemTable.Put(guid, newItemInfo);
+  bool success = mMediaItemTable.Put(guid, newItemInfo);
   NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
 
   nsCOMPtr<sbIMediaItem> mediaItem;
@@ -3014,7 +3014,7 @@ sbLocalDatabaseLibrary::CreateMediaList(const nsAString& aType,
 NS_IMETHODIMP
 sbLocalDatabaseLibrary::CopyMediaList(const nsAString& aType,
                                       sbIMediaList* aSource,
-                                      PRBool aDontCopyContent,
+                                      bool aDontCopyContent,
                                       sbIMediaList** _retval)
 {
   NS_ENSURE_FALSE(aType.IsEmpty(), NS_ERROR_INVALID_ARG);
@@ -3149,7 +3149,7 @@ sbLocalDatabaseLibrary::GetMediaItem(const nsAString& aGUID,
   if (!itemInfo->listType.IsEmpty()) {
     // This must be a media list, so get the appropriate factory.
     sbMediaListFactoryInfo* factoryInfo;
-    PRBool success = mMediaListFactoryTable.Get(itemInfo->listType,
+    bool success = mMediaListFactoryTable.Get(itemInfo->listType,
                                                 &factoryInfo);
     NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
 
@@ -3173,7 +3173,7 @@ sbLocalDatabaseLibrary::GetMediaItem(const nsAString& aGUID,
   // may be instantiated.  We'll use this information for fast
   // notification.
   if (!itemInfo->listType.IsEmpty()) {
-    PRBool success = mMediaListTable.Put(aGUID, itemInfo->weakRef);
+    bool success = mMediaListTable.Put(aGUID, itemInfo->weakRef);
     NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
   }
 
@@ -3298,7 +3298,7 @@ sbLocalDatabaseLibrary::RegisterMediaListFactory(sbIMediaListFactory* aFactory)
          NS_LossyConvertUTF16toASCII(type).get()));
 
   // Bail if we've already registered this type.
-  PRBool alreadyRegistered = mMediaListFactoryTable.Get(type, nsnull);
+  bool alreadyRegistered = mMediaListFactoryTable.Get(type, nsnull);
   if (alreadyRegistered) {
     NS_WARNING("Registering a media list factory that was already registered!");
     return NS_OK;
@@ -3385,7 +3385,7 @@ sbLocalDatabaseLibrary::RegisterMediaListFactory(sbIMediaListFactory* aFactory)
   NS_ENSURE_TRUE(factoryInfo, NS_ERROR_OUT_OF_MEMORY);
 
   // And add it to our hash table.
-  PRBool success = mMediaListFactoryTable.Put(type, factoryInfo);
+  bool success = mMediaListFactoryTable.Put(type, factoryInfo);
   NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
 
   factoryInfo.forget();
@@ -3396,7 +3396,7 @@ sbLocalDatabaseLibrary::RegisterMediaListFactory(sbIMediaListFactory* aFactory)
  * See sbILibrary
  */
 NS_IMETHODIMP
-sbLocalDatabaseLibrary::Optimize(PRBool aAnalyzeOnly)
+sbLocalDatabaseLibrary::Optimize(bool aAnalyzeOnly)
 {
   TRACE(("LocalDatabaseLibrary[0x%.8x] - Optimize()", this));
 
@@ -3441,7 +3441,7 @@ sbLocalDatabaseLibrary::Flush()
 NS_IMETHODIMP
 sbLocalDatabaseLibrary::BatchCreateMediaItems(nsIArray* aURIArray,
                                               nsIArray* aPropertyArrayArray,
-                                              PRBool aAllowDuplicates,
+                                              bool aAllowDuplicates,
                                               nsIArray** _retval)
 {
   NS_ENSURE_ARG_POINTER(aURIArray);
@@ -3488,7 +3488,7 @@ NS_IMETHODIMP
 sbLocalDatabaseLibrary::BatchCreateMediaItemsAsync(sbIBatchCreateMediaItemsListener* aListener,
                                                    nsIArray* aURIArray,
                                                    nsIArray* aPropertyArrayArray,
-                                                   PRBool aAllowDuplicates)
+                                                   bool aAllowDuplicates)
 {
   NS_ENSURE_ARG_POINTER(aListener);
   NS_ENSURE_ARG_POINTER(aURIArray);
@@ -3506,7 +3506,7 @@ sbLocalDatabaseLibrary::BatchCreateMediaItemsAsync(sbIBatchCreateMediaItemsListe
 nsresult
 sbLocalDatabaseLibrary::BatchCreateMediaItemsInternal(nsIArray* aURIArray,
                                                       nsIArray* aPropertyArrayArray,
-                                                      PRBool aAllowDuplicates,
+                                                      bool aAllowDuplicates,
                                                       nsIArray** aMediaItemCreatedArray,
                                                       sbIBatchCreateMediaItemsListener* aListener,
                                                       nsIArray** _retval)
@@ -3542,7 +3542,7 @@ sbLocalDatabaseLibrary::BatchCreateMediaItemsInternal(nsIArray* aURIArray,
       strArray.forget();
   }
 
-  PRBool runAsync = aListener ? PR_TRUE : PR_FALSE;
+  bool runAsync = aListener ? PR_TRUE : PR_FALSE;
 
   nsCOMPtr<sbIDatabaseQuery> query;
   rv = MakeStandardQuery(getter_AddRefs(query), runAsync);
@@ -3582,7 +3582,7 @@ sbLocalDatabaseLibrary::BatchCreateMediaItemsInternal(nsIArray* aURIArray,
     // Stick the timer into a member array so we keep it alive while it does
     // its thing.  It never gets removed from this array until this library
     // gets deleted.
-    PRBool success = mBatchCreateTimers.AppendObject(timer);
+    bool success = mBatchCreateTimers.AppendObject(timer);
     NS_ENSURE_TRUE(success, rv);
 
     rv = timer->InitWithCallback(callback, BATCHCREATE_NOTIFICATION_INTERVAL_MS,
@@ -3679,7 +3679,7 @@ sbLocalDatabaseLibrary::BatchCreateMediaItemsInternal(nsIArray* aURIArray,
 }
 
 nsresult
-sbLocalDatabaseLibrary::ClearInternal(PRBool aExcludeLists /*= PR_FALSE*/,
+sbLocalDatabaseLibrary::ClearInternal(bool aExcludeLists /*= PR_FALSE*/,
                                       const nsAString &aContentType /*= EmptyString()*/)
 {
   SB_MEDIALIST_LOCK_FULLARRAY_AND_ENSURE_MUTABLE();
@@ -3800,7 +3800,7 @@ sbLocalDatabaseLibrary::ClearInternal(PRBool aExcludeLists /*= PR_FALSE*/,
 }
 
 nsresult
-sbLocalDatabaseLibrary::NeedsMigration(PRBool *aNeedsMigration,
+sbLocalDatabaseLibrary::NeedsMigration(bool *aNeedsMigration,
                                        PRUint32 *aFromVersion,
                                        PRUint32 *aToVersion)
 {
@@ -3914,7 +3914,7 @@ sbLocalDatabaseLibrary::RemoveSelected(nsISimpleEnumerator* aSelection,
     do_QueryInterface(NS_ISUPPORTS_CAST(sbIMediaList*, viewMediaList), &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool isLibrary;
+  bool isLibrary;
   rv = this->Equals(list, &isLibrary);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -3960,7 +3960,7 @@ sbLocalDatabaseLibrary::RemoveSelected(nsISimpleEnumerator* aSelection,
       deleteQuery.AppendLiteral(",");
 
       // Finally, remember this media item so we can send notifications
-      PRBool success = selectedItems.AppendObject(item);
+      bool success = selectedItems.AppendObject(item);
       NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
       // Get the index of this item in the full array
@@ -3991,7 +3991,7 @@ sbLocalDatabaseLibrary::RemoveSelected(nsISimpleEnumerator* aSelection,
     // If we are removing from the library, we need to notify all the simple
     // media lists that contains the items as well as the library's listeners
     sbMediaItemToListsMap map;
-    PRBool success = map.Init(count);
+    bool success = map.Init(count);
     NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
 
     sbMediaListArray lists;
@@ -4183,7 +4183,7 @@ sbLocalDatabaseLibrary::GetItemByGuid(const nsAString& aGuid,
  */
 NS_IMETHODIMP
 sbLocalDatabaseLibrary::Contains(sbIMediaItem* aMediaItem,
-                                 PRBool* _retval)
+                                 bool* _retval)
 {
   NS_ENSURE_ARG_POINTER(aMediaItem);
   NS_ENSURE_ARG_POINTER(_retval);
@@ -4220,7 +4220,7 @@ sbLocalDatabaseLibrary::AddItem(sbIMediaItem* aMediaItem,
 
   SB_MEDIALIST_LOCK_FULLARRAY_AND_ENSURE_MUTABLE();
 
-  PRBool containsCopy;
+  bool containsCopy;
   nsresult rv = ContainsCopy(aMediaItem, &containsCopy);
   NS_ENSURE_SUCCESS(rv, rv);
   if (containsCopy)
@@ -4296,7 +4296,7 @@ NS_IMETHODIMP
 sbLocalDatabaseLibrary::AddMediaItems(
                                     nsISimpleEnumerator* aMediaItems,
                                     sbIAddMediaItemsListener * aListener,
-                                    PRBool aAsync)
+                                    bool aAsync)
 {
   NS_ENSURE_ARG_POINTER(aMediaItems);
 
@@ -4338,7 +4338,7 @@ sbLocalDatabaseLibrary::AddMediaItems(
 
     sbAutoBatchHelper batchHelper(*this);
 
-    PRBool hasMore;
+    bool hasMore;
     while (NS_SUCCEEDED(aMediaItems->HasMoreElements(&hasMore)) && hasMore) {
       nsCOMPtr<nsISupports> supports;
       rv = aMediaItems->GetNext(getter_AddRefs(supports));
@@ -4380,7 +4380,7 @@ sbLocalDatabaseLibrary::AddSomeAsyncInternal(nsISimpleEnumerator* aMediaItems,
 
   sbAutoBatchHelper batchHelper(*this);
 
-  PRBool hasMore;
+  bool hasMore;
   PRUint32 itemsProcessed = 0;
 
   while (NS_SUCCEEDED(aMediaItems->HasMoreElements(&hasMore)) && hasMore) {
@@ -4492,7 +4492,7 @@ sbLocalDatabaseLibrary::RemoveSome(nsISimpleEnumerator* aMediaItems)
   nsresult rv = listener.OnEnumerationBegin(nsnull, &stepResult);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  PRBool hasMore;
+  bool hasMore;
   while (NS_SUCCEEDED(aMediaItems->HasMoreElements(&hasMore)) && hasMore) {
 
     nsCOMPtr<nsISupports> supports;
@@ -4707,7 +4707,7 @@ sbBatchCreateTimerCallback::Notify(nsITimer* aTimer)
 {
   NS_ENSURE_ARG_POINTER(aTimer);
 
-  PRBool complete;
+  bool complete;
   nsresult rv = NotifyInternal(&complete);
   if (NS_SUCCEEDED(rv) && !complete) {
     // Everything looks fine, let the timer continue.
@@ -4735,7 +4735,7 @@ sbBatchCreateTimerCallback::Notify(nsITimer* aTimer)
 }
 
 nsresult
-sbBatchCreateTimerCallback::NotifyInternal(PRBool* _retval)
+sbBatchCreateTimerCallback::NotifyInternal(bool* _retval)
 {
   NS_ASSERTION(_retval, "Null retval!");
 
@@ -4748,7 +4748,7 @@ sbBatchCreateTimerCallback::NotifyInternal(PRBool* _retval)
   }
 
   // Check to see if the query is complete.
-  PRBool isExecuting = PR_FALSE;
+  bool isExecuting = PR_FALSE;
   rv = mQuery->IsExecuting(&isExecuting);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -4885,7 +4885,7 @@ sbBatchCreateHelper::NotifyAndGetItems(nsIArray** _retval)
       NS_ASSERTION(!mLibrary->mMediaItemTable.Get(mGuids[i], nsnull),
                    "Guid already exists!");
 
-      PRBool success = mLibrary->mMediaItemTable.Put(mGuids[i], newItemInfo);
+      bool success = mLibrary->mMediaItemTable.Put(mGuids[i], newItemInfo);
       NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
 
       nsCOMPtr<sbIMediaItem> mediaItem;
@@ -4972,7 +4972,7 @@ NS_IMETHODIMP
 sbLocalDatabaseLibrary::CollectDistinctValues(const nsAString & aProperty,
                                               PRUint32 aCollectionMethod,
                                               const nsAString & aOtherProperty,
-                                              PRBool aAscending,
+                                              bool aAscending,
                                               PRUint32 aMaxResults,
                                               nsIArray **_retval)
 {
@@ -5034,7 +5034,7 @@ sbLocalDatabaseLibrary::CollectDistinctValues(const nsAString & aProperty,
 }
 
 nsresult
-sbLocalDatabaseLibrary::NeedsReindexCollations(PRBool *aNeedsReindexCollations) {
+sbLocalDatabaseLibrary::NeedsReindexCollations(bool *aNeedsReindexCollations) {
 
   nsresult rv;
 
@@ -5042,7 +5042,7 @@ sbLocalDatabaseLibrary::NeedsReindexCollations(PRBool *aNeedsReindexCollations) 
   nsCOMPtr<nsIPrefBranch> prefBranch =
     do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
   if (NS_SUCCEEDED(rv)) {
-    PRBool prefValue;
+    bool prefValue;
     nsCString key(INVALID_COLLATION_INDEX_PREF_PREFIX);
     key.Append(NS_ConvertUTF16toUTF8(mDatabaseGuid));
     key.Append(INVALID_COLLATION_INDEX_PREF_SUFFIX);
@@ -5122,7 +5122,7 @@ sbLocalDatabaseLibrary::ReindexCollations() {
   nsCOMPtr<nsIPrefBranch> prefBranch =
     do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
   if (NS_SUCCEEDED(rv)) {
-    PRBool prefValue;
+    bool prefValue;
     nsCString key(INVALID_COLLATION_INDEX_PREF_PREFIX);
     key.Append(NS_ConvertUTF16toUTF8(mDatabaseGuid));
     key.Append(INVALID_COLLATION_INDEX_PREF_SUFFIX);

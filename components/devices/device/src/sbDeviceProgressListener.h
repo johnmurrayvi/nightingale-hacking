@@ -111,7 +111,7 @@ public:
    * Return true if the job is complete.
    */
 
-  PRBool IsComplete();
+  bool IsComplete();
 
 
   /**

@@ -86,7 +86,7 @@ class sbFileScanQuery : public sbIFileScanQuery
 public:
   sbFileScanQuery();
   sbFileScanQuery(const nsString & strDirectory,
-                  const PRBool & bRecurse,
+                  const bool & bRecurse,
                   sbIFileScanCallback *pCallback);
 
   virtual ~sbFileScanQuery();
@@ -98,8 +98,8 @@ public:
 
 protected:
   nsString GetExtensionFromFilename(const nsAString &strFilename);
-  PRBool VerifyFileExtension(const nsAString &strExtension,
-                             PRBool *aOutIsFlaggedExtension);
+  bool VerifyFileExtension(const nsAString &strExtension,
+                             bool *aOutIsFlaggedExtension);
 
   mozilla::Mutex m_pDirectoryLock;
   nsString m_strDirectory;
@@ -107,12 +107,12 @@ protected:
   mozilla::Mutex m_pCurrentPathLock;
   nsString m_strCurrentPath;
 
-  PRBool m_bSearchHidden;
-  PRBool m_bRecurse;
-  PRBool m_bWantLibraryContentURIs;
+  bool m_bSearchHidden;
+  bool m_bRecurse;
+  bool m_bWantLibraryContentURIs;
 
   mozilla::Mutex m_pScanningLock;
-  PRBool m_bIsScanning;
+  bool m_bIsScanning;
 
   mozilla::Mutex m_pCallbackLock;
   nsCOMPtr<sbIFileScanCallback> m_pCallback;
@@ -131,7 +131,7 @@ protected:
   nsString m_lastSeenExtension;
 
   mozilla::Mutex m_pCancelLock;
-  PRBool m_bCancel;
+  bool m_bCancel;
 };
 
 class sbIDirectoryEnumerator;
@@ -179,8 +179,8 @@ protected:
   PRInt32 m_ScanQueryProcessorIsRunning;
 
   nsCOMPtr<nsINetUtil> mNetUtil;
-  PRBool               m_ThreadShouldShutdown;
-  PRBool               m_Finalized;
+  bool               m_ThreadShouldShutdown;
+  bool               m_Finalized;
 
 
   NS_DECL_RUNNABLEMETHOD(sbFileScan, RunProcessScanQueries);

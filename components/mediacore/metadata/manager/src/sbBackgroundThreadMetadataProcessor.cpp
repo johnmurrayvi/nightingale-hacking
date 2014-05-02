@@ -197,10 +197,10 @@ NS_IMETHODIMP sbBackgroundThreadMetadataProcessor::Run()
     }
   
     // If the job item is blocked, wait until it is no longer blocked.
-    PRBool skipItem = PR_FALSE;
+    bool skipItem = PR_FALSE;
     while (1) {
       // Check if job item is blocked.
-      PRBool jobItemIsBlocked;
+      bool jobItemIsBlocked;
       rv = mJobManager->GetJobItemIsBlocked(item, &jobItemIsBlocked);
       if (NS_FAILED(rv)) {
           NS_ERROR("sbBackgroundThreadMetadataProcessor::Run unable "
@@ -236,7 +236,7 @@ NS_IMETHODIMP sbBackgroundThreadMetadataProcessor::Run()
         continue;
     }
 
-    PRBool async = PR_FALSE;
+    bool async = PR_FALSE;
     PRInt32 operationRetVal;
     if (jobType == sbMetadataJob::TYPE_WRITE) {
       rv = handler->Write(&operationRetVal);
@@ -260,7 +260,7 @@ NS_IMETHODIMP sbBackgroundThreadMetadataProcessor::Run()
                  " to set item processing started.");
       }
 
-      PRBool handlerCompleted = PR_FALSE;
+      bool handlerCompleted = PR_FALSE;
       rv = handler->GetCompleted(&handlerCompleted);
       if (!NS_SUCCEEDED(rv)) {
         NS_ERROR("sbBackgroundThreadMetadataProcessor::Run unable "
@@ -287,7 +287,7 @@ NS_IMETHODIMP sbBackgroundThreadMetadataProcessor::Run()
              handler->GetCompleted(&handlerCompleted), counter++) {
 
           // Run at most 10 messages.
-          PRBool event = PR_FALSE;
+          bool event = PR_FALSE;
           int eventCount = 0;
           for (mThread->ProcessNextEvent(PR_FALSE, &event);
                event && eventCount < 10;

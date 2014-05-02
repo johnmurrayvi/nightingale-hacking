@@ -273,7 +273,7 @@ sbNewFileURI(nsIFile* aFile,
 
 void
 RemoveBadFileNameCharacters(nsAString& aFileName,
-                            PRBool     aAllPlatforms)
+                            bool     aAllPlatforms)
 {
   // Get the list of bad characters.
   const char* badCharacters;

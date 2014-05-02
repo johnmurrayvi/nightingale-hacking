@@ -251,7 +251,7 @@ StreamListener::OnStartRequest(nsIRequest *req, nsISupports *ctxt)
   if (httpChannel) {
     nsCAutoString acceptRangesHeader;
     nsCAutoString icyHeader;
-    PRBool succeeded;
+    bool succeeded;
 
     if (NS_SUCCEEDED(httpChannel->GetRequestSucceeded(&succeeded)) 
             && !succeeded) 
@@ -1070,7 +1070,7 @@ gst_mozilla_src_uri_get_protocols(GType handler)
 
   // Enumerate through the contractIDs and look for a specific prefix
   nsCOMPtr<nsISupports> element;
-  PRBool more = PR_FALSE;
+  bool more = PR_FALSE;
   while(NS_SUCCEEDED(simpleEnumerator->HasMoreElements(&more)) && more) {
 
     rv = simpleEnumerator->GetNext(getter_AddRefs(element));

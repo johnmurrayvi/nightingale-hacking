@@ -356,7 +356,7 @@ sbFileMetadataService::StartJob(nsIArray* aMediaItemsArray,
     // If the last job in the job array is blocked, the new job will be too.
     PRUint32 jobCount = mJobArray.Length();
     if (jobCount > 0) {
-      PRBool blocked;
+      bool blocked;
       rv = mJobArray[jobCount-1]->GetBlocked(&blocked);
       NS_ENSURE_SUCCESS(rv, rv);
       if (blocked) {
@@ -422,7 +422,7 @@ sbFileMetadataService::StartJob(nsIArray* aMediaItemsArray,
 }
 
 
-nsresult sbFileMetadataService::GetQueuedJobItem(PRBool aMainThreadOnly,
+nsresult sbFileMetadataService::GetQueuedJobItem(bool aMainThreadOnly,
                                                 sbMetadataJobItem** aJobItem)
 {
   TRACE(("%s[%.8x]", __FUNCTION__, this));
@@ -437,7 +437,7 @@ nsresult sbFileMetadataService::GetQueuedJobItem(PRBool aMainThreadOnly,
     // Look through active jobs for a job item to be processed.
     // Skip any files that may have cause an sbIMetadataHandler
     // to crash in the past.
-    PRBool isURLBlacklisted;
+    bool isURLBlacklisted;
     do {
       isURLBlacklisted = PR_FALSE;
     
@@ -526,7 +526,7 @@ nsresult sbFileMetadataService::PutProcessedJobItem(sbMetadataJobItem* aJobItem)
 
 nsresult
 sbFileMetadataService::GetJobItemIsBlocked(sbMetadataJobItem* aJobItem,
-                                           PRBool*            aJobItemIsBlocked)
+                                           bool*            aJobItemIsBlocked)
 {
   NS_ENSURE_ARG_POINTER(aJobItem);
   NS_ENSURE_ARG_POINTER(aJobItemIsBlocked);
@@ -570,7 +570,7 @@ sbFileMetadataService::GetJobItemIsBlocked(sbMetadataJobItem* aJobItem,
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Job is not blocked if the job media item is not currently being played.
-  PRBool equals;
+  bool equals;
   rv = jobItem->Equals(sequencerCurrentItem, &equals);
   NS_ENSURE_SUCCESS(rv, rv);
   if (!equals) {
@@ -628,7 +628,7 @@ sbFileMetadataService::Observe(nsISupports *aSubject,
 
       // Update blocked status of jobs.  If any job is blocked, all jobs after
       // it are also blocked.
-      PRBool blocked = PR_FALSE;
+      bool blocked = PR_FALSE;
       PRUint32 jobCount = jobs.Length();
       for (PRUint32 i=0; i < jobCount; i++) {
         // If no jobs are blocked yet, check current job.  Otherwise, mark
@@ -648,7 +648,7 @@ sbFileMetadataService::Observe(nsISupports *aSubject,
 
     // Now lock again and see if there are any active jobs left
     {
-      PRBool allComplete = PR_TRUE;
+      bool allComplete = PR_TRUE;
       mozilla::MutexAutoLock lock(mJobLock);
       for (PRUint32 i=0; i < mJobArray.Length(); i++) {
         mJobArray[i]->GetStatus(&status);
@@ -696,7 +696,7 @@ nsresult sbFileMetadataService::EnsureWritePermitted()
   TRACE(("%s[%.8x]", __FUNCTION__, this));
   nsresult rv;
 
-  PRBool enableWriting = PR_FALSE;
+  bool enableWriting = PR_FALSE;
   nsCOMPtr<nsIPrefBranch> prefService =
   do_GetService( "@mozilla.org/preferences-service;1", &rv );
   NS_ENSURE_SUCCESS( rv, rv);
@@ -707,7 +707,7 @@ nsresult sbFileMetadataService::EnsureWritePermitted()
     // Let the user know what the situation is. 
     // Allow them to enable writing if desired.
     
-    PRBool promptOnWrite = PR_TRUE;
+    bool promptOnWrite = PR_TRUE;
     prefService->GetBoolPref( "songbird.metadata.promptOnWrite", &promptOnWrite );
     
     if (promptOnWrite) {
@@ -724,8 +724,8 @@ nsresult sbFileMetadataService::EnsureWritePermitted()
           do_GetService("@mozilla.org/embedcomp/prompt-service;1", &rv);
         NS_ENSURE_SUCCESS( rv, rv);
 
-        PRBool promptResult = PR_FALSE;
-        PRBool checkState = PR_FALSE;
+        bool promptResult = PR_FALSE;
+        bool checkState = PR_FALSE;
 
         // TODO Clean up, localize, or remove from the product
         rv = promptService->ConfirmCheck(mainWindow,                  

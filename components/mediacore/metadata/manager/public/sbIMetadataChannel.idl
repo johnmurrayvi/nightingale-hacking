@@ -65,11 +65,11 @@ interface sbIMetadataChannel : nsIStreamListener
   * \brief If the datastream is seekable
   * \todo Make "GetSeekable()" work.  Right now, nothing is seekable.
   */
-  readonly attribute PRBool seekable;
+  readonly attribute bool seekable;
   /**
   * \brief If the nsIChannel has finished (by completion or error)
   */
-  readonly attribute PRBool completed;
+  readonly attribute bool completed;
   /**
   * \brief Open the channel and start downloading the file
   *

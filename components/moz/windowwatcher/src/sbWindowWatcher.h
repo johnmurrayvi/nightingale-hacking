@@ -143,9 +143,9 @@ private:
   nsCOMPtr<nsIWindowMediator>   mWindowMediator;
   nsCOMPtr<nsIObserverService>  mObserverService;
   nsCOMPtr<nsIThreadManager>    mThreadManager;
-  PRBool                        mSentMainWinPresentedNotification;
+  bool                        mSentMainWinPresentedNotification;
   mozilla::ReentrantMonitor     mMonitor;
-  PRBool                        mIsShuttingDown;
+  bool                        mIsShuttingDown;
   nsCOMArray<nsIDOMWindow>      mWindowList;
 
   class WindowInfo
@@ -164,7 +164,7 @@ private:
     nsCOMPtr<nsIDOMEventTarget> eventTarget;
     nsRefPtr<sbWindowWatcherEventListener>
                                 eventListener;
-    PRBool                      isReady;
+    bool                      isReady;
   };
   nsClassHashtable<nsISupportsHashKey, WindowInfo>
                                 mWindowInfoTable;
@@ -175,7 +175,7 @@ private:
     nsCOMPtr<sbICallWithWindowCallback> callback;
   } CallWithWindowInfo;
   nsTArray<CallWithWindowInfo>  mCallWithWindowList;
-  PRBool                        mServicingCallWithWindowList;
+  bool                        mServicingCallWithWindowList;
 
 
   //
@@ -213,7 +213,7 @@ private:
   nsresult
   CallWithWindow_Proxy(const nsAString&           aWindowType,
                              sbICallWithWindowCallback* aCallback,
-                             PRBool                   aWait);
+                             bool                   aWait);
 };
 
 
@@ -384,7 +384,7 @@ private:
   nsCOMPtr<sbIWindowWatcher>    mSBWindowWatcher;
   mozilla::ReentrantMonitor     mReadyMonitor;
   nsCOMPtr<nsIDOMWindow>        mWindow;
-  PRBool                        mReady;
+  bool                        mReady;
 
   //
   // Internal wait for window services.

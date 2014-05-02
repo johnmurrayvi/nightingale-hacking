@@ -138,7 +138,7 @@ sbCDDeviceController::CreateDevice(nsIPropertyBag *aParams,
 }
 
 NS_IMETHODIMP
-sbCDDeviceController::ControlsDevice(sbIDevice *aDevice, PRBool *aRetVal)
+sbCDDeviceController::ControlsDevice(sbIDevice *aDevice, bool *aRetVal)
 {
   return ControlsDeviceInternal(aDevice, aRetVal);
 }

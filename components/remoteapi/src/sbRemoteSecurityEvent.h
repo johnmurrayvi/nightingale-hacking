@@ -81,19 +81,19 @@ public:
 /** nsIPrivateDOMEvent - this is non-XPCOM so no forward macro **/
   NS_IMETHOD DuplicatePrivateData();
   NS_IMETHOD SetTarget(nsIDOMEventTarget* aTarget);
-  NS_IMETHOD_(PRBool) IsDispatchStopped();
+  NS_IMETHOD_(bool) IsDispatchStopped();
   NS_IMETHOD_(nsEvent*) GetInternalNSEvent();
-  NS_IMETHOD SetTrusted(PRBool aTrusted);
+  NS_IMETHOD SetTrusted(bool aTrusted);
 
   /* XXX: Need to implement derivation from nsIPrivateDOMEvent.
    * Don't know what to do with these.
    */
-  void Serialize(IPC::Message*, PRBool)
+  void Serialize(IPC::Message*, bool)
   {
 
   }
 
-  PRBool Deserialize(const IPC::Message*, void**)
+  bool Deserialize(const IPC::Message*, void**)
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -106,7 +106,7 @@ public:
                         nsIURI *,
                         const nsAString &, 
                         const nsAString &,
-                        PRBool );
+                        bool );
 
 protected:
   nsCOMPtr<nsISecurityCheckedComponent> mSecurityMixin;
@@ -116,7 +116,7 @@ protected:
   
   // this is the actual event payload.
   nsCOMPtr<nsIURI> mScopeURI;
-  PRBool           mHasAccess;
+  bool           mHasAccess;
   nsString         mCategory;
   nsString         mCategoryID;
 };

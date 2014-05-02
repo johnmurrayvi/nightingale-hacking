@@ -99,7 +99,7 @@ static nsresult GetWindowAttribute(NSWindow*        aWindow,
 
 static NSImage* GetImageFromURL(const nsAString& aImageURL);
 
-static PRBool SBParseColor(const nsAString& aColorString,
+static bool SBParseColor(const nsAString& aColorString,
                            nscolor*         aColor);
 
 
@@ -323,7 +323,7 @@ GetDOMWindowFromNativeWindow(NATIVEWINDOW   aNativeWindow,
   while (1) {
     // Get the next DOM window.  Break from loop if no more windows.
     nsCOMPtr<nsISupports> domWindow;
-    PRBool                hasMoreElements;
+    bool                hasMoreElements;
     rv = windowEnumerator->HasMoreElements(&hasMoreElements);
     NS_ENSURE_SUCCESS(rv, rv);
     if (!hasMoreElements)
@@ -640,7 +640,7 @@ GetImageFromURL(const nsAString& aImageURL)
  * \return PR_TRUE              Whether the string could be parsed to a color.
  */
 
-PRBool
+bool
 SBParseColor(const nsAString& aColorString,
              nscolor*         aColor)
 {

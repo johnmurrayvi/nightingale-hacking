@@ -108,13 +108,13 @@ public:
                         jsval id,
                         PRUint32 flags,
                         JSObject **objp,
-                        PRBool *_retval);
+                        bool *_retval);
   NS_IMETHOD GetProperty(nsIXPConnectWrappedNative *wrapper,
                          JSContext *cx,
                          JSObject *obj,
                          jsval id,
                          jsval *vp,
-                         PRBool *_retval);
+                         bool *_retval);
 
   // sbIWrappedMediaList
   virtual already_AddRefed<sbIMediaItem> GetMediaItem();
@@ -136,7 +136,7 @@ protected:
   already_AddRefed<sbIMediaItem>
     FindMediaItemWithMatchingScope(const nsCOMArray<sbIMediaItem>& aMediaItems);
 
-  PRBool mShouldScan;
+  bool mShouldScan;
   nsCOMPtr<sbILibrary> mLibrary;
   nsRefPtr<sbRemoteMediaListBase> mRemMediaList;
 
@@ -149,8 +149,8 @@ protected:
 
   nsRefPtr<sbRemotePlayer> mRemotePlayer;
   
-  PRBool mIgnoreHiddenPlaylists;
-  PRBool mAllowDuplicates;
+  bool mIgnoreHiddenPlaylists;
+  bool mAllowDuplicates;
 };
 
 #endif // __SB_REMOTE_LIBRARYBASE_H__

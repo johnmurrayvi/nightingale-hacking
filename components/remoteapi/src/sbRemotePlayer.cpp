@@ -279,7 +279,7 @@ class sbAutoPrincipalPusher
       }
     }
     // tell people if we succeeded in pushing the principal
-    operator PRBool() const
+    operator bool() const
     {
       return mStack ? PR_TRUE : PR_FALSE ;
     }
@@ -445,7 +445,7 @@ sbRemotePlayer::InitInternal(nsPIDOMWindow* aWindow)
   mIOService = do_GetService("@mozilla.org/network/io-service;1", &rv);
   NS_ENSURE_SUCCESS( rv, rv );
 
-  PRBool success = mRemObsHash.Init();
+  bool success = mRemObsHash.Init();
   NS_ENSURE_TRUE( success, NS_ERROR_FAILURE );
 
   success = mCachedLibraries.Init(2);
@@ -595,7 +595,7 @@ sbRemotePlayer::GetRemotePlayer(sbIRemotePlayer * *aRemotePlayer)
 
 NS_IMETHODIMP
 sbRemotePlayer::SupportsVersion( const nsAString &aAPIVersion, 
-                                 PRBool *aSupportsVersion )
+                                 bool *aSupportsVersion )
 {
   NS_ENSURE_ARG_POINTER(aSupportsVersion);
   NS_ENSURE_TRUE(!aAPIVersion.IsEmpty(), NS_ERROR_INVALID_ARG);
@@ -808,7 +808,7 @@ sbRemotePlayer::GetSiteLibrary(sbIRemoteLibrary * *aSiteLibrary)
                        &rv ) );
   NS_ENSURE_SUCCESS( rv, rv );
 
-  PRBool success = mCachedLibraries.Put( siteLibraryFilename, remoteLibrary );
+  bool success = mCachedLibraries.Put( siteLibraryFilename, remoteLibrary );
   NS_ENSURE_TRUE( success, NS_ERROR_FAILURE );
 
   NS_ADDREF( *aSiteLibrary = remoteLibrary );
@@ -839,7 +839,7 @@ sbRemotePlayer::GetCommands( sbIRemoteCommands **aCommandsObject )
 }
 
 nsresult
-sbRemotePlayer::RegisterCommands( PRBool aUseDefaultCommands )
+sbRemotePlayer::RegisterCommands( bool aUseDefaultCommands )
 {
   NS_ENSURE_STATE(mCommandsObject);
   nsresult rv;
@@ -1083,7 +1083,7 @@ sbRemotePlayer::GetCurrentTrack( nsAString &aCurrentTrack )
 }
 
 NS_IMETHODIMP
-sbRemotePlayer::GetPlaying( PRBool *aPlaying )
+sbRemotePlayer::GetPlaying( bool *aPlaying )
 {
   LOG(("sbRemotePlayer::GetPlaying()"));
   NS_ENSURE_ARG_POINTER(aPlaying);
@@ -1100,7 +1100,7 @@ sbRemotePlayer::GetPlaying( PRBool *aPlaying )
 }
 
 NS_IMETHODIMP
-sbRemotePlayer::GetPaused( PRBool *aPaused )
+sbRemotePlayer::GetPaused( bool *aPaused )
 {
   LOG(("sbRemotePlayer::GetPaused()"));
   NS_ENSURE_ARG_POINTER(aPaused);
@@ -1134,7 +1134,7 @@ sbRemotePlayer::GetRepeat( PRInt64 *aRepeat )
 }
 
 NS_IMETHODIMP
-sbRemotePlayer::GetShuffle( PRBool *aShuffle )
+sbRemotePlayer::GetShuffle( bool *aShuffle )
 {
   LOG(("sbRemotePlayer::GetShuffle()"));
   NS_ENSURE_ARG_POINTER(aShuffle);
@@ -1246,7 +1246,7 @@ sbRemotePlayer::GetVolume( PRInt64 *aVolume )
 }
 
 NS_IMETHODIMP
-sbRemotePlayer::GetMute( PRBool *aMute )
+sbRemotePlayer::GetMute( bool *aMute )
 {
   LOG(("sbRemotePlayer::GetMute()"));
   NS_ENSURE_ARG_POINTER(aMute);
@@ -1291,7 +1291,7 @@ sbRemotePlayer::AddListener( const nsAString &aKey,
   sbRemoteObserver remObs;
   remObs.observer = aObserver;
   remObs.remote = dr;
-  PRBool success = mRemObsHash.Put( aKey, remObs );
+  bool success = mRemObsHash.Put( aKey, remObs );
   NS_ENSURE_TRUE( success, NS_ERROR_OUT_OF_MEMORY );
 
   return NS_OK;
@@ -1350,7 +1350,7 @@ sbRemotePlayer::Play()
 
   // Check to see if playback is currently paused.
   // If currently paused, first attempt to resume.
-  PRBool isPaused = PR_FALSE;
+  bool isPaused = PR_FALSE;
 
   rv = GetPaused( &isPaused );
   NS_ENSURE_SUCCESS( rv, rv );
@@ -1664,7 +1664,7 @@ sbRemotePlayer::FireMediaItemStatusEventToContent( const nsAString &aClass,
   NS_ENSURE_SUCCESS( rv, rv );
 
   // Fire an event to the chrome system.
-  PRBool dummy;
+  bool dummy;
   return eventTarget->DispatchEvent( remoteEvent, &dummy );
 }
 
@@ -1957,7 +1957,7 @@ sbRemotePlayer::HandleEvent( nsIDOMEvent *aEvent )
     rv = mContentDoc->CreateEvent( NS_LITERAL_STRING("mouseevent"), getter_AddRefs(newEvent) );
     NS_ENSURE_SUCCESS(rv, rv);
 
-    PRBool ctrlKey = PR_FALSE, altKey = PR_FALSE,
+    bool ctrlKey = PR_FALSE, altKey = PR_FALSE,
            shiftKey = PR_FALSE, metaKey = PR_FALSE;
     PRUint16 button = 0;
     nsCOMPtr<nsIDOMMouseEvent> srcMouseEvent( do_QueryInterface(playlistClickEvent, &rv) );
@@ -2005,7 +2005,7 @@ sbRemotePlayer::HandleEvent( nsIDOMEvent *aEvent )
     NS_ENSURE_SUCCESS(rv, rv);
 
     // dispatch the event the the content document
-    PRBool dummy;
+    bool dummy;
     nsCOMPtr<nsIDOMEventTarget> destEventTarget = do_QueryInterface( mContentDoc, &rv );
     NS_ENSURE_SUCCESS(rv, rv);
     rv = destEventTarget->DispatchEvent( remoteEvent, &dummy );
@@ -2030,7 +2030,7 @@ sbRemotePlayer::HandleEvent( nsIDOMEvent *aEvent )
     rv = nsEvent->GetOriginalTarget( getter_AddRefs(originalEventTarget) );
     NS_ENSURE_SUCCESS( rv, rv );
 
-    PRBool allow = PR_FALSE;
+    bool allow = PR_FALSE;
     if ( SameCOMIdentity( originalEventTarget, mChromeDoc ) ) {
       LOG(( "    - target IS this chromeDoc - ALLOWING " ));
       allow = PR_TRUE;
@@ -2089,7 +2089,7 @@ sbRemotePlayer::HandleEvent( nsIDOMEvent *aEvent )
         rv = securityEvent->GetCategoryID(categoryID);
         NS_ENSURE_SUCCESS( rv, rv );
 
-        PRBool hasAccess = PR_FALSE;
+        bool hasAccess = PR_FALSE;
         rv = securityEvent->GetHasAccess(&hasAccess);
         NS_ENSURE_SUCCESS( rv, rv );
 
@@ -2180,7 +2180,7 @@ sbRemotePlayer::ConfirmPlaybackControl() {
 
   LOG(("sbRemotePlayer::ConfirmPlaybackControl()"));
 
-  PRBool isPlaying;
+  bool isPlaying;
   nsresult rv;
 
   // we are safe to run from untrusted script.  Since we may end up across
@@ -2217,7 +2217,7 @@ sbRemotePlayer::ConfirmPlaybackControl() {
     nsCOMPtr<sbIRemoteAPIService> remoteAPIService =
       do_GetService( "@songbirdnest.com/remoteapi/remoteapiservice;1", &rv );
     NS_ENSURE_SUCCESS( rv, rv );
-    PRBool hasPlaybackControl;
+    bool hasPlaybackControl;
     rv = remoteAPIService->HasPlaybackControl( codebaseURI, &hasPlaybackControl );
     NS_ENSURE_SUCCESS( rv, rv );
     if ( hasPlaybackControl ) {
@@ -2226,7 +2226,7 @@ sbRemotePlayer::ConfirmPlaybackControl() {
     }
   } // pop the principal
 
-  PRBool allowed =
+  bool allowed =
     GetUserApprovalForHost( codebaseURI,
                             NS_LITERAL_STRING("rapi.playback_control.blocked.title"),
                             NS_LITERAL_STRING("rapi.playback_control.blocked.message") );
@@ -2234,7 +2234,7 @@ sbRemotePlayer::ConfirmPlaybackControl() {
   return allowed ? NS_OK : NS_ERROR_ABORT ;
 }
 
-PRBool
+bool
 sbRemotePlayer::GetUserApprovalForHost( nsIURI *aURI,
                                         const nsAString &aTitleKey,
                                         const nsAString &aMessageKey,
@@ -2250,7 +2250,7 @@ sbRemotePlayer::GetUserApprovalForHost( nsIURI *aURI,
   nsCOMPtr<nsIPrefBranch> prefService =
     do_GetService("@mozilla.org/preferences-service;1", &rv);
   if (NS_SUCCEEDED(rv)) {
-    PRBool shouldPrompt;
+    bool shouldPrompt;
     rv = prefService->GetBoolPref( "songbird.rapi.promptForApproval",
                                    &shouldPrompt );
     if (NS_SUCCEEDED(rv) && !shouldPrompt) {
@@ -2363,7 +2363,7 @@ sbRemotePlayer::GetUserApprovalForHost( nsIURI *aURI,
                                  &allowed );
   NS_ENSURE_SUCCESS( rv, PR_FALSE );
 
-  PRBool retval = PR_FALSE;
+  bool retval = PR_FALSE;
 #ifdef METRICS_ENABLED
   nsString metricsCategory;
   metricsCategory.AssignLiteral("rapi.prompt.");
@@ -2505,7 +2505,7 @@ nsresult
 sbRemotePlayer::DispatchEvent( nsIDOMDocument *aDoc,
                                const nsAString &aClass,
                                const nsAString &aType,
-                               PRBool aIsTrusted )
+                               bool aIsTrusted )
 {
   LOG(( "sbRemotePlayer::DispatchEvent(%s, %s)",
         NS_LossyConvertUTF16toASCII(aClass).get(),
@@ -2530,7 +2530,7 @@ sbRemotePlayer::DispatchEvent( nsIDOMDocument *aDoc,
   privEvt->SetTrusted(aIsTrusted);
 
   // Fire an event to the chrome system. This event will NOT get to content.
-  PRBool dummy;
+  bool dummy;
   return eventTarget->DispatchEvent( event, &dummy );
 }
 
@@ -2540,8 +2540,8 @@ sbRemotePlayer::DispatchSecurityEvent( nsIDOMDocument *aDoc,
                                        const nsAString &aClass,
                                        const nsAString &aType,
                                        const nsAString &aCategoryID,
-                                       PRBool aHasAccess,
-                                       PRBool aIsTrusted )
+                                       bool aHasAccess,
+                                       bool aIsTrusted )
 {
   LOG(( "sbRemotePlayer::DispatchSecurityEvent(%s, %s)",
     NS_LossyConvertUTF16toASCII(aClass).get(),
@@ -2584,11 +2584,11 @@ sbRemotePlayer::DispatchSecurityEvent( nsIDOMDocument *aDoc,
   NS_ENSURE_SUCCESS( rv, rv );
 
   // Fire an event to the chrome system.
-  PRBool dummy;
+  bool dummy;
   return eventTarget->DispatchEvent( securityEvent, &dummy );
 }
 
-PRBool
+bool
 sbRemotePlayer::IsPrivileged()
 {
   return mPrivileged;
@@ -2806,8 +2806,8 @@ sbRemotePlayer::CreateProperty( const nsAString& aPropertyType,
                                 const nsAString& aDisplayName,
                                 const nsAString& aButtonLabel,
                                 PRInt32 aTimeType,
-                                PRBool aReadonly,
-                                PRBool aUserViewable,
+                                bool aReadonly,
+                                bool aUserViewable,
                                 PRUint32 aNullSort )
 {
 #ifdef PR_LOGGING
@@ -2827,7 +2827,7 @@ sbRemotePlayer::CreateProperty( const nsAString& aPropertyType,
                          do_GetService( SB_PROPERTYMANAGER_CONTRACTID, &rv ) );
   NS_ENSURE_SUCCESS( rv, rv );
 
-  PRBool hasProp;
+  bool hasProp;
   nsCOMPtr<sbIPropertyInfo> info;
   propMngr->HasProperty( aPropertyID, &hasProp );
 
@@ -2967,8 +2967,8 @@ sbRemotePlayer::CreateProperty( const nsAString& aPropertyType,
 NS_IMETHODIMP
 sbRemotePlayer::CreateTextProperty( const nsAString& aPropertyID,
                                     const nsAString& aDisplayName,
-                                    PRBool aReadonly,
-                                    PRBool aUserViewable,
+                                    bool aReadonly,
+                                    bool aUserViewable,
                                     PRUint32 aNullSort )
 {
   return CreateProperty( NS_LITERAL_STRING("text"),
@@ -2985,8 +2985,8 @@ NS_IMETHODIMP
 sbRemotePlayer::CreateDateTimeProperty( const nsAString& aPropertyID,
                                         const nsAString& aDisplayName,
                                         PRInt32 aTimeType,
-                                        PRBool aReadonly,
-                                        PRBool aUserViewable,
+                                        bool aReadonly,
+                                        bool aUserViewable,
                                         PRUint32 aNullSort )
 {
   return CreateProperty( NS_LITERAL_STRING("datetime"),
@@ -3002,8 +3002,8 @@ sbRemotePlayer::CreateDateTimeProperty( const nsAString& aPropertyID,
 NS_IMETHODIMP
 sbRemotePlayer::CreateURIProperty( const nsAString& aPropertyID,
                                    const nsAString& aDisplayName,
-                                   PRBool aReadonly,
-                                   PRBool aUserViewable,
+                                   bool aReadonly,
+                                   bool aUserViewable,
                                    PRUint32 aNullSort)
 {
   return CreateProperty( NS_LITERAL_STRING("uri"),
@@ -3019,8 +3019,8 @@ sbRemotePlayer::CreateURIProperty( const nsAString& aPropertyID,
 NS_IMETHODIMP
 sbRemotePlayer::CreateNumberProperty( const nsAString& aPropertyID,
                                       const nsAString& aDisplayName,
-                                      PRBool aReadonly,
-                                      PRBool aUserViewable,
+                                      bool aReadonly,
+                                      bool aUserViewable,
                                       PRUint32 aNullSort )
 {
   return CreateProperty( NS_LITERAL_STRING("number"),
@@ -3036,8 +3036,8 @@ sbRemotePlayer::CreateNumberProperty( const nsAString& aPropertyID,
 NS_IMETHODIMP
 sbRemotePlayer::CreateImageProperty( const nsAString& aPropertyID,
                                      const nsAString& aDisplayName,
-                                     PRBool aReadonly,
-                                     PRBool aUserViewable,
+                                     bool aReadonly,
+                                     bool aUserViewable,
                                      PRUint32 aNullSort )
 {
   return CreateProperty( NS_LITERAL_STRING("image"),
@@ -3053,8 +3053,8 @@ sbRemotePlayer::CreateImageProperty( const nsAString& aPropertyID,
 NS_IMETHODIMP
 sbRemotePlayer::CreateRatingsProperty( const nsAString& aPropertyID,
                                        const nsAString& aDisplayName,
-                                       PRBool aReadonly,
-                                       PRBool aUserViewable,
+                                       bool aReadonly,
+                                       bool aUserViewable,
                                        PRUint32 aNullSort )
 {
   return CreateProperty( NS_LITERAL_STRING("rating"),
@@ -3071,8 +3071,8 @@ NS_IMETHODIMP
 sbRemotePlayer::CreateButtonProperty( const nsAString& aPropertyID,
                                       const nsAString& aDisplayName,
                                       const nsAString& aButtonLabel,
-                                      PRBool aReadonly,
-                                      PRBool aUserViewable,
+                                      bool aReadonly,
+                                      bool aUserViewable,
                                       PRUint32 aNullSort )
 {
   return CreateProperty( NS_LITERAL_STRING("button"),
@@ -3089,8 +3089,8 @@ NS_IMETHODIMP
 sbRemotePlayer::CreateDownloadButtonProperty( const nsAString& aPropertyID,
                                               const nsAString& aDisplayName,
                                               const nsAString& aButtonLabel,
-                                              PRBool aReadonly,
-                                              PRBool aUserViewable,
+                                              bool aReadonly,
+                                              bool aUserViewable,
                                               PRUint32 aNullSort )
 {
   return CreateProperty( NS_LITERAL_STRING("downloadbutton"),
@@ -3105,7 +3105,7 @@ sbRemotePlayer::CreateDownloadButtonProperty( const nsAString& aPropertyID,
 
 NS_IMETHODIMP
 sbRemotePlayer::HasAccess( const nsAString& aRemotePermCategory,
-                           PRBool *_retval )
+                           bool *_retval )
 {
   nsCOMPtr<sbISecurityMixin> mixin;
   mixin = do_QueryInterface(mSecurityMixin);
@@ -3176,7 +3176,7 @@ sbRemotePlayerDownloadCallback::Initialize(sbRemotePlayer* aRemotePlayer)
 
   // Set up download callbacks
   nsCOMPtr<sbIDeviceManager> deviceManager;
-  PRBool hasDeviceForCategory;
+  bool hasDeviceForCategory;
 
   deviceManager = do_GetService("@songbirdnest.com/Songbird/DeviceManager;1",
                                 &rv);

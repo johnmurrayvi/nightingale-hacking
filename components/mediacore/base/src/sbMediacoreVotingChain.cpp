@@ -94,7 +94,7 @@ sbMediacoreVotingChain::AddVoteResult(PRUint32 aVoteResult,
 }
 
 NS_IMETHODIMP 
-sbMediacoreVotingChain::GetValid(PRBool *aValid) 
+sbMediacoreVotingChain::GetValid(bool *aValid) 
 {
   TRACE(("sbMediacoreVotingChain[0x%x] - GetValid", this));
   NS_ENSURE_ARG_POINTER(aValid);

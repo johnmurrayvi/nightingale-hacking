@@ -66,7 +66,7 @@ sbTranscodeManager::sbTranscodeManager()
   rv = registrar->EnumerateContractIDs(getter_AddRefs(simpleEnumerator));
   NS_ENSURE_SUCCESS (rv, /* void */);
 
-  PRBool moreAvailable = PR_FALSE;
+  bool moreAvailable = PR_FALSE;
   while(simpleEnumerator->HasMoreElements(&moreAvailable) == NS_OK &&
         moreAvailable)
   {

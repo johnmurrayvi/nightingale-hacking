@@ -121,12 +121,12 @@ NS_IMETHODIMP sbDataRemoteWrapper::SetStringValue(const nsAString & aStringValue
 }
 
 /* attribute boolean boolValue; */
-NS_IMETHODIMP sbDataRemoteWrapper::GetBoolValue(PRBool *aBoolValue)
+NS_IMETHODIMP sbDataRemoteWrapper::GetBoolValue(bool *aBoolValue)
 {
   NS_ENSURE_STATE(mInnerDataRemote);
   return mInnerDataRemote->GetAsBool(aBoolValue);
 }
-NS_IMETHODIMP sbDataRemoteWrapper::SetBoolValue(PRBool aBoolValue)
+NS_IMETHODIMP sbDataRemoteWrapper::SetBoolValue(bool aBoolValue)
 {
   NS_ENSURE_STATE(mInnerDataRemote);
   return mInnerDataRemote->SetAsBool(aBoolValue);
@@ -145,7 +145,7 @@ NS_IMETHODIMP sbDataRemoteWrapper::SetIntValue(PRInt64 aIntValue)
 }
 
 /* void bindObserver (in nsIObserver aObserver, [optional] in boolean aSuppressFirst); */
-NS_IMETHODIMP sbDataRemoteWrapper::BindObserver(nsIObserver *aObserver, PRBool aSuppressFirst)
+NS_IMETHODIMP sbDataRemoteWrapper::BindObserver(nsIObserver *aObserver, bool aSuppressFirst)
 {
   LOG(("DataRemoteWrapper[0x%x] - BindObserver", this));
 
@@ -156,7 +156,7 @@ NS_IMETHODIMP sbDataRemoteWrapper::BindObserver(nsIObserver *aObserver, PRBool a
 }
 
 /* void bindRemoteObserver (in sbIRemoteObserver, [optional] in boolean aSuppressFirst); */
-NS_IMETHODIMP sbDataRemoteWrapper::BindRemoteObserver(sbIRemoteObserver *aObserver, PRBool aSuppressFirst)
+NS_IMETHODIMP sbDataRemoteWrapper::BindRemoteObserver(sbIRemoteObserver *aObserver, bool aSuppressFirst)
 {
   LOG(("DataRemoteWrapper[0x%x] - BindRemoteObserver", this));
 

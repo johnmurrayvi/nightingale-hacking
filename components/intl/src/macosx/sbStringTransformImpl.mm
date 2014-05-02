@@ -55,7 +55,7 @@ sbStringTransformImpl::NormalizeString(const nsAString & aCharset,
                                        const nsAString & aInput, 
                                        nsAString & _retval)
 {
-  PRBool leadingOnly = 
+  bool leadingOnly = 
     aTransformFlags & sbIStringTransform::TRANSFORM_IGNORE_LEADING;
 
   NSMutableString *str = [[NSMutableString alloc] initWithCharacters:aInput.BeginReading() 
@@ -109,8 +109,8 @@ sbStringTransformImpl::NormalizeString(const nsAString & aCharset,
       (aTransformFlags & sbIStringTransform::TRANSFORM_IGNORE_NONALPHANUM_IGNORE_SPACE)) {
     NSCharacterSet *symbols = [NSCharacterSet symbolCharacterSet];
     NSCharacterSet *alphaNumSet = [NSCharacterSet alphanumericCharacterSet];
-    PRBool bypassSymbolFiltering = false;
-    PRBool bypassNonalnumFiltering = false;
+    bool bypassSymbolFiltering = false;
+    bool bypassNonalnumFiltering = false;
     
     for(unsigned int current = 0, optr = 0; current < [str length]; ++current, ++optr) {
       if (bypassSymbolFiltering &&

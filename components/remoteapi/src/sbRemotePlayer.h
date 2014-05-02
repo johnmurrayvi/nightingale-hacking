@@ -106,23 +106,23 @@ public:
   static nsresult DispatchEvent( nsIDOMDocument *aDocument,
                                  const nsAString &aClass,
                                  const nsAString &aType,
-                                 PRBool aIsTrusted );
+                                 bool aIsTrusted );
   static nsresult DispatchSecurityEvent( nsIDOMDocument *aDoc,
                                          sbIRemotePlayer *aPlayer,
                                          const nsAString &aClass,
                                          const nsAString &aType,
                                          const nsAString &aCategoryID,
-                                         PRBool aHasAccess,
-                                         PRBool aIsTrusted);
+                                         bool aHasAccess,
+                                         bool aIsTrusted);
 
-  PRBool IsPrivileged();
+  bool IsPrivileged();
 
   static nsresult GetJSScopeNameFromScope( const nsACString &aScopeName,
                                            nsAString &aJSScopeName );
 
   sbRemoteNotificationManager* GetNotificationManager();
 
-  static PRBool GetUserApprovalForHost( nsIURI *aURI,
+  static bool GetUserApprovalForHost( nsIURI *aURI,
                                         const nsAString &aTitleKey,
                                         const nsAString &aMessageKey,
                                         const char* aScopedName = nsnull );
@@ -141,7 +141,7 @@ protected:
   // Helper Methods
   nsresult InitInternal(nsPIDOMWindow* aWindow);
   nsresult InitRemoteWebPlaylist();
-  nsresult RegisterCommands( PRBool aUseDefaultCommands );
+  nsresult RegisterCommands( bool aUseDefaultCommands );
   nsresult UnregisterCommands();
   nsresult ConfirmPlaybackControl();
   nsresult GetBrowser( nsIDOMElement** aElement );
@@ -153,8 +153,8 @@ protected:
                            const nsAString& aDisplayName,
                            const nsAString& aButtonLabel,
                            PRInt32 aTimeType,
-                           PRBool aReadonly,
-                           PRBool aUserViewable,
+                           bool aReadonly,
+                           bool aUserViewable,
                            PRUint32 aNullSort );
 
   // Event handlers for mediacore 
@@ -168,9 +168,9 @@ protected:
   nsresult OnViewChange(sbIMediacoreEvent *aEvent);
 
   // Data members
-  PRBool mInitialized;
-  PRBool mUseDefaultCommands;
-  PRBool mPrivileged;
+  bool mInitialized;
+  bool mUseDefaultCommands;
+  bool mPrivileged;
   nsCOMPtr<nsIWeakReference> mMM;
   nsCOMPtr<nsIIOService> mIOService;
 

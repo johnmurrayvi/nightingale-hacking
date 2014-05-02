@@ -224,12 +224,12 @@ NS_IMETHODIMP sbDeviceStatus::GetElapsedTime(PRUint32 *aElapsedTime)
 }
 
 /* attribute boolean isNewBatch; */
-NS_IMETHODIMP sbDeviceStatus::GetIsNewBatch(PRBool *aIsNewBatch)
+NS_IMETHODIMP sbDeviceStatus::GetIsNewBatch(bool *aIsNewBatch)
 {
   *aIsNewBatch = mNewBatch;
   return NS_OK;
 }
-NS_IMETHODIMP sbDeviceStatus::SetIsNewBatch(PRBool aIsNewBatch)
+NS_IMETHODIMP sbDeviceStatus::SetIsNewBatch(bool aIsNewBatch)
 {
   mNewBatch = aIsNewBatch;
   if (aIsNewBatch)

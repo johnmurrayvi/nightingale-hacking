@@ -40,7 +40,7 @@ public:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIRUNNABLE
 
-  sbProxiedComponentManagerRunnable(PRBool aIsService,
+  sbProxiedComponentManagerRunnable(bool aIsService,
                                     const nsCID& aCID,
                                     const char* aContractID,
                                     const nsIID& aIID) :
@@ -49,7 +49,7 @@ public:
     mContractID(aContractID),
     mIID(aIID) {}
 
-  PRBool mIsService;
+  bool mIsService;
   const nsCID& mCID;
   const char* mContractID;
   const nsIID& mIID;
@@ -61,7 +61,7 @@ class NS_COM_GLUE sbCreateProxiedComponent : public nsCOMPtr_helper
 {
 public:
   sbCreateProxiedComponent(const nsCID& aCID,
-                           PRBool aIsService,
+                           bool aIsService,
                            nsresult* aErrorPtr)
     : mCID(aCID),
       mContractID(nsnull),
@@ -71,7 +71,7 @@ public:
   }
 
   sbCreateProxiedComponent(const char* aContractID,
-                           PRBool aIsService,
+                           bool aIsService,
                            nsresult* aErrorPtr)
     : mCID(NS_GET_IID(nsISupports)),
       mContractID(aContractID),
@@ -85,7 +85,7 @@ public:
 private:
   const nsCID& mCID;
   const char*  mContractID;
-  PRBool       mIsService;
+  bool       mIsService;
   nsresult*    mErrorPtr;
 };
 

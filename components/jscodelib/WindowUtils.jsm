@@ -232,8 +232,8 @@ var WindowUtils = {
     // Notify all windows that an application quit has been requested.
     var os = Cc["@mozilla.org/observer-service;1"]
                .getService(Ci.nsIObserverService);
-    var cancelQuit = Cc["@mozilla.org/supports-PRBool;1"]
-                       .createInstance(Ci.nsISupportsPRBool);
+    var cancelQuit = Cc["@mozilla.org/supports-bool;1"]
+                       .createInstance(Ci.nsISupportsbool);
     os.notifyObservers(cancelQuit, "quit-application-requested", "restart");
 
     // Something aborted the quit process.
