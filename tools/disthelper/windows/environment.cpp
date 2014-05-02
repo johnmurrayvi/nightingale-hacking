@@ -151,7 +151,8 @@ int SetupEnvironment() {
       }
     }
   }
-  
+
+#ifndef NG_CROSS_COMP
   LPTCH environ = ::GetEnvironmentStrings();
   DebugMessage("===== Dumping environment variables =====");
   for (LPTCH environment = environ; *environment; ) {
@@ -161,6 +162,17 @@ int SetupEnvironment() {
   }
   DebugMessage("===== End of environment variables =====");
   ::FreeEnvironmentStrings(environ);
+#else
+  LPTCH environStrs = ::GetEnvironmentStrings();
+  DebugMessage("===== Dumping environment variables =====");
+  for (LPTCH environment = environStrs; *environment; ) {
+    tstring line(environment);
+    DebugMessage("%s", line.c_str());
+    environment += line.length() + 1; // with terminating null
+  }
+  DebugMessage("===== End of environment variables =====");
+  ::FreeEnvironmentStrings(environStrs);
+#endif
 
   return result;
 }
