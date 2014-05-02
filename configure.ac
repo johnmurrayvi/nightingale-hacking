@@ -797,19 +797,24 @@ case "$SB_PLATFORM" in
       AC_SUBST([SB_WITH_MSVC_EXPRESS])
       AC_LANG_POP([C++])
     else
+      ### cross compiling ###
       AC_CHECK_PROG(LD, ${CXX}, ${CXX})
       if test -z "$LD"; then AC_MSG_ERROR(Linker not found); fi
-      AC_CHECK_PROG(AR, ar, ar)
+      AC_CHECK_PROG(AR, ${NG_CROSS_TOOLS}ar, ${NG_CROSS_TOOLS}ar)
       if test -z "$AR"; then AC_MSG_ERROR(Archiver not found); fi
-      AC_CHECK_PROG(RANLIB, ranlib, ranlib)
+      AC_CHECK_PROG(RANLIB, ${NG_CROSS_TOOLS}ranlib, ${NG_CROSS_TRIPLET}-ranlib)
       if test -z "$RANLIB"; then AC_MSG_ERROR(Ranlib not found); fi
       if test -z "$GZIP"; then AC_MSG_ERROR(Gzip not found); fi
       if test -z "$GUNZIP"; then AC_MSG_ERROR(Gunzip not found); fi
       if test -z "$TAR"; then AC_MSG_ERROR(Tar not found); fi
-      AC_CHECK_PROGS(STRIP, ${STRIP} strip)
+      AC_CHECK_PROGS(STRIP, ${NG_CROSS_TOOLS}${STRIP}, ${NG_CROSS_TOOLS}strip)
       if test -z "$STRIP"; then AC_MSG_WARN(strip not found); fi
-      AC_CHECK_PROGS(WIDL, widl, widl)
-      if test -z "$WIDL"; then AC_MSG_ERROR(WIDL not found); fi
+      AC_CHECK_PROGS(WIDL, ${NG_CROSS_TOOLS}widl, ${NG_CROSS_TOOLS}widl)
+      if test -z "$WIDL"; then AC_MSG_ERROR(widl not found); fi
+      AC_CHECK_PROGS(RC, ${NG_CROSS_TOOLS}windres, ${NG_CROSS_TOOLS}windres)
+      if test -z "$RC"; then AC_MSG_ERROR(rc not found); fi
+      AC_CHECK_PROG(WINDRES, ${NG_CROSS_TOOLS}windres, ${NG_CROSS_TOOLS}windres)
+      if test -z "$WINDRES"; then AC_MSG_ERROR(windres not found); fi
     fi
   ;;
   *)

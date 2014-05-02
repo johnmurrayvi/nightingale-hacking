@@ -254,6 +254,7 @@ SYSINSTALL = echo
 TAR = @TAR@
 TOUCH = @TOUCH@
 UNZIP = @UNZIP@
+WINDRES = @WINDRES@
 ZIP = @ZIP@
 
 XPIDL = $(PYTHON) $(MOZSDK_DIR)/frozen/bin/xpidl.py
