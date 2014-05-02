@@ -49,6 +49,10 @@
   #define _T(s) (s)
 #endif
 
+#ifdef NG_CROSS_COMP
+  #include <string.h>
+#endif
+
 #include "error.h"
 #include "debug.h"
 
