@@ -1,0 +1,25 @@
+ac_add_options --with-taglib-source=packaged
+ac_add_options --with-media-core=gstreamer
+ac_add_options --enable-cross
+ac_add_options --with-cross-triplet=i686-w64-mingw32
+ac_add_options --with-cross-prefix=/opt/cross/mingw-w64
+ac_add_options --enable-jemalloc=no
+ac_add_options --enable-debug
+# ac_add_options --host=i686-pc-mingw32
+ac_add_options --host=i686-w64-mingw32
+
+
+export CROSS_COMPILE=1
+export CC=i686-w64-mingw32-gcc
+export CXX=i686-w64-mingw32-g++
+export LD=i686-w64-mingw32-ld
+export AR=i686-w64-mingw32-ar
+export AS=i686-w64-mingw32-as
+export NM=i686-w64-mingw32-nm
+export OBJDUMP=i686-w64-mingw32-objdump
+export RANLIB=i686-w64-mingw32-ranlib
+export STRIP=i686-w64-mingw32-strip
+export PKG_CONFIG=i686-w64-mingw32-pkg-config
+export DLLTOOL=i686-w64-mingw32-dlltool
+export RC=i686-w64-mingw32-windres
+export WINDRES=i686-w64-mingw32-windres
