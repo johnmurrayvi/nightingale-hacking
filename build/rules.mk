@@ -506,9 +506,24 @@ ALL_TRASH += $(MIDL_GENERATED_FILES) \
              $(if $(MIDL_SRCS), dlldata.c) \
              $(NULL)
 
+ifneq (1, $(NG_CROSS_COMP))
 %.h %.tlb %_i.c %_p.c %_s.c %_c.c: %.midl
 	$(MIDL) $(OUR_MIDL_FLAGS) $^
-		
+else
+%.h: %.midl
+	$(MIDL) $(OUR_MIDL_FLAGS) -o $@ $^
+%.tlb: %.midl
+	$(MIDL) $(OUR_MIDL_FLAGS) -o $@ $^
+%_i.c: %.midl
+	$(MIDL) $(OUR_MIDL_FLAGS) -o $@ $^
+%_p.c: %.midl
+	$(MIDL) $(OUR_MIDL_FLAGS) -o $@ $^
+%_s.c: %.midl
+	$(MIDL) $(OUR_MIDL_FLAGS) -o $@ $^
+%_c.c: %.midl
+	$(MIDL) $(OUR_MIDL_FLAGS) -o $@ $^
+endif
+
 dlldata.c: %.midl
 	$(MIDL) $(OUR_MIDL_FLAGS) $^
 
@@ -519,7 +534,11 @@ export:: $(MIDL_GENERATED_FILES)
 #------------------------------------------------------------------------------
 
 ifeq (windows,$(SB_PLATFORM))
-   COMPILER_OUTPUT_FLAG = -Fo$@
+   ifneq (windows,$(SB_PLATFORM))
+      COMPILER_OUTPUT_FLAG = -Fo$@
+   else
+      COMPILER_OUTPUT_FLAG = -o $@
+   endif
 else
    COMPILER_OUTPUT_FLAG = -o $@
 endif
