@@ -41,55 +41,9 @@
 
 #ifdef NG_CROSS_COMP
 # include <windows.h>
-typedef enum  { 
-  VDS_IA_UNKNOWN  = 0,
-  VDS_IA_FCFS     = 1,
-  VDS_IA_FCPH     = 2,
-  VDS_IA_FCPH3    = 3,
-  VDS_IA_MAC      = 4,
-  VDS_IA_SCSI     = 5
-} VDS_INTERCONNECT_ADDRESS_TYPE;
-
-typedef enum {
-  VDSBusTypeUnknown = 0x00,
-  VDSBusTypeScsi = 0x01,
-  VDSBusTypeAtapi = 0x02,
-  VDSBusTypeAta = 0x03,
-  VDSBusType1394 = 0x04,
-  VDSBusTypeSsa = 0x05,
-  VDSBusTypeFibre = 0x06,
-  VDSBusTypeUsb = 0x07,
-  VDSBusTypeRAID = 0x08,
-  VDSBusTypeiScsi = 0x09,
-  VDSBusTypeMaxReserved = 0x7F
-}VDS_STORAGE_BUS_TYPE;
-
-typedef enum {
-  VDSStorageIdCodeSetReserved = 0,
-  VDSStorageIdCodeSetBinary = 1,
-  VDSStorageIdCodeSetAscii = 2
-} VDS_STORAGE_IDENTIFIER_CODE_SET;
-
-typedef enum {
-  VDSStorageIdTypeVendorSpecific = 0,
-  VDSStorageIdTypeVendorId = 1,
-  VDSStorageIdTypeEUI64 = 2,
-  VDSStorageIdTypeFCPHName = 3,
-  VDSStorageIdTypeSCSINameString = 8
-} VDS_STORAGE_IDENTIFIER_TYPE;
-
-typedef struct _VDS_STORAGE_IDENTIFIER {
-  VDS_STORAGE_IDENTIFIER_CODE_SET m_CodeSet;
-  VDS_STORAGE_IDENTIFIER_TYPE m_Type;
-  ULONG m_cbIdentifier;
-  BYTE* m_rgbIdentifier;
-} VDS_STORAGE_IDENTIFIER;
-
-typedef struct _VDS_STORAGE_DEVICE_ID_DESCRIPTOR {
-  ULONG                  m_version;
-  ULONG                  m_cIdentifiers;
-  VDS_STORAGE_IDENTIFIER *m_rgIdentifiers;
-} VDS_STORAGE_DEVICE_ID_DESCRIPTOR;
+# include <unknwn.h>
+# undef _WIN32_WINNT
+# define _WIN32_WINNT 0x0600
 #endif
 
 // Import defs for instatiating GUIDs.
