@@ -621,9 +621,7 @@ endif
 	$(RM) -r $(XULRUNNER_EXTENSION_ROOTDIR)
 
 libs::
-ifneq (1, $(NG_CROSS_COMP))
 	$(MV) -f $(SONGBIRD_XR_STUB) $(SONGBIRD_XR_STUB_DIR)
-endif
 ifeq (,$(filter-out linux solaris,$(SB_PLATFORM)))
 	$(INSTALL_PROG) $(topsrcdir)/installer/linux/nightingale.sh $(SONGBIRD_DISTDIR)/nightingale
 endif
