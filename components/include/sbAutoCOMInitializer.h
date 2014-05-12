@@ -29,7 +29,7 @@
 
 // Platform includes
 #include <assert.h>
-#include <Objbase.h>
+#include <objbase.h>
 #include <windows.h>
 
 /**

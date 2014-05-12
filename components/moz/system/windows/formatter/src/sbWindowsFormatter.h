@@ -54,7 +54,7 @@
 
 #include <vds.h>
 
-#include <sbautoCOMInitializer.h>
+#include <sbAutoCOMInitializer.h>
 
 //------------------------------------------------------------------------------
 //
