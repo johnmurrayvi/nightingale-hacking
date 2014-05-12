@@ -809,6 +809,8 @@ case "$SB_PLATFORM" in
       if test -z "$TAR"; then AC_MSG_ERROR(Tar not found); fi
       AC_CHECK_PROGS(STRIP, ${NG_CROSS_TOOLS}${STRIP}, ${NG_CROSS_TOOLS}strip)
       if test -z "$STRIP"; then AC_MSG_WARN(strip not found); fi
+      AC_CHECK_PROGS(MIDL, ${NG_CROSS_TOOLS}widl, midl)
+      if test -z "$MIDL"; then AC_MSG_ERROR(Midl not found); fi
       AC_CHECK_PROGS(WIDL, ${NG_CROSS_TOOLS}widl, ${NG_CROSS_TOOLS}widl)
       if test -z "$WIDL"; then AC_MSG_ERROR(widl not found); fi
       AC_CHECK_PROGS(RC, ${NG_CROSS_TOOLS}windres, ${NG_CROSS_TOOLS}windres)
@@ -1089,6 +1091,7 @@ case "$SB_PLATFORM" in
       UNZIPFLAGS_EXTRACT="-d"
       USING_RANLIB=1
       STRIP_FLAGS="-v"
+      XULRUNNERDIR="/xulrunner"
     fi
   ;;
   macosx)
