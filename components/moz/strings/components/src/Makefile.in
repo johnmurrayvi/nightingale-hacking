@@ -40,7 +40,11 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/moz/strings/components/public \
                      $(topsrcdir)/components/moz/strings/src \
                      $(NULL)
 
-ifneq (,$(filter-out macosx,$(SB_PLATFORM)))
+ifneq (,$(filter-out macosx windows,$(SB_PLATFORM)))
+  CPP_EXTRA_FLAGS += -std=gnu++0x \
+                     $(NULL)
+endif
+ifeq (1, $(NG_CROSS_COMP))
   CPP_EXTRA_FLAGS += -std=gnu++0x \
                      $(NULL)
 endif
