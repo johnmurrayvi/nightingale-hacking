@@ -859,8 +859,10 @@ else
 
    ifeq (windows,$(SB_PLATFORM))
       ifdef WIN32_DLL_DEFFILE
-         OUR_LD_FLAGS += -DEF:$(call normalizepath,$(WIN32_DLL_DEFFILE))
-         OUR_DYNAMIC_LIB_EXTRA_DEPS += $(WIN32_DLL_DEFFILE)
+         ifneq (1, $(NG_CROSS_COMP))
+            OUR_LD_FLAGS += -DEF:$(call normalizepath,$(WIN32_DLL_DEFFILE))
+            OUR_DYNAMIC_LIB_EXTRA_DEPS += $(WIN32_DLL_DEFFILE)
+         endif
       endif
    endif
 endif
@@ -1418,13 +1420,17 @@ relativepath = $(if $(filter $(1),$(2)),,$(1:$(2)/%=%))
 # them to be in the DOS form (i.e. e:/builds/...).  This function
 # does the appropriate conversion on Windows, but is a noop on other systems.
 ifeq (windows,$(SB_PLATFORM))
-   # We use 'pwd -W' to get DOS form of the path.  However, since the given path
-   # could be a file or a non-existent path, we cannot call 'pwd -W' directly
-   # on the path.  Instead, we extract the root path (i.e. "c:/"), call 'pwd -W'
-   # on it, then merge with the rest of the path.
-   root-path = $(shell echo $(1) | sed -e "s|\(/[^/]*\)/\?\(.*\)|\1|")
-   non-root-path = $(shell echo $(1) | sed -e "s|\(/[^/]*\)/\?\(.*\)|\2|")
-   normalizepath = $(if $(filter /%,$(1)),$(shell cd $(call root-path,$(1)) && pwd -W)/$(call non-root-path,$(1)),$(1))
+   ifneq (1, $(NG_CROSS_COMP))
+      # We use 'pwd -W' to get DOS form of the path.  However, since the given path
+      # could be a file or a non-existent path, we cannot call 'pwd -W' directly
+      # on the path.  Instead, we extract the root path (i.e. "c:/"), call 'pwd -W'
+      # on it, then merge with the rest of the path.
+      root-path = $(shell echo $(1) | sed -e "s|\(/[^/]*\)/\?\(.*\)|\1|")
+      non-root-path = $(shell echo $(1) | sed -e "s|\(/[^/]*\)/\?\(.*\)|\2|")
+      normalizepath = $(if $(filter /%,$(1)),$(shell cd $(call root-path,$(1)) && pwd -W)/$(call non-root-path,$(1)),$(1))
+   else
+      normalizepath = $(1)
+   endif
 else
    normalizepath = $(1)
 endif
