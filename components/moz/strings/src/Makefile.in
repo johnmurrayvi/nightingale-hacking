@@ -39,8 +39,6 @@ CPP_SRCS = sbTArrayStringEnumerator.cpp \
 CPP_EXTRA_INCLUDES = $(DEPTH)/components/moz/strings/components/public \
                      $(topsrcdir)/components/include \
                      $(topsrcdir)/components/moz/strings/src \
-                     $(MOZSDK_INCLUDE_DIR)/intl \
-                     $(MOZSDK_INCLUDE_DIR)/uconv \
                      $(NULL)
 
 ifneq (,$(filter-out macosx windows,$(SB_PLATFORM)))
