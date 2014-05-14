@@ -42,7 +42,7 @@ CPP_EXTRA_INCLUDES = $(DEPTH)/components/moz/strings/components/public \
                      $(MOZSDK_INCLUDE_DIR)/intl \
                      $(NULL)
 
-ifneq (,$(filter-out macosx windows,$(SB_PLATFORM)))
+ifneq (,$(filter-out macosx,$(SB_PLATFORM)))
   CPP_EXTRA_FLAGS += -std=gnu++0x \
                      $(NULL)
 endif

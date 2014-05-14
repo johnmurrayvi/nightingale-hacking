@@ -43,6 +43,11 @@ CPP_SRCS = sbDirectoryProvider.cpp \
 CPP_EXTRA_INCLUDES = $(MOZSDK_INCLUDE_DIR)/xpcom \
                      $(NULL)
 
+ifeq (1, $(NG_CROSS_COMP))
+  CPP_EXTRA_FLAGS += -std=gnu++0x \
+                     $(NULL)
+endif
+
 IS_COMPONENT = 1
 
 include $(topsrcdir)/build/rules.mk

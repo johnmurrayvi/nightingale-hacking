@@ -38,8 +38,13 @@ CPP_SRCS = sbDirectoryEnumerator.cpp \
 
 CPP_EXTRA_INCLUDES = $(DEPTH)/components/moz/fileutils/public
 
-ifneq (,$(filter linux solaris,$(SB_PLATFORM)))
-   CPP_EXTRA_FLAGS += -std=gnu++0x
+ifneq (,$(filter-out macosx windows,$(SB_PLATFORM)))
+  CPP_EXTRA_FLAGS += -std=gnu++0x \
+                     $(NULL)
+endif
+ifeq (1, $(NG_CROSS_COMP))
+  CPP_EXTRA_FLAGS += -std=gnu++0x \
+                     $(NULL)
 endif
 
 DYNAMIC_LIB_EXTRA_IMPORTS = plds4 \
