@@ -1049,6 +1049,7 @@ case "$SB_PLATFORM" in
       XULRUNNERDIR="/xulrunner"
       COMPILER_GARBAGE="vc70.pdb vc71.pdb vc80.pdb vc90.pdb vc100.pdb"
     else
+      # CROSS COMPILING #
       # Breakpad needs stabs debugging data, so always explicitly request it with
       GCC_COMPILER_FLAGS="-c -fPIC -fshort-wchar -fexceptions -fnon-call-exceptions -funwind-tables -fasynchronous-unwind-tables -fno-rtti -fno-strict-aliasing -Wall -Wno-conversion -Wno-attributes -Wpointer-arith -Wcast-align -Wno-long-long -pipe -pthread"
       if test "$enable_debug" = "yes"; then
@@ -1070,7 +1071,7 @@ case "$SB_PLATFORM" in
       CFLAGS_PREPROCESS="-E"
       CFLAGS_ASSEMBLER="-S"
       CFLAGS_WARNING_IS_ERROR=""
-      LDFLAGS="$LDFLAGS -L$NG_CROSS_PREFIX/lib -L$NG_CROSS_ROOT_PREFIX/lib $GCC_LINKER_FLAGS"
+      LDFLAGS="$LDFLAGS $GCC_LINKER_FLAGS -L$NG_CROSS_PREFIX/lib -L$NG_CROSS_ROOT_PREFIX/lib"
       LDFLAGS_DLL="-shared"
       LDFLAGS_BIN=""
       LDFLAGS_LIB="-static"
