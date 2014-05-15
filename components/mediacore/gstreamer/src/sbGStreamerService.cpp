@@ -415,6 +415,8 @@ sbGStreamerService::Inspect(sbIGStreamerInspectHandler* aHandler)
   NS_ENSURE_ARG_POINTER(aHandler);
   nsresult rv;
 
+  // XXX this is really dumb, having to blacklist a single
+  // plugin because it throws SIGABRT when running tests
   char libvisual[10] = "libvisual";
 
   GList *plugins, *orig_plugins;
