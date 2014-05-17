@@ -171,7 +171,7 @@ function testRead() {
       assertNotEqual(mimeTypeOutparam.value, null);
       assertNotEqual(imageData, "");
     } catch (err) {
-      doThrow("Caught exception: " + err);
+      doThrow("Caught exception: " + err + ", index = " + index + ", artFile = " + artFiles[index]);
     }
 
     // Try grabbing some other artwork that is not there

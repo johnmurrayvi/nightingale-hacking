@@ -378,7 +378,7 @@ ifdef MEDIA_CORE_GST #{
        $(addsuffix .so, $(GST_PLUGINS_UGLY_NAMES)))
 
       GST_PLUGINS_BAD = \
-	   $(addprefix $(DEPS_DIR)/gst-plugins-bad/$(SB_CONFIGURATION)/lib/gstreamer-0.10/lib, \
+     $(addprefix $(DEPS_DIR)/gst-plugins-bad/$(SB_CONFIGURATION)/lib/gstreamer-0.10/lib, \
        $(addsuffix .so, $(GST_PLUGINS_BAD_NAMES)))
 
       SONGBIRD_LIB += $(GLIB) \
@@ -447,6 +447,7 @@ ifdef MEDIA_CORE_GST #{
        $(addprefix $(DEPS_DIR)/gst-plugins-bad/$(SB_CONFIGURATION)/lib/gstreamer-0.10/lib, \
        $(addsuffix .so, $(GST_PLUGINS_BAD_NAMES)))
 
+
       SONGBIRD_LIB += $(GSTREAMER) \
                       $(GST_PLUGINS_BASE_LIBS) \
                       $(OGG) \
@@ -469,6 +470,11 @@ ifdef MEDIA_CORE_GST #{
                            $(GST_PLUGINS_BAD) \
                            $(NULL)
 endif # }MEDIA_CORE_GST
+
+ifeq (linux, $(SB_PLATFORM))
+  SONGBIRD_COMPONENTS += $(DEPS_DIR)/taglib/$(SB_CONFIGURATION)/lib/libtag.so \
+                         $(NULL)
+endif
 
 ifeq (macosx,$(SB_PLATFORM))
    SONGBIRD_XR_STUB_DIR = $(SONGBIRD_MACOS)

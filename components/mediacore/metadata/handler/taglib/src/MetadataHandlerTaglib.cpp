@@ -1616,13 +1616,55 @@ nsresult sbMetadataHandlerTaglib::ReadImageITunes(TagLib::MP4::Tag  *aTag,
   nsCOMPtr<nsIThread> mainThread;
   nsresult rv = NS_OK;
 
+  const char covr[5] = "covr";
+
   /*
    * Extract the requested image from the metadata
    */
   MP4::ItemListMap::Iterator itr = aTag->itemListMap().begin();
 
-  if (aTag->itemListMap().contains("covr")) {
-    MP4::CoverArtList coverArtList = aTag->itemListMap()["covr"].toCoverArtList();
+
+  #ifdef PR_LOGGING
+  {
+    LOG(("Printing ItemListMap..."));
+
+    MP4::ItemListMap lm = aTag->itemListMap();
+    MP4::ItemListMap::Iterator lmit;
+    StringList slist;
+    StringList::Iterator siter;
+
+    for(lmit = lm.begin(); lmit != lm.end(); lmit++) {
+      LOG(("    Key = %s", lmit->first.toCString()));
+      slist = lmit->second.toStringList();
+      for (siter = slist.begin(); siter != slist.end(); siter++) {
+        LOG(("        %s", siter->toCString()));
+      }
+    }
+  }
+  #endif /* PR_LOGGING */
+
+  #ifdef PR_LOGGING
+  {
+    LOG(("Printing PropertyMap..."));
+
+    PropertyMap pm = aTag->properties();
+    PropertyMap::Iterator pmit;
+    StringList slist;
+    StringList::Iterator siter;
+
+    for (pmit = pm.begin(); pmit != pm.end(); pmit++) {
+      LOG(("    Key = %s", pmit->first.toCString()));
+      slist = pmit->second;
+      for (siter = slist.begin(); siter != slist.end(); siter++) {
+        LOG(("        %s", siter->toCString()));
+      }
+    }
+  }
+  #endif /* PR_LOGGING */
+
+
+  if (aTag->itemListMap().contains(covr)) {
+    MP4::CoverArtList coverArtList = aTag->itemListMap()[covr].toCoverArtList();
 
     if (coverArtList.size() == 0) {
       return NS_OK;
@@ -1652,6 +1694,8 @@ nsresult sbMetadataHandlerTaglib::ReadImageITunes(TagLib::MP4::Tag  *aTag,
     }
 
     *aData = data.forget();
+  } else {
+    LOG(("sbMetadataHandlerTaglib::ReadImageITunes Didn't find cover art!"));
   }
 
   return NS_OK;
@@ -3547,7 +3591,7 @@ nsresult sbMetadataHandlerTaglib::WriteXiphComment(
 
 /*
  * base64 encode/decode routines:
- * Copyright (C) 2004-2008 René Nyffenegger
+ * Copyright (C) 2004-2008 Renï¿½ Nyffenegger
  *
  * This source code is provided 'as-is', without any express or implied
  * warranty. In no event will the author be held liable for any damages
@@ -3567,7 +3611,7 @@ nsresult sbMetadataHandlerTaglib::WriteXiphComment(
  *
  * 3. This notice may not be removed or altered from any source distribution.
  *
- * René Nyffenegger rene.nyffenegger@adp-gmbh.ch
+ * Renï¿½ Nyffenegger rene.nyffenegger@adp-gmbh.ch
 */
 
 static const std::string base64_chars = 
