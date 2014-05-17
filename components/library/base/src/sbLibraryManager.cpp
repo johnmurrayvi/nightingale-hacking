@@ -107,11 +107,9 @@ sbLibraryManager::Init()
 
   nsresult rv;
 
-  bool success = mLibraryTable.Init();
-  NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
+  mLibraryTable.Init();
 
-  success = mListeners.Init();
-  NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
+  mListeners.Init();
 
   // Get the thread manager.  This is used so that main thread checks work
   // during XPCOM shutdown.
@@ -646,8 +644,7 @@ sbLibraryManager::RegisterLibrary(sbILibrary* aLibrary,
   {
     mozilla::MutexAutoLock lock(mLock);
 
-    bool success = mLibraryTable.Put(libraryGUID, newLibraryInfo);
-    NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
+    mLibraryTable.Put(libraryGUID, newLibraryInfo);
 
     newLibraryInfo.forget();
   }
@@ -747,8 +744,7 @@ sbLibraryManager::SetLibraryLoadsAtStartup(sbILibrary* aLibrary,
     return NS_ERROR_UNEXPECTED;
   }
 
-  bool success = mLibraryTable.Put(libraryGUID, libraryInfo);
-  NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
+  mLibraryTable.Put(libraryGUID, libraryInfo);
   
   libraryInfo.forget();
   return NS_OK;

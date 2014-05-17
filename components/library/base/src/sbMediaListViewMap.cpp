@@ -212,10 +212,8 @@ sbMediaListViewMap::SetView(nsISupports *aParentKey,
   {
     innerMap = new sbViewMapInner;
     NS_ENSURE_TRUE(innerMap, NS_ERROR_OUT_OF_MEMORY);
-    success = innerMap->Init();
-    NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
-    success = mViewMap.Put( aParentKey, innerMap ); // Takes over memory management for innerMap
-    NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
+    innerMap->Init();
+    mViewMap.Put( aParentKey, innerMap ); // Takes over memory management for innerMap
   }
 
   nsCOMPtr<sbIMediaList> list;
@@ -252,8 +250,7 @@ sbMediaListViewMap::SetView(nsISupports *aParentKey,
   NS_ENSURE_TRUE(si, NS_ERROR_OUT_OF_MEMORY);
 
   // Put the view into the inner map
-  success = innerMap->Put( aPageKey, si );
-  NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
+  innerMap->Put( aPageKey, si );
 
   si.forget();
 
