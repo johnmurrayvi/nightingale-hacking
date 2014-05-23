@@ -410,9 +410,7 @@ private:
         nsString                    totalKey);
 
 private:
-    /*
-     * Functions to write Metadata to tags
-     */
+    // Functions to write Metadata to tags
     nsresult WriteBasic(
       TagLib::PropertyMap           *properties);
     nsresult WriteSeparatedNumbers(
@@ -440,9 +438,7 @@ private:
     nsDetectionConfident mLastConfidence;
     
 private:
-    /*
-     * Base64 en-/decoding
-     */
+    // Base64 en-/decoding
     std::string base64_decode(std::string const& encoded_string);
     std::string base64_encode(unsigned char const* bytes_to_encode,
                               unsigned int in_len);
