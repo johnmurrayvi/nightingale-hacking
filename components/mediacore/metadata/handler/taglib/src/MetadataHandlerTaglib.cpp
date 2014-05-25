@@ -1252,12 +1252,12 @@ nsresult sbMetadataHandlerTaglib::RemoveAllImagesOGG(
                                           PRInt32 imageType)
 {
   if (aOGGFile->tag()) {
-    // Create a new FlacPicture object and leave the picture element empty
-    TagLib::FlacPicture *pic = new TagLib::FlacPicture;
-    pic->setType(TagLib::FlacPicture::Type(imageType));
+    // Create a new FLAC::Picture object and leave the picture element empty
+    TagLib::FLAC::Picture *pic = new TagLib::FLAC::Picture;
+    pic->setType(TagLib::FLAC::Picture::Type(imageType));
 
-    List<TagLib::FlacPicture*> artworkList = aOGGFile->tag()->artwork();
-    List<TagLib::FlacPicture*>::Iterator it = artworkList.begin();
+    List<TagLib::FLAC::Picture*> artworkList = aOGGFile->tag()->artwork();
+    List<TagLib::FLAC::Picture*>::Iterator it = artworkList.begin();
     while (it != artworkList.end())
     {
       // erase all images of this type
@@ -1455,11 +1455,11 @@ nsresult sbMetadataHandlerTaglib::WriteOGGImage(
     // Create the picture frame, and set mimetype, image type (e.g. front cover)
     // and then fill in the data.
     LOG(("WriteOGGImage():: Creating new FlacPicture"));
-    TagLib::FlacPicture *pic = new TagLib::FlacPicture;
+    TagLib::FLAC::Picture *pic = new TagLib::FLAC::Picture;
     pic->setMimeType(TagLib::String(imageMimeType.BeginReading(),
                                     TagLib::String::UTF8));
-    pic->setType(TagLib::FlacPicture::Type(imageType));
-    pic->setPicture(TagLib::ByteVector((const char *)imageData, imageDataSize));
+    pic->setType(TagLib::FLAC::Picture::Type(imageType));
+    pic->setData(TagLib::ByteVector((const char *)imageData, imageDataSize));
 
     // First we have to remove any other existing frames of the same type
     LOG(("WriteOGGImage():: Removing all images from OGG file"));
@@ -1646,18 +1646,18 @@ nsresult sbMetadataHandlerTaglib::ReadImageOgg(TagLib::Ogg::XiphComment  *aTag,
    * Extract the requested image from the metadata
    */
   if (aTag->artwork().size() > 0) {
-    List<TagLib::FlacPicture*> artwork = aTag->artwork();
-    for (List<TagLib::FlacPicture*>::Iterator it = artwork.begin();
+    List<TagLib::FLAC::Picture*> artwork = aTag->artwork();
+    for (List<TagLib::FLAC::Picture*>::Iterator it = artwork.begin();
          it != artwork.end();
          ++it)
     {
-      TagLib::FlacPicture* p = *it;
+      TagLib::FLAC::Picture* p = *it;
       if (p->type() == aType) {
-        *aDataLen = p->picture().size();
+        *aDataLen = p->data().size();
 
         aMimeType.Assign(p->mimeType().toCString());
 
-        *aData = static_cast<PRUint8 *>(nsMemory::Clone(p->picture().data(),
+        *aData = static_cast<PRUint8 *>(nsMemory::Clone(p->data().data(),
                                                         *aDataLen));
         NS_ENSURE_TRUE(*aData, NS_ERROR_OUT_OF_MEMORY);
       }
