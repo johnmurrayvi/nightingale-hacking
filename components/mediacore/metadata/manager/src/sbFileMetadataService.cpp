@@ -511,6 +511,7 @@ nsresult sbFileMetadataService::PutProcessedJobItem(sbMetadataJobItem* aJobItem)
     nsCString url;
     rv = aJobItem->GetURL(url);
     NS_ENSURE_SUCCESS(rv, rv);
+    TRACE(("sbFileMetadataService[0x%.8x]::PutProcessedJobItem - URL = ", this, url.get()));
     rv = mCrashTracker->LogURLEnd(url);
     if (NS_FAILED(rv)) {
       NS_ERROR("sbFileMetadataService::PutProcessedJobItem couldn't log URL");

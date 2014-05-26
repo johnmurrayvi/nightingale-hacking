@@ -1569,13 +1569,16 @@ sbMetadataJob::RemoveJobProgressListener(sbIJobProgressListener* aListener)
 
   PRInt32 indexToRemove = mListeners.IndexOf(aListener);
   if (indexToRemove < 0) {
+    TRACE(("%s[%.8x] indexToRemove < 0!", __FUNCTION__, this));
     // Err, no such listener
     return NS_ERROR_UNEXPECTED;
   }
 
+  TRACE(("%s[%.8x] about to remove the listener...", __FUNCTION__, this));
   // remove the listener
   PRBool succeeded = mListeners.RemoveObjectAt(indexToRemove);
   NS_ENSURE_TRUE(succeeded, NS_ERROR_FAILURE);
+  TRACE(("%s[%.8x] finished removing the listener", __FUNCTION__, this));
 
   return NS_OK;
 }

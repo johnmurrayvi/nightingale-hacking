@@ -179,6 +179,19 @@ static PRLogModuleInfo* gLog = nsnull;
 #endif
 
 
+void printPropertyMap(TagLib::PropertyMap *p)
+{
+  TagLib::PropertyMap::Iterator pit;
+  TagLib::StringList::Iterator sit;
+  for (pit = p->begin(); pit != p->end(); ++pit) {
+    LOG(("    key = %s", pit->first.toCString()));
+    for (sit = pit->second.begin(); sit != pit->second.end(); ++sit) {
+      LOG(("        value = %s", sit->toCString()));
+    }
+  }
+}
+
+
 // the minimum number of chracters to feed into the charset detector
 #define GUESS_CHARSET_MIN_CHAR_COUNT 256
 
@@ -2404,6 +2417,11 @@ PRBool sbMetadataHandlerTaglib::ReadFile(
     AddMetadataValue(SB_PROPERTY_GENRE,           pTag->genre(), aCharset);
     AddMetadataValue(SB_PROPERTY_YEAR,            (PRUint64)pTag->year());
 
+    LOG(("ReadFile - AddMetadataValue - title = %s", pTag->title().toCString()));
+    LOG(("ReadFile - AddMetadataValue - artist = %s", pTag->artist().toCString()));
+    LOG(("ReadFile - AddMetadataValue - album = %s", pTag->album().toCString()));
+    LOG(("ReadFile - AddMetadataValue - genre = %s", pTag->genre().toCString()));
+
     AddMetadataValue(SB_PROPERTY_ALBUMARTISTNAME,
       GET_PROPERTY("ALBUMARTIST"), aCharset);
     AddMetadataValue(SB_PROPERTY_LYRICS,
@@ -2528,11 +2546,15 @@ void sbMetadataHandlerTaglib::ConvertCharset(
         !strcmp("us-ascii", aCharset))
 
     {
-        LOG(("sbMetadataHandlerTaglib::ConvertCharset: not converting to \"%s\"",
-             aCharset ? aCharset : "(null)"
-             ));
+//        LOG(("sbMetadataHandlerTaglib::ConvertCharset: not converting to \"%s\"",
+//             aCharset ? aCharset : "(null)"
+//             ));
 
         toMozString(aString, aResult);
+        char *aTmpStr = ToNewUTF8String(aResult);
+        if (aTmpStr)
+            LOG(("sbMetadataHandlerTaglib::ConvertCharset: aResult = %s", aTmpStr));
+        free(aTmpStr);
         return;
     }
 
@@ -2631,6 +2653,11 @@ PRBool sbMetadataHandlerTaglib::ReadFLACFile()
     /* Read the Xiph comment metadata. */
     if (NS_SUCCEEDED(result) && isValid)
         ReadXiphTags(pTagFile->xiphComment());
+
+    if (NS_SUCCEEDED(result) && isValid) {
+        TagLib::PropertyMap p = pTagFile->properties();
+        printPropertyMap(&p);
+    }
 
     /* File is invalid on any error. */
     if (NS_FAILED(result))
@@ -3069,6 +3096,8 @@ nsresult sbMetadataHandlerTaglib::AddMetadataValue(
     result = mpMetadataPropertyArray->AppendProperty
                         (NS_ConvertASCIItoUTF16(name),
                          strValue);
+    if (NS_ConvertUTF16toUTF8(strValue).get())
+        LOG(("AddMetadataValue - name = %s, strValue = %s", name, NS_ConvertUTF16toUTF8(strValue).get()));
 
     return (result);
 }
@@ -3547,7 +3576,7 @@ nsresult sbMetadataHandlerTaglib::WriteXiphComment(
 
 /*
  * base64 encode/decode routines:
- * Copyright (C) 2004-2008 René Nyffenegger
+ * Copyright (C) 2004-2008 Renï¿½ Nyffenegger
  *
  * This source code is provided 'as-is', without any express or implied
  * warranty. In no event will the author be held liable for any damages
@@ -3567,7 +3596,7 @@ nsresult sbMetadataHandlerTaglib::WriteXiphComment(
  *
  * 3. This notice may not be removed or altered from any source distribution.
  *
- * René Nyffenegger rene.nyffenegger@adp-gmbh.ch
+ * Renï¿½ Nyffenegger rene.nyffenegger@adp-gmbh.ch
 */
 
 static const std::string base64_chars = 
