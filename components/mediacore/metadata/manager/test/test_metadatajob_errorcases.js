@@ -74,7 +74,11 @@ function runTest() {
   assertEqual(file.exists(), false, "file_that_doesn't_exist shouldn't exist!");
   files.push(file);
   gErrorExpected++;
+  log("");
+  log("##### Adding to retries for file_that_doesnt_exist case.");
   gRetriesExpected += retries(["taglib", "gstreamer"]);
+  log("##### Now gRetriesExpected = " + gRetriesExpected);
+  log("");
 
   // Bogus files
   var fakeFile = newAppRelativeFile("testharness/metadatamanager/errorcases/fake-file.mp3");
@@ -91,13 +95,27 @@ function runTest() {
   // Media files with the wrong extensions
   files.push(newAppRelativeFile("testharness/metadatamanager/errorcases/mp3-disguised-as.flac"));
   gErrorExpected++;
+  log("");
+  log("##### Adding to retries for mp3-disguised-as-flac case.");
   gRetriesExpected += retries(["taglib", "gstreamer"]);
+  log("##### Now gRetriesExpected = " + gRetriesExpected);
+  log("");
+
   files.push(newAppRelativeFile("testharness/metadatamanager/errorcases/mp3-disguised-as.ogg"));
   gErrorExpected++;
+  log("");
+  log("##### Adding to retries for mp3-disguised-as-ogg case.");
   gRetriesExpected += retries(["taglib", "gstreamer"]);
+  log("##### Now gRetriesExpected = " + gRetriesExpected);
+  log("");
+
   files.push(newAppRelativeFile("testharness/metadatamanager/errorcases/ogg-disguised-as.m4a"));
   gErrorExpected++;
+  log("");
+  log("##### Adding to retries for ogg-disguised-as-m4a case.");
   gRetriesExpected += retries(["taglib", "gstreamer"]);
+  log("##### Now gRetriesExpected = " + gRetriesExpected);
+  log("");
 
   // Misc file permissions
   file = newAppRelativeFile("testharness/metadatamanager/errorcases/access-tests.mp3");  
@@ -112,7 +130,11 @@ function runTest() {
   if ((writeonly.permissions & 0777) == 0200) {
     files.push(writeonly);
     gErrorExpected++;
+    log("");
+    log("##### Adding to retries for writeonly case.");
     gRetriesExpected += retries(["taglib", "gstreamer"]);
+    log("##### Now gRetriesExpected = " + gRetriesExpected);
+    log("");
   } else {
     log("MetadataJob_ErrorCases: platform does not support write-only. Perms=" + (writeonly.permissions & 0777));
   }
@@ -125,7 +147,11 @@ function runTest() {
   if (!isWindows) {
     // only seen as an error on non-Windows (Windows doesn't support permissions correctly)
     gErrorExpected++
+    log("");
+    log("##### Adding to retries for noaccess case.");
     gRetriesExpected += retries(["taglib", "gstreamer"]);
+    log("##### Now gRetriesExpected = " + gRetriesExpected);
+    log("");
   }
   
   // A remote file that doesn't exist
@@ -135,16 +161,25 @@ function runTest() {
   // to port 80.
   files.push(newURI("http://localhost:12345/remote/file/that/doesnt/exist.mp3"));
   gErrorExpected++;
+  log("");
+  log("##### Adding to retries for remote file that doesn't exit case.");
   gRetriesExpected += retries(["taglib", "gstreamer"]);
+  log("##### Now gRetriesExpected = " + gRetriesExpected);
+  log("");
 
 
   ///////////////////////////////////////
   // Load the files into two libraries //
   ///////////////////////////////////////
   log("Creating libraries");
+  log("##### files.length = " + files.length);
   var library1 = createNewLibrary( "test_metadatajob_errorcases_library1" );
   var library2 = createNewLibrary( "test_metadatajob_errorcases_library2" );
+  log("***** calling importFilesToLibrary with library1 *****");
+  log("");
   var items1 = importFilesToLibrary(files, library1);
+  log("***** calling importFilesToLibrary with library2 *****");
+  log("");
   var items2 = importFilesToLibrary(files, library2);
   // We need to make the items in the two libraries copies of each other
   // So the synchronization logic is happy
@@ -169,6 +204,9 @@ function runTest() {
               files.length,
               "expecting number of added items in library2 to equal total number of files");
   
+  log("");
+  log("***** initial: startMetadataJob(items1, read), items1.length = " + items1.length);
+  log("");
   var job = startMetadataJob(items1, "read");
   
   
@@ -179,6 +217,7 @@ function runTest() {
   // Called when the first scan into library1 completes
   function onLib1ReadComplete(job) {
     try {
+      log("onLib1ReadComplete");
       reportJobProgress(job, "onLib1ReadComplete");
           
       if (job.status == Ci.sbIJobProgress.STATUS_RUNNING) {
@@ -186,6 +225,11 @@ function runTest() {
       }
       job.removeJobProgressListener(onLib1ReadComplete);
       
+      log("onLib1ReadComplete: files.length = " + files.length);
+      log("onLib1ReadComplete: gErrorExpected = " + gErrorExpected);
+      log("onLib1ReadComplete: gRetriesExpected = " + gRetriesExpected);
+      log("onLib1ReadComplete: job.total = " + job.total);
+
       // Verify job progress reporting.
       
       assertEqual(files.length + gRetriesExpected,
@@ -210,6 +254,9 @@ function runTest() {
         }
       }
       
+      log("");
+      log("***** onLib1ReadComplete: startMetadataJob(items2, write, ...), items2.length = " + items2.length + ", jobs.total = " + job.total);
+      log("");
       job = startMetadataJob(items2, "write", propertiesToWrite);
       
       // Wait for reading to complete before continuing
@@ -229,6 +276,7 @@ function runTest() {
   // Called when the write out from library2 completes
   function onWriteComplete(job) {
     try {
+      log("onWriteComplete");
       reportJobProgress(job, "onWriteComplete");
 
       if (job.status == Ci.sbIJobProgress.STATUS_RUNNING) {
@@ -268,6 +316,9 @@ function runTest() {
                   Ci.sbIJobProgress.STATUS_FAILED,
                   "expected the job to have failed");
       
+      log("");
+      log("***** onWriteComplete: startMetadataJob(items2, read), items2.length = " + items2.length + ", jobs.total = " + job.total);
+      log("");
       job = startMetadataJob(items2, "read");
 
       // Wait for reading to complete before continuing
@@ -386,6 +437,9 @@ function importFilesToLibrary(files, library) {
     }
     items.push(library.createMediaItem(file, null, true));
   }
+  log("");
+  log("***** importFilesToLibrary: items.length = " + items.length);
+  log("");
   return items;
 }
 

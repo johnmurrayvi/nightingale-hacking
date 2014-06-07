@@ -491,9 +491,11 @@ sbGStreamerMetadataHandler::HandleMessage(GstMessage *message)
   NS_ENSURE_TRUE(message, /* void */);
   switch (GST_MESSAGE_TYPE(message)) {
     case GST_MESSAGE_TAG:
+      TRACE(("%s: case GST_MESSAGE_TAG", __FUNCTION__));
       HandleTagMessage(message);
       break;
     case GST_MESSAGE_STATE_CHANGED: {
+      TRACE(("%s: case GST_MESSAGE_STATE_CHANGED", __FUNCTION__));
       nsAutoLock lock(mLock);
       if (!mPipeline || mCompleted) {
         // umm, we stopped, don't bother
@@ -525,6 +527,7 @@ sbGStreamerMetadataHandler::HandleMessage(GstMessage *message)
       break;
     }
     case GST_MESSAGE_ELEMENT: {
+      TRACE(("%s: case GST_MESSAGE_ELEMENT", __FUNCTION__));
       if (gst_is_missing_plugin_message(message)) {
         /* If we got a missing plugin message about a missing video decoder,
            we should still mark it as a video file */
@@ -544,6 +547,7 @@ sbGStreamerMetadataHandler::HandleMessage(GstMessage *message)
       break;
     }
     case GST_MESSAGE_ERROR: {
+      TRACE(("%s: case GST_MESSAGE_ERROR", __FUNCTION__));
       GError *gerror = NULL;
       gchar *debugMessage = NULL;
       gst_message_parse_error(message, &gerror, &debugMessage);
@@ -581,6 +585,7 @@ sbGStreamerMetadataHandler::HandleMessage(GstMessage *message)
       break;
     }
     default:
+      TRACE(("%s: default", __FUNCTION__));
       break;
   }
 }
