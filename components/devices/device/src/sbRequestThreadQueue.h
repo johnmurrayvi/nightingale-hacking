@@ -84,6 +84,11 @@ public:
     typedef RequestItems::size_type size_type;
     typedef RequestItems::reference reference;
     typedef RequestItems::const_reference const_reference;
+// VS2010 is more strict with STL than 2008
+// http://stackoverflow.com/q/12605324
+#if defined(XP_WIN) && _MSC_VER >= 1600
+    typedef RequestItems::value_type value_type;
+#endif
 
     Batch();
     ~Batch();

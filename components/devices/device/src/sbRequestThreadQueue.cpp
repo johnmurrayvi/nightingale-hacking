@@ -29,6 +29,12 @@
 // Platform includes
 #include <algorithm>
 
+// VS2010 doesn't auto-include this like VS2008 did
+// http://stackoverflow.com/q/2959234
+#if defined(XP_WIN) && _MSC_VER >= 1600
+  #include <iterator>
+#endif
+
 // Mozilla includes
 #include <nsArrayUtils.h>
 #include <nsAutoLock.h>

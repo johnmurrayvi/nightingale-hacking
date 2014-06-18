@@ -67,6 +67,12 @@
 #include <sbThreadPoolService.h>
 #include <sbDebugUtils.h>
 
+// VS2010 doesn't auto-include this like VS2008 did
+// http://stackoverflow.com/q/2959234
+#if defined(XP_WIN) && _MSC_VER >= 1600
+  #include <iterator>
+#endif
+
 /*
  * To log this module, set the following environment variable:
  *   NSPR_LOG_MODULES=sbLocalDatabasePropertyCache:5

@@ -47,6 +47,12 @@
 #include <sbDeviceContent.h>
 #include <sbVariantUtils.h>
 
+// VS2010 doesn't auto-include this like VS2008 did
+// http://stackoverflow.com/q/2959234
+#if defined(XP_WIN) && _MSC_VER >= 1600
+  #include <iterator>
+#endif
+
 /* for an actual device, you would probably want to actually sort the prefs on
  * the device itself (and not the mozilla prefs system).  And even if you do end
  * up wanting to store things in the prefs system for some odd reason, you would

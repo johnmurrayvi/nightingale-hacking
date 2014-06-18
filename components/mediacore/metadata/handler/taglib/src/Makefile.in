@@ -100,9 +100,15 @@ ifeq (system,$(SB_TAGLIB))
   DYNAMIC_LIB_RAW_IMPORTS += $(TAGLIB_LIBS) \
                              $(NULL)
 else
-  DYNAMIC_LIB_STATIC_IMPORTS += \
-    $(DEPS_DIR)/taglib/$(SB_CONFIGURATION)/lib/$(LIB_PREFIX)tag$(LIB_SUFFIX) \
-    $(NULL)
+  ifeq (windows, $(SB_PLATFORM))
+    DYNAMIC_LIB_STATIC_IMPORTS += \
+      $(DEPS_DIR)/taglib/$(SB_CONFIGURATION)/lib/$(LIB_PREFIX)tag$(DEBUG:%=d)$(LIB_SUFFIX) \
+      $(NULL)
+  else
+    DYNAMIC_LIB_STATIC_IMPORTS += \
+      $(DEPS_DIR)/taglib/$(SB_CONFIGURATION)/lib/$(LIB_PREFIX)tag$(LIB_SUFFIX) \
+      $(NULL)
+  endif
 
   CPP_EXTRA_INCLUDES += $(DEPS_DIR)/taglib/$(SB_CONFIGURATION)/include/taglib \
                         $(NULL)
