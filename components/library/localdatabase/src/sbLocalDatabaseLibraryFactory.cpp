@@ -68,6 +68,21 @@
 
 #define CONVERTER_BUFFER_SIZE 8192
 
+/*
+ * To log this module, set the following environment variable:
+ * NSPR_LOG_MODULES=sbLocalDatabaseLibraryFactory:5
+ */
+#include <prlog.h>
+#ifdef PR_LOGGING
+static PRLogModuleInfo* sLocalDatabaseLibraryFactoryLog = nsnull;
+#define TRACE(args) PR_LOG(sLocalDatabaseLibraryFactoryLog, PR_LOG_DEBUG, args)
+#define LOG(args)   PR_LOG(sLocalDatabaseLibraryFactoryLog, PR_LOG_WARN, args)
+#else
+#define TRACE(args) /* nothing */
+#define LOG(args)   /* nothing */
+#endif
+
+
 static nsresult
 CreateDirectory(nsIFile* aDirectory)
 {
@@ -169,6 +184,11 @@ sbLocalDatabaseLibraryFactory::RegisterSelf(nsIComponentManager* aCompMgr,
 nsresult
 sbLocalDatabaseLibraryFactory::Init()
 {
+#ifdef PR_LOGGING
+  if (!sLocalDatabaseLibraryFactoryLog)
+    sLocalDatabaseLibraryFactoryLog = PR_NewLogModule("sbLocalDatabaseLibraryFactory");
+#endif
+
   PRBool success = mCreatedLibraries.Init();
   NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
 
@@ -178,6 +198,8 @@ sbLocalDatabaseLibraryFactory::Init()
 NS_IMETHODIMP
 sbLocalDatabaseLibraryFactory::GetType(nsAString& aType)
 {
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::GetType(\"%s\")", this, NS_ConvertUTF16toUTF8(aType).get()));
+
   aType.AssignLiteral(SB_LOCALDATABASE_LIBRARYFACTORY_TYPE);
   return NS_OK;
 }
@@ -185,6 +207,8 @@ sbLocalDatabaseLibraryFactory::GetType(nsAString& aType)
 NS_IMETHODIMP
 sbLocalDatabaseLibraryFactory::GetContractID(nsACString& aContractID)
 {
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::GetContractID(\"%s\")", this, aContractID));
+
   aContractID.AssignLiteral(SB_LOCALDATABASE_LIBRARYFACTORY_CONTRACTID);
   return NS_OK;
 }
@@ -193,6 +217,7 @@ NS_IMETHODIMP
 sbLocalDatabaseLibraryFactory::CreateLibrary(nsIPropertyBag2* aCreationParameters,
                                              sbILibrary** _retval)
 {
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::CreateLibrary", this));
   NS_ENSURE_ARG_POINTER(aCreationParameters);
   NS_ENSURE_ARG_POINTER(_retval);
 
@@ -227,6 +252,7 @@ sbLocalDatabaseLibraryFactory::CreateLibraryFromDatabase(nsIFile* aDatabase,
                                                          nsIPropertyBag2* aCreationParameters,
                                                          nsString aResourceGUID /* = EmptyString() */)
 {
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::CreateLibraryFromDatabase", this));
   NS_ENSURE_ARG_POINTER(aDatabase);
   NS_ENSURE_ARG_POINTER(_retval);
 
@@ -245,12 +271,17 @@ sbLocalDatabaseLibraryFactory::CreateLibraryFromDatabase(nsIFile* aDatabase,
   rv = NS_NewFileURI(getter_AddRefs(databaseURI), aDatabase, ioService);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  nsCString dbspec;
+  databaseURI->GetAsciiSpec(dbspec);
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::CreateLibraryFromDatabase        dbURI path = \"%s\"", this, dbspec));
+
   nsCOMPtr<nsIURL> databaseURL = do_QueryInterface(databaseURI, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCAutoString utf8GUID;
   rv = databaseURL->GetFileBaseName(utf8GUID);
   NS_ENSURE_SUCCESS(rv, rv);
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::CreateLibraryFromDatabase        utf8GUID = \"%s\"", this, utf8GUID));
 
   nsCOMPtr<nsIFile> databaseParent;
   rv = aDatabase->GetParent(getter_AddRefs(databaseParent));
@@ -259,6 +290,7 @@ sbLocalDatabaseLibraryFactory::CreateLibraryFromDatabase(nsIFile* aDatabase,
   nsCAutoString fileName;
   rv = databaseURL->GetFileName(fileName);
   NS_ENSURE_SUCCESS(rv, rv);
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::CreateLibraryFromDatabase        fileName = \"%s\"", this, fileName));
 
   nsCOMPtr<nsIFile> escapedFile;
   rv = databaseParent->Clone(getter_AddRefs(escapedFile));
@@ -292,10 +324,12 @@ sbLocalDatabaseLibraryFactory::CreateLibraryFromDatabase(nsIFile* aDatabase,
   // If the database file does not exist, create and initalize it.  Otherwise,
   // update it.
   if (!exists) {
+    TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::CreateLibraryFromDatabase        Library doesn't exist, calling InitalizeLibrary", this));
     rv = InitalizeLibrary(aDatabase, aResourceGUID);
     NS_ENSURE_SUCCESS(rv, rv);
   }
   else {
+    TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::CreateLibraryFromDatabase        Library exists, calling UpdateLibrary", this));
     rv = UpdateLibrary(aDatabase);
     NS_ENSURE_SUCCESS(rv, rv);
   }
@@ -304,6 +338,10 @@ sbLocalDatabaseLibraryFactory::CreateLibraryFromDatabase(nsIFile* aDatabase,
   rv = NS_NewFileURI(getter_AddRefs(databaseLocation), databaseParent,
                      ioService);
   NS_ENSURE_SUCCESS(rv, rv);
+ 
+  nsCString dblocspec;
+  databaseURI->GetAsciiSpec(dblocspec);
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::CreateLibraryFromDatabase        databaseLocation path = \"%s\"", this, dblocspec));
 
   nsRefPtr<sbLocalDatabaseLibrary> library(new sbLocalDatabaseLibrary());
   NS_ENSURE_TRUE(library, NS_ERROR_OUT_OF_MEMORY);
@@ -326,6 +364,7 @@ sbLocalDatabaseLibraryFactory::CreateLibraryFromDatabase(nsIFile* aDatabase,
                      databaseLocation);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::CreateLibraryFromDatabase        Adding library to table", this));
   // Add this library to our table of created libraries.
   weakRef = do_GetWeakReference(NS_ISUPPORTS_CAST(sbILibrary*, library),
                                 &rv);
@@ -334,6 +373,7 @@ sbLocalDatabaseLibraryFactory::CreateLibraryFromDatabase(nsIFile* aDatabase,
   PRBool success = mCreatedLibraries.Put(hashable, weakRef);
   NS_ENSURE_TRUE(success, NS_ERROR_FAILURE);
 
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::CreateLibraryFromDatabase        Returning", this));
   NS_ADDREF(*_retval = library);
   return NS_OK;
 }
@@ -342,6 +382,7 @@ nsresult
 sbLocalDatabaseLibraryFactory::InitalizeLibrary(nsIFile* aDatabaseFile,
                                                 const nsAString &aResourceGUID)
 {
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::InitalizeLibrary", this));
   nsresult rv;
   PRInt32 dbOk;
 
@@ -376,6 +417,10 @@ sbLocalDatabaseLibraryFactory::InitalizeLibrary(nsIFile* aDatabaseFile,
   rv = NS_NewURI(getter_AddRefs(schemaURI), NS_LITERAL_CSTRING(SCHEMA_URL));
   NS_ENSURE_SUCCESS(rv, rv);
 
+  nsCString sspec;
+  schemaURI->GetAsciiSpec(sspec);
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::InitalizeLibrary        Schema path = \"%s\"", this, sspec));
+
   nsCOMPtr<nsIInputStream> input;
   rv = NS_OpenURI(getter_AddRefs(input), schemaURI);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -390,24 +435,30 @@ sbLocalDatabaseLibraryFactory::InitalizeLibrary(nsIFile* aDatabaseFile,
                              nsIConverterInputStream::
                                DEFAULT_REPLACEMENT_CHARACTER);
   NS_ENSURE_SUCCESS(rv, rv);
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::InitalizeLibrary        Got converterStream", this));
 
   nsCOMPtr<nsIUnicharInputStream> unichar =
     do_QueryInterface(converterStream, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::InitalizeLibrary        Got unichar", this));
 
   PRUint32 read;
   nsString response, result;
   rv = unichar->ReadString(PR_UINT32_MAX, result, &read);
   NS_ENSURE_SUCCESS(rv, rv);
   NS_ASSERTION(read, "Schema file zero bytes?");
+  // TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::InitalizeLibrary        Initial ReadString: result = \"%s\"", this, NS_ConvertUTF16toUTF8(result).get()));
   while (read > 0) {
     response.Append(result);
     rv = unichar->ReadString(PR_UINT32_MAX, result, &read);
     NS_ENSURE_SUCCESS(rv, rv);
+    // TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::InitalizeLibrary        In loop, ReadString: result = \"%s\"", this, NS_ConvertUTF16toUTF8(result).get()));
   }
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::InitalizeLibrary        Done reading unichar", this));
 
   rv = unichar->Close();
   NS_ENSURE_SUCCESS(rv, rv);
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::InitalizeLibrary        Closed unichar, finding sql lines", this));
 
   NS_NAMED_LITERAL_STRING(colonNewline, ";\n");
   PRInt32 posStart = 0;
@@ -421,14 +472,18 @@ sbLocalDatabaseLibraryFactory::InitalizeLibrary(nsIFile* aDatabaseFile,
     // Try again, looking for ";\r\n"
     NS_NAMED_LITERAL_STRING(colonCRNewline, ";\r\n");
     posEnd = response.Find(colonCRNewline, posStart);
+    TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::InitalizeLibrary        Initial find (CRLF): posEnd = %d", this, posEnd));
     while (posEnd >= 0) {
+      TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::InitalizeLibrary        In loop (CRLF), adding query \"%s\"", this, Substring(response, posStart, posEnd - posStart)));
       rv = query->AddQuery(Substring(response, posStart, posEnd - posStart));
       NS_ENSURE_SUCCESS(rv, rv);
       posStart = posEnd + 3;
       posEnd = response.Find(colonCRNewline, posStart);
     }
   } else {
+    TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::InitalizeLibrary        Initial find (LF): posEnd = %d", this, posEnd));
     while (posEnd >= 0) {
+      TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::InitalizeLibrary        In loop (LF), adding query \"%s\"", this, Substring(response, posStart, posEnd - posStart)));
       rv = query->AddQuery(Substring(response, posStart, posEnd - posStart));
       NS_ENSURE_SUCCESS(rv, rv);
       posStart = posEnd + 2;
@@ -503,6 +558,10 @@ sbLocalDatabaseLibraryFactory::InitalizeLibrary(nsIFile* aDatabaseFile,
   rv = fileURI->GetSpec(uriSpec);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  nsCString adbspec;
+  fileURI->GetAsciiSpec(adbspec);
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::InitalizeLibrary        aDatabaseFile path = \"%s\"", this, adbspec));
+
   // Add the default library media item properties
   insert = do_CreateInstance(SB_SQLBUILDER_INSERT_CONTRACTID, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -559,12 +618,14 @@ sbLocalDatabaseLibraryFactory::InitalizeLibrary(nsIFile* aDatabaseFile,
   NS_ENSURE_SUCCESS(rv, rv);
   NS_ENSURE_TRUE(dbOk == 0, NS_ERROR_FAILURE);
 
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::InitalizeLibrary        Returning", this));
   return NS_OK;
 }
 
 nsresult
 sbLocalDatabaseLibraryFactory::UpdateLibrary(nsIFile* aDatabaseFile)
 {
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::UpdateLibrary", this));
   nsresult rv;
   PRInt32 dbOk;
 
@@ -614,6 +675,7 @@ sbLocalDatabaseLibraryFactory::UpdateLibrary(nsIFile* aDatabaseFile)
 already_AddRefed<nsILocalFile>
 sbLocalDatabaseLibraryFactory::GetFileForGUID(const nsAString& aGUID)
 {
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::GetFileForGUID(\"%s\")", this, NS_ConvertUTF16toUTF8(aGUID).get()));
   nsCOMPtr<nsILocalFile> file = GetDBFolder();
   NS_ENSURE_TRUE(file, nsnull);
 
@@ -633,6 +695,7 @@ void
 sbLocalDatabaseLibraryFactory::GetGUIDFromFile(nsILocalFile* aFile,
                                                nsAString& aGUID)
 {
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::GetGUIDFromFile(file, \"%s\")", this, NS_ConvertUTF16toUTF8(aGUID).get()));
   nsAutoString filename;
   nsresult rv = aFile->GetLeafName(filename);
   NS_ENSURE_SUCCESS(rv,);
@@ -645,6 +708,7 @@ sbLocalDatabaseLibraryFactory::SetQueryDatabaseFile
                                  (sbIDatabaseQuery* aQuery,
                                   nsIFile*          aDatabaseFile)
 {
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::SetQueryDatabaseFile(aQuery, aDatabaseFile)", this));
   NS_ENSURE_ARG_POINTER(aQuery);
   NS_ENSURE_ARG_POINTER(aDatabaseFile);
 
@@ -659,6 +723,10 @@ sbLocalDatabaseLibraryFactory::SetQueryDatabaseFile
   nsCOMPtr<nsIURI> fileURI;
   rv = NS_NewFileURI(getter_AddRefs(fileURI), aDatabaseFile, ioService);
   NS_ENSURE_SUCCESS(rv, rv);
+
+  nsCString fspec;
+  fileURI->GetAsciiSpec(fspec);
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::SetQueryDatabaseFile        fileURI path = \"%s\"", this, fspec));
 
   nsCOMPtr<nsIURL> fileURL = do_QueryInterface(fileURI, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
@@ -681,6 +749,7 @@ sbLocalDatabaseLibraryFactory::SetQueryDatabaseFile
     }
   }
 #endif
+
   // Set the parent directory as the location for the library database file.
   nsCOMPtr<nsIFile> parentDirectory;
   rv = aDatabaseFile->GetParent(getter_AddRefs(parentDirectory));
@@ -689,6 +758,10 @@ sbLocalDatabaseLibraryFactory::SetQueryDatabaseFile
   nsCOMPtr<nsIURI> parentURI;
   rv = NS_NewFileURI(getter_AddRefs(parentURI), parentDirectory, ioService);
   NS_ENSURE_SUCCESS(rv, rv);
+
+  nsCString pspec;
+  fileURI->GetAsciiSpec(pspec);
+  TRACE(("sbLocalDatabaseLibraryFactory[0x%0x]::SetQueryDatabaseFile        parentURI path = \"%s\"", this, pspec));
 
   rv = aQuery->SetDatabaseLocation(parentURI);
   NS_ENSURE_SUCCESS(rv, rv);

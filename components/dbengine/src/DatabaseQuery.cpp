@@ -198,7 +198,7 @@ nsresult CDatabaseQuery::GetDatabaseLocation(nsACString& aURISpec)
 /* void SetAsyncQuery (in PRBool bAsyncQuery); */
 NS_IMETHODIMP CDatabaseQuery::SetAsyncQuery(PRBool bAsyncQuery)
 {
-  TRACE(("CDatabaseQuery[0x%0x]::SetAsyncQuery", this));
+  TRACE(("CDatabaseQuery[0x%0x]::SetAsyncQuery(bAsyncQuery = \"%s\")", this, ((bAsyncQuery == PR_TRUE) ? "TRUE" : "FALSE")));
   m_AsyncQuery = bAsyncQuery;
   return NS_OK;
 } //SetAsyncQuery
