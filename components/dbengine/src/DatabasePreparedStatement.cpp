@@ -43,11 +43,30 @@
 // The maximum characters to output in a single PR_LOG call
 #define MAX_PRLOG 400
 
+/*
+ * To log this module, set the following environment variable:
+ * NSPR_LOG_MODULES=sbDBPreparedStatement:5
+ */
+#include <prlog.h>
+#ifdef PR_LOGGING
+static PRLogModuleInfo* sDBPreparedStatementLog = nsnull;
+#define TRACE(args) PR_LOG(sDBPreparedStatementLog, PR_LOG_DEBUG, args)
+#define LOG(args)   PR_LOG(sDBPreparedStatementLog, PR_LOG_WARN, args)
+#else
+#define TRACE(args) /* nothing */
+#define LOG(args)   /* nothing */
+#endif
+
+
 NS_IMPL_THREADSAFE_ISUPPORTS1(CDatabasePreparedStatement, sbIDatabasePreparedStatement)
 
 CDatabasePreparedStatement::CDatabasePreparedStatement(const nsAString &sql) 
   : mStatement(nsnull), mSql(sql)
 {
+#ifdef PR_LOGGING
+  if (!sDBPreparedStatementLog)
+    sDBPreparedStatementLog = PR_NewLogModule("sbDBPreparedStatement");
+#endif
 }
 
 CDatabasePreparedStatement::~CDatabasePreparedStatement() 
@@ -66,6 +85,7 @@ CDatabasePreparedStatement::~CDatabasePreparedStatement()
 
 NS_IMETHODIMP CDatabasePreparedStatement::GetQueryString(nsAString &_retval)
 {
+  TRACE(("CDatabasePreparedStatement[0x%0x] - GetQueryString", this));
   if (mSql.Length() > 0) {
     _retval = mSql;
   }
@@ -81,6 +101,7 @@ NS_IMETHODIMP CDatabasePreparedStatement::GetQueryString(nsAString &_retval)
 
 sqlite3_stmt* CDatabasePreparedStatement::GetStatement(sqlite3 *db) 
 {
+  TRACE(("CDatabasePreparedStatement[0x%0x] - GetStatement", this));
   if (!db) {
     NS_WARNING("GetStatement called without a database pointer.");
     return nsnull;
@@ -88,6 +109,7 @@ sqlite3_stmt* CDatabasePreparedStatement::GetStatement(sqlite3 *db)
   
   // either reset and return the existing statement, or compile it first and return that. 
   if (mStatement) {
+    LOG(("    mStatement exists, in if branch of top-level conditional"));
     if (db != sqlite3_db_handle(mStatement)) {
       NS_WARNING("GetStatement() called with a different DB than the one originally used compile it!.");
       return nsnull;
@@ -98,17 +120,33 @@ sqlite3_stmt* CDatabasePreparedStatement::GetStatement(sqlite3 *db)
     retDB = sqlite3_clear_bindings(mStatement);
   }
   else {
+    LOG(("    mStatement does NOT exist, in else branch of top-level conditional"));
     if (mSql.Length() == 0) {
       NS_WARNING("GetStatement() called on a PreparedStatement with no SQL.");
       return nsnull;
     }
 
+    LOG(("    Setting sqlStr to \"%s\"", NS_ConvertUTF16toUTF8(mSql).get()));
+
+    int ret = sqlite3_extended_result_codes(db, 1);
+    LOG(("    Enabled extended result codes, ret = %d", ret));
+
     const char *pzTail = nsnull;
     nsCString sqlStr = NS_ConvertUTF16toUTF8(mSql);
     int retDB = sqlite3_prepare_v2(db, sqlStr.get(), sqlStr.Length(),
                                    &mStatement, &pzTail);
+    LOG(("    After sqlite3_prepare_v2, retDB = %d", retDB));
     if (retDB != SQLITE_OK) {
+      LOG(("        retDB != SQLITE_OK,"));
+      
       const char *szErr = sqlite3_errmsg(db);
+      LOG(("        sqlite3_errmsg is \"%s\"", szErr));
+
+      ret = sqlite3_errcode(db);
+      LOG(("        sqlite3_errcode(db) = %d", ret));
+      
+      ret = sqlite3_extended_errcode(db);
+      LOG(("        sqlite3_extended_errcode(db) = %d", ret));
 
       nsString log;
       log.AppendLiteral("SQLite compile step: \n");

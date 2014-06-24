@@ -1319,7 +1319,7 @@ PLDHashOperator sbDeviceFirmwareUpdater::EnumerateIntoArrayISupportsKey(
   T* aData,
   void* aArray)
 {
-  TRACE(("sbDeviceFirmwareUpdater[0x%x] - EnumerateIntoArray (nsISupports)"));
+  TRACE(("[sbDeviceFirmwareUpdater] - EnumerateIntoArray (nsISupports)"));
   return appendElementToArray(aData, aArray);
 }
 
@@ -1331,7 +1331,7 @@ sbDeviceFirmwareUpdater::Observe(nsISupports* aSubject,
                                  const char* aTopic,
                                  const PRUnichar* aData)
 {
-  LOG(("[sbDeviceFirmwareUpdater] - Observe: %s", this, aTopic));
+  LOG(("sbDeviceFirmwareUpdater[0x%x] - Observe: %s", this, aTopic));
 
   nsresult rv;
   nsCOMPtr<nsIObserverService> observerService =

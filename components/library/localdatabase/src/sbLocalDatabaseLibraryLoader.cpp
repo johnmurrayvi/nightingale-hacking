@@ -225,6 +225,7 @@ sbLocalDatabaseLibraryLoader::Init()
 nsresult
 sbLocalDatabaseLibraryLoader::EnsureDefaultLibraries()
 {
+  TRACE("sbLocalDatabaseLibraryLoader[0x%x] - EnsureDefaultLibraries", this);
   PRBool databasesOkay = PR_TRUE;
   nsresult retval = NS_OK;
   
@@ -291,6 +292,7 @@ sbLocalDatabaseLibraryLoader::EnsureDefaultLibrary(const nsACString& aLibraryGUI
                                                    const nsAString& aCustomType,
                                                    const nsAString& aDefaultColumnSpec)
 {
+  TRACE("sbLocalDatabaseLibraryLoader[0x%x] - EnsureDefaultLibrary", this);
   nsCAutoString resourceGUIDPrefKey(aLibraryGUIDPref);
 
   // Figure out the GUID for this library.
@@ -436,6 +438,7 @@ sbLocalDatabaseLibraryLoader::CreateDefaultLibraryInfo(const nsACString& aPrefKe
                                                        nsILocalFile* aDatabaseFile,
                                                        const nsAString& aLibraryNameKey)
 {
+  TRACE("sbLocalDatabaseLibraryLoader[0x%x] - CreateDefaultLibraryInfo", this);
   nsAutoPtr<sbLibraryLoaderInfo> newLibraryInfo(new sbLibraryLoaderInfo());
   NS_ENSURE_TRUE(newLibraryInfo, nsnull);
 
@@ -526,6 +529,7 @@ sbLocalDatabaseLibraryLoader::CreateDefaultLibraryInfo(const nsACString& aPrefKe
 NS_METHOD
 sbLocalDatabaseLibraryLoader::PromptToDeleteLibraries() 
 {
+  TRACE("sbLocalDatabaseLibraryLoader[0x%x] - PromptToDeleteLibraries", this);
   nsresult rv;
 
   nsCOMPtr<nsIPromptService> promptService =
@@ -598,6 +602,7 @@ sbLocalDatabaseLibraryLoader::PromptToDeleteLibraries()
 NS_METHOD
 sbLocalDatabaseLibraryLoader::PromptInaccessibleLibraries() 
 {
+  TRACE("sbLocalDatabaseLibraryLoader[0x%x] - PromptInaccessibleLibraries", this);
   nsresult rv;
 
   nsCOMPtr<nsIPromptService> promptService =
@@ -679,6 +684,7 @@ sbLocalDatabaseLibraryLoader::PromptInaccessibleLibraries()
 /* static */ void
 sbLocalDatabaseLibraryLoader::RemovePrefBranch(const nsACString& aPrefBranch)
 {
+  TRACE("[sbLocalDatabaseLibraryLoader] - RemovePrefBranch");
   nsresult rv;
   nsCOMPtr<nsIPrefService> prefService =
     do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
@@ -714,6 +720,7 @@ sbLocalDatabaseLibraryLoader::LoadLibrariesCallback(nsUint32HashKey::KeyType aKe
                                                     sbLibraryLoaderInfo* aEntry,
                                                     void* aUserData)
 {
+  TRACE("[sbLocalDatabaseLibraryLoader] - LoadLibrariesCallback");
   sbLoaderInfo* loaderInfo = static_cast<sbLoaderInfo*>(aUserData);
   NS_ASSERTION(loaderInfo, "Doh, how did this happen?!");
 
@@ -741,6 +748,7 @@ sbLocalDatabaseLibraryLoader::LibraryExistsCallback(nsUint32HashKey::KeyType aKe
                                                     sbLibraryLoaderInfo* aEntry,
                                                     void* aUserData)
 {
+  TRACE("[sbLocalDatabaseLibraryLoader] - LibraryExistsCallback");
   sbLibraryExistsInfo* existsInfo =
     static_cast<sbLibraryExistsInfo*>(aUserData);
   NS_ASSERTION(existsInfo, "Doh, how did this happen?!");
@@ -762,6 +770,7 @@ sbLocalDatabaseLibraryLoader::VerifyEntriesCallback(nsUint32HashKey::KeyType aKe
                                                     nsAutoPtr<sbLibraryLoaderInfo>& aEntry,
                                                     void* aUserData)
 {
+  TRACE("[sbLocalDatabaseLibraryLoader] - VerifyEntriesCallback");
   nsCAutoString prefBranch;
   aEntry->GetPrefBranch(prefBranch);
   NS_ASSERTION(!prefBranch.IsEmpty(), "This can't be empty!");
@@ -777,7 +786,9 @@ sbLocalDatabaseLibraryLoader::VerifyEntriesCallback(nsUint32HashKey::KeyType aKe
   nsAutoString resourceGUID;
   aEntry->GetResourceGUID(resourceGUID);
   if (resourceGUID.IsEmpty()) {
-    NS_WARNING("One of the libraries was missing a resource GUID and will be removed.");
+    // NS_WARNING("One of the libraries was missing a resource GUID and will be removed.");
+    NS_WARNING("One of the libraries was missing a resource GUID and will be removed");
+    TRACE("Its databaseGUID is %s", NS_ConvertUTF16toUTF8(databaseGUID).get());
     RemovePrefBranch(prefBranch);
     return PL_DHASH_REMOVE;
   }
@@ -798,7 +809,7 @@ sbLocalDatabaseLibraryLoader::VerifyEntriesCallback(nsUint32HashKey::KeyType aKe
 NS_IMETHODIMP
 sbLocalDatabaseLibraryLoader::OnRegisterStartupLibraries(sbILibraryManager* aLibraryManager)
 {
-  TRACE("sbLocalDatabaseLibraryLoader[0x%x] - LoadLibraries", this);
+  TRACE("sbLocalDatabaseLibraryLoader[0x%x] - OnRegisterStartupLibraries -- LoadLibraries", this);
 
   nsresult rv = Init();
   NS_ENSURE_SUCCESS(rv, rv);
@@ -826,6 +837,7 @@ NS_IMETHODIMP
 sbLocalDatabaseLibraryLoader::OnLibraryStartupModified(sbILibrary* aLibrary,
                                                        PRBool aLoadAtStartup)
 {
+  TRACE("sbLocalDatabaseLibraryLoader[0x%x] - OnLibraryStartupModified", this);
   NS_ENSURE_ARG_POINTER(aLibrary);
 
   // See if we support this library type.
@@ -899,6 +911,7 @@ sbLocalDatabaseLibraryLoader::Observe(nsISupports *aSubject,
                                       const char *aTopic,
                                       const PRUnichar *aData)
 {
+  TRACE("sbLocalDatabaseLibraryLoader[0x%x] - Observe", this);
   nsresult rv;
 
   if (strcmp(aTopic, NS_FINAL_UI_STARTUP_CATEGORY) == 0) {
@@ -1011,6 +1024,7 @@ sbLocalDatabaseLibraryLoader::Observe(nsISupports *aSubject,
 nsresult
 sbLibraryLoaderInfo::Init(const nsACString& aPrefKey)
 {
+  TRACE("sbLocalDatabaseLibraryLoaderInfo[0x%x] - Init", this);
   nsresult rv;
   nsCOMPtr<nsIPrefService> prefService =
     do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
@@ -1042,6 +1056,8 @@ sbLibraryLoaderInfo::Init(const nsACString& aPrefKey)
 nsresult
 sbLibraryLoaderInfo::SetDatabaseGUID(const nsAString& aGUID)
 {
+  TRACE("sbLocalDatabaseLibraryLoaderInfo[0x%x] - SetDatabaseGUID(\"%s\")", 
+    this, NS_ConvertUTF16toUTF8(aGUID).get());
   NS_ENSURE_FALSE(aGUID.IsEmpty(), NS_ERROR_INVALID_ARG);
 
   nsresult rv;
@@ -1062,6 +1078,7 @@ sbLibraryLoaderInfo::SetDatabaseGUID(const nsAString& aGUID)
 void
 sbLibraryLoaderInfo::GetDatabaseGUID(nsAString& _retval)
 {
+  TRACE("sbLocalDatabaseLibraryLoaderInfo[0x%x] - GetDatabaseGUID", this);
   _retval.Truncate();
 
   nsCOMPtr<nsISupportsString> supportsString;
@@ -1077,6 +1094,7 @@ sbLibraryLoaderInfo::GetDatabaseGUID(nsAString& _retval)
 nsresult
 sbLibraryLoaderInfo::SetDatabaseLocation(nsILocalFile* aLocation)
 {
+  TRACE("sbLocalDatabaseLibraryLoaderInfo[0x%x] - SetDatabaseLocation", this);
   NS_ENSURE_ARG_POINTER(aLocation);
 
   nsresult rv;
@@ -1096,6 +1114,7 @@ sbLibraryLoaderInfo::SetDatabaseLocation(nsILocalFile* aLocation)
 already_AddRefed<nsILocalFile>
 sbLibraryLoaderInfo::GetDatabaseLocation()
 {
+  TRACE("sbLocalDatabaseLibraryLoaderInfo[0x%x] - GetDatabaseLocation", this);
   nsresult rv;
   nsCOMPtr<nsILocalFile> location = do_CreateInstance(NS_LOCAL_FILE_CONTRACTID, &rv);
   NS_ENSURE_SUCCESS(rv, nsnull);
@@ -1115,6 +1134,7 @@ sbLibraryLoaderInfo::GetDatabaseLocation()
 nsresult
 sbLibraryLoaderInfo::SetLoadAtStartup(PRBool aLoadAtStartup)
 {
+  TRACE("sbLocalDatabaseLibraryLoaderInfo[0x%x] - SetLoadAtStartup", this);
   nsresult rv = mPrefBranch->SetBoolPref(mStartupKey.get(), aLoadAtStartup);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -1124,6 +1144,7 @@ sbLibraryLoaderInfo::SetLoadAtStartup(PRBool aLoadAtStartup)
 PRBool
 sbLibraryLoaderInfo::GetLoadAtStartup()
 {
+  TRACE("sbLocalDatabaseLibraryLoaderInfo[0x%x] - GetLoadAtStartup", this);
   PRBool loadAtStartup;
   nsresult rv = mPrefBranch->GetBoolPref(mStartupKey.get(), &loadAtStartup);
   NS_ENSURE_SUCCESS(rv, PR_FALSE);
@@ -1134,6 +1155,8 @@ sbLibraryLoaderInfo::GetLoadAtStartup()
 nsresult
 sbLibraryLoaderInfo::SetResourceGUID(const nsAString& aGUID)
 {
+  TRACE("sbLocalDatabaseLibraryLoaderInfo[0x%x] - SetResourceGUID(\"%s\")",
+    this, NS_ConvertUTF16toUTF8(aGUID).get());
   NS_ENSURE_FALSE(aGUID.IsEmpty(), NS_ERROR_INVALID_ARG);
 
   nsresult rv;
@@ -1154,6 +1177,7 @@ sbLibraryLoaderInfo::SetResourceGUID(const nsAString& aGUID)
 void
 sbLibraryLoaderInfo::GetResourceGUID(nsAString& _retval)
 {
+  TRACE("sbLocalDatabaseLibraryLoaderInfo[0x%x] - GetResourceGUID", this);
   _retval.Truncate();
 
   nsCOMPtr<nsISupportsString> supportsString;
@@ -1169,6 +1193,7 @@ sbLibraryLoaderInfo::GetResourceGUID(nsAString& _retval)
 void
 sbLibraryLoaderInfo::GetPrefBranch(nsACString& _retval)
 {
+  TRACE("sbLocalDatabaseLibraryLoaderInfo[0x%x] - GetPrefBranch", this);
   _retval.Truncate();
 
   nsCAutoString prefBranch;

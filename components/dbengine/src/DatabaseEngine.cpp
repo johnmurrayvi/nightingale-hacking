@@ -1240,6 +1240,8 @@ NS_IMETHODIMP CDatabaseEngine::Observe(nsISupports *aSubject,
 //-----------------------------------------------------------------------------
 nsresult CDatabaseEngine::InitMemoryConstraints()
 {
+  LOG("CDatabaseEngine[0x%.8x] - InitMemoryConstraints()", this);
+
   if (m_MemoryConstraintsSet) 
     return NS_ERROR_ALREADY_INITIALIZED;
     
@@ -1320,6 +1322,8 @@ nsresult CDatabaseEngine::GetDBPrefs(const nsAString &dbGUID,
                                      PRInt32 *cacheSize, 
                                      PRInt32 *pageSize)
 {
+  LOG("CDatabaseEngine[0x%.8x] - GetDBPrefs, dbGUID = %s", this, NS_ConvertUTF16toUTF8(dbGUID).get());
+
   nsresult rv = NS_OK;
   
   nsCOMPtr<nsIPrefService> prefService =
@@ -1359,10 +1363,13 @@ nsresult CDatabaseEngine::OpenDB(const nsAString &dbGUID,
                                  CDatabaseQuery *pQuery,
                                  sqlite3 ** ppHandle)
 {
+  LOG("CDatabaseEngine[0x%.8x] - OpenDB, dbGUID = %s", this, NS_ConvertUTF16toUTF8(dbGUID).get());
+
   sqlite3 *pHandle = nsnull;
 
   nsAutoString strFilename;
   GetDBStorePath(dbGUID, pQuery, strFilename);
+  LOG("    strFilename = %s", NS_ConvertUTF16toUTF8(strFilename).get());
 
 #if defined(USE_SQLITE_SHARED_CACHE)
   sqlite3_enable_shared_cache(1);
@@ -1466,6 +1473,16 @@ nsresult CDatabaseEngine::OpenDB(const nsAString &dbGUID,
     }
   }
 
+  {
+    char *strErr = nsnull;
+    query = NS_LITERAL_CSTRING("PRAGMA parser_trace = TRUE");
+    sqlite3_exec(pHandle, query.get(), nsnull, nsnull, &strErr);
+    if(strErr) {
+      NS_WARNING(strErr);
+      sqlite3_free(strErr);
+    }
+  }
+
 #if defined(USE_SQLITE_FULL_DISK_CACHING)
   {
     char *strErr = nsnull;
@@ -1505,12 +1522,14 @@ nsresult CDatabaseEngine::OpenDB(const nsAString &dbGUID,
 
   *ppHandle = pHandle;
 
+  LOG("CDatabaseEngine[0x%.8x] - OpenDB, returning NS_OK", this);
   return NS_OK;
 } //OpenDB
 
 //-----------------------------------------------------------------------------
 nsresult CDatabaseEngine::CloseDB(sqlite3 *pHandle)
 {
+  LOG("CDatabaseEngine[0x%.8x] - CloseDB", this);
   PRInt32 retries = 0;
   PRInt32 ret = SQLITE_BUSY;
 
@@ -1541,6 +1560,7 @@ nsresult CDatabaseEngine::CloseDB(sqlite3 *pHandle)
 //-----------------------------------------------------------------------------
 NS_IMETHODIMP CDatabaseEngine::CloseDatabase(const nsAString &aDatabaseGUID) 
 {
+  LOG("CDatabaseEngine[0x%.8x] - CloseDatabase, aDatabaseGUID = %s", this, NS_ConvertUTF16toUTF8(aDatabaseGUID).get());
   nsAutoMonitor mon(m_pThreadMonitor);
 
   nsRefPtr<QueryProcessorQueue> pQueue;
@@ -1562,6 +1582,8 @@ NS_IMETHODIMP CDatabaseEngine::CloseDatabase(const nsAString &aDatabaseGUID)
 /* [noscript] PRInt32 SubmitQuery (in CDatabaseQueryPtr dbQuery); */
 NS_IMETHODIMP CDatabaseEngine::SubmitQuery(CDatabaseQuery * dbQuery, PRInt32 *_retval)
 {
+  LOG("CDatabaseEngine[0x%.8x] - SubmitQuery", this);
+
   if (m_IsShutDown) {
     NS_WARNING("Don't submit queries after the DBEngine is shut down!");
     return NS_ERROR_FAILURE;
@@ -1574,6 +1596,8 @@ NS_IMETHODIMP CDatabaseEngine::SubmitQuery(CDatabaseQuery * dbQuery, PRInt32 *_r
 //-----------------------------------------------------------------------------
 PRInt32 CDatabaseEngine::SubmitQueryPrivate(CDatabaseQuery *pQuery)
 {
+  LOG("CDatabaseEngine[0x%.8x] - SubmitQueryPrivate", this);
+
   //Query is null, bail.
   if(!pQuery) {
     NS_WARNING("A null queury was submitted to the database engine");
@@ -1623,6 +1647,8 @@ PRInt32 CDatabaseEngine::SubmitQueryPrivate(CDatabaseQuery *pQuery)
 NS_IMETHODIMP
 CDatabaseEngine::DumpDatabase(const nsAString & aDatabaseGUID, nsIFile *aOutFile)
 {
+  LOG("CDatabaseEngine[0x%.8x] - DumpDatabase", this);
+
   NS_ENSURE_ARG_POINTER(aOutFile);
 
   nsRefPtr<CDatabaseQuery> dummyQuery = new CDatabaseQuery();
@@ -1646,6 +1672,8 @@ CDatabaseEngine::DumpDatabase(const nsAString & aDatabaseGUID, nsIFile *aOutFile
 //-----------------------------------------------------------------------------
 NS_IMETHODIMP CDatabaseEngine::DumpMemoryStatistics()
 {
+  LOG("CDatabaseEngine[0x%.8x] - DumpMemoryStatistics", this);
+
   int current    = -1;
   int highwater  = -1;
 
@@ -1679,6 +1707,8 @@ NS_IMETHODIMP CDatabaseEngine::DumpMemoryStatistics()
 //-----------------------------------------------------------------------------
 NS_IMETHODIMP CDatabaseEngine::GetCurrentMemoryUsage(PRInt32 flag, PRInt32 *_retval)
 {
+  LOG("CDatabaseEngine[0x%.8x] - GetCurrentMemoryUsage", this);
+
   int disused  = -1;
   sqlite3_status((int)flag, (int*)_retval, &disused, 0);
   return NS_OK;
@@ -1687,6 +1717,8 @@ NS_IMETHODIMP CDatabaseEngine::GetCurrentMemoryUsage(PRInt32 flag, PRInt32 *_ret
 //-----------------------------------------------------------------------------
 NS_IMETHODIMP CDatabaseEngine::GetHighWaterMemoryUsage(PRInt32 flag, PRInt32 *_retval)
 {
+  LOG("CDatabaseEngine[0x%.8x] - GetHighWaterMemoryUsage", this);
+
   int disused  = -1;
   sqlite3_status((int)flag, &disused, (int*)_retval, 0);
   return NS_OK;
@@ -1695,6 +1727,8 @@ NS_IMETHODIMP CDatabaseEngine::GetHighWaterMemoryUsage(PRInt32 flag, PRInt32 *_r
 //-----------------------------------------------------------------------------
 NS_IMETHODIMP CDatabaseEngine::ReleaseMemory()
 {
+  LOG("CDatabaseEngine[0x%.8x] - ReleaseMemory", this);
+
   // Attempt to free a large amount of memory.
   // This will cause SQLite to free as much as it can.
   int SB_UNUSED_IN_RELEASE(memReleased) = sqlite3_release_memory(500000000);
@@ -1707,6 +1741,8 @@ NS_IMETHODIMP CDatabaseEngine::ReleaseMemory()
 already_AddRefed<QueryProcessorQueue> CDatabaseEngine::GetQueueByQuery(CDatabaseQuery *pQuery,
                                                          PRBool bCreate /*= PR_FALSE*/)
 {
+  LOG("CDatabaseEngine[0x%.8x] - GetQueueByQuery", this);
+
   NS_ENSURE_TRUE(pQuery, nsnull);
 
   nsAutoString strGUID;
@@ -1732,6 +1768,8 @@ already_AddRefed<QueryProcessorQueue> CDatabaseEngine::GetQueueByQuery(CDatabase
 //-----------------------------------------------------------------------------
 already_AddRefed<QueryProcessorQueue> CDatabaseEngine::CreateQueueFromQuery(CDatabaseQuery *pQuery)
 {
+  LOG("CDatabaseEngine[0x%.8x] - CreateQueueFromQuery", this);
+
   nsAutoString strGUID;
   nsAutoMonitor mon(m_pThreadMonitor);
 
@@ -1761,6 +1799,8 @@ nsresult
 CDatabaseEngine::MarkDatabaseForPotentialDeletion(const nsAString &aDatabaseGUID,
                                                   CDatabaseQuery *pQuery)
 {
+  LOG("CDatabaseEngine[0x%.8x] - MarkDatabaseForPotentialDeletion", this);
+
   nsAutoMonitor mon(m_pThreadMonitor);
 
   m_PromptForDelete = PR_TRUE;
@@ -1778,6 +1818,8 @@ CDatabaseEngine::MarkDatabaseForPotentialDeletion(const nsAString &aDatabaseGUID
 nsresult 
 CDatabaseEngine::PromptToDeleteDatabases() 
 {
+  LOG("CDatabaseEngine[0x%.8x] - PromptToDeleteDatabases", this);
+
   nsresult rv;
 
   nsAutoMonitor mon(m_pThreadMonitor);
@@ -1856,6 +1898,8 @@ CDatabaseEngine::PromptToDeleteDatabases()
 nsresult
 CDatabaseEngine::DeleteMarkedDatabases()
 {
+  LOG("CDatabaseEngine[0x%.8x] - DeleteMarkedDatabases", this);
+
   nsresult rv;
   nsCOMPtr<nsIPrefService> prefService =
     do_GetService(NS_PREFSERVICE_CONTRACTID, &rv);
@@ -2030,6 +2074,8 @@ PLDHashOperator CDatabaseEngine::EnumerateIntoArrayStringKey(
                                    T* aQueue,
                                    void* aArray)
 {
+  LOG("CDatabaseEngine - EnumerateIntoArrayStringKey");
+
   nsTArray<nsString> *stringArray = 
     reinterpret_cast< nsTArray<nsString>* >(aArray);
   
@@ -2047,6 +2093,8 @@ PLDHashOperator CDatabaseEngine::EnumerateIntoArrayStringKey(
 nsresult 
 CDatabaseEngine::RunAnalyze()
 {
+  LOG("CDatabaseEngine[0x%.8x] - RunAnalyze", this);
+
   nsAutoMonitor mon(m_pThreadMonitor);
   
   nsTArray<nsString> dbGUIDs;
@@ -2083,7 +2131,9 @@ CDatabaseEngine::RunAnalyze()
 //-----------------------------------------------------------------------------
 /*static*/ void PR_CALLBACK CDatabaseEngine::QueryProcessor(CDatabaseEngine* pEngine,
                                                             QueryProcessorQueue *pQueue)
-{  
+{
+  LOG("CDatabaseEngine - QueryProcessor");
+
   if(!pEngine ||
      !pQueue ) {
     NS_WARNING("Called QueryProcessor without an engine or thread!!!!");
@@ -2138,10 +2188,12 @@ CDatabaseEngine::RunAnalyze()
     //Default return error.
     pQuery->SetLastError(SQLITE_ERROR);
     pQuery->GetQueryCount(&nQueryCount);
+    LOG("DBE: set default return and got query count, nQueryCount = %d", nQueryCount);
 
     // Create a result set object
     nsRefPtr<CDatabaseResult> databaseResult = 
       new CDatabaseResult(pQuery->m_AsyncQuery);
+    LOG("DBE: created result set object (databaseResult)");
     
     // Out of memory, attempt to restart the thread
     if(NS_UNLIKELY(!databaseResult)) {
@@ -2150,8 +2202,10 @@ CDatabaseEngine::RunAnalyze()
       return;
     }
 
+    LOG("DBE: Not out of memory, about to start loop");
     for(PRUint32 currentQuery = 0; currentQuery < nQueryCount && !pQuery->m_IsAborting; ++currentQuery)
     {
+      LOG("DBE: in loop! currentQuery = %d", currentQuery);
       nsAutoPtr<bindParameterArray_t> pParameters;
       
       int retDB = 0; // sqlite return code.
@@ -2399,6 +2453,8 @@ CDatabaseEngine::RunAnalyze()
 already_AddRefed<nsIEventTarget> 
 CDatabaseEngine::GetEventTarget()
 {
+  LOG("CDatabaseEngine[0x%.8x] - GetEventTarget", this);
+
   NS_ENSURE_TRUE(m_pThreadPool, nsnull);
   
   nsresult rv = NS_ERROR_UNEXPECTED;
@@ -2409,7 +2465,10 @@ CDatabaseEngine::GetEventTarget()
 }
 
 //-----------------------------------------------------------------------------
-void CDatabaseEngine::ReportError(sqlite3* db, sqlite3_stmt* stmt) {
+void CDatabaseEngine::ReportError(sqlite3* db, sqlite3_stmt* stmt)
+{
+  LOG("CDatabaseEngine[0x%.8x] - ReportError", this);
+
   const char *sql = sqlite3_sql(stmt);
   const char *errMsg = sqlite3_errmsg(db);
 
@@ -2449,6 +2508,8 @@ EnumSimpleCallback(nsISupports *key, sbIDatabaseSimpleQueryCallback *data, void 
 //-----------------------------------------------------------------------------
 void CDatabaseEngine::DoSimpleCallback(CDatabaseQuery *pQuery)
 {
+  LOG("CDatabaseEngine[0x%.8x] - DoSimpleCallback", this);
+
   PRUint32 callbackCount = 0;
   nsCOMArray<sbIDatabaseSimpleQueryCallback> callbackSnapshot;
 
@@ -2485,6 +2546,8 @@ void CDatabaseEngine::DoSimpleCallback(CDatabaseQuery *pQuery)
 //-----------------------------------------------------------------------------
 nsresult CDatabaseEngine::CreateDBStorePath()
 {
+  LOG("CDatabaseEngine[0x%.8x] - CreateDBStorePath", this);
+
   nsresult rv = NS_ERROR_FAILURE;
   sbSimpleAutoLock lock(m_pDBStorePathLock);
 
@@ -2515,6 +2578,8 @@ nsresult CDatabaseEngine::CreateDBStorePath()
 //-----------------------------------------------------------------------------
 nsresult CDatabaseEngine::GetDBStorePath(const nsAString &dbGUID, CDatabaseQuery *pQuery, nsAString &strPath)
 {
+  LOG("CDatabaseEngine[0x%.8x] - GetDBStorePath", this);
+
   nsresult rv = NS_ERROR_FAILURE;
   nsCOMPtr<nsILocalFile> f;
   nsCString spec;
@@ -2555,6 +2620,8 @@ nsresult CDatabaseEngine::GetDBStorePath(const nsAString &dbGUID, CDatabaseQuery
 
 NS_IMETHODIMP CDatabaseEngine::GetLocaleCollationEnabled(PRBool *aEnabled)
 {
+  LOG("CDatabaseEngine[0x%.8x] - GetLocaleCollationEnabled", this);
+
   NS_ENSURE_ARG_POINTER(aEnabled);
   *aEnabled = (PRBool)gLocaleCollationEnabled;
   return NS_OK;
@@ -2562,13 +2629,18 @@ NS_IMETHODIMP CDatabaseEngine::GetLocaleCollationEnabled(PRBool *aEnabled)
 
 NS_IMETHODIMP CDatabaseEngine::SetLocaleCollationEnabled(PRBool aEnabled)
 {
+  LOG("CDatabaseEngine[0x%.8x] - SetLocaleCollationEnabled", this);
+
   PR_AtomicSet(&gLocaleCollationEnabled, (PRInt32)aEnabled);
   return NS_OK;
 }
 
 PRInt32 CDatabaseEngine::CollateForCurrentLocale(collationBuffers *aCollationBuffers, 
                                                  const NATIVE_CHAR_TYPE *aStr1, 
-                                                 const NATIVE_CHAR_TYPE *aStr2) {
+                                                 const NATIVE_CHAR_TYPE *aStr2)
+{
+  LOG("CDatabaseEngine[0x%.8x] - CollateForCurrentLocale", this);
+
   // shortcut when both strings are empty
   if (!aStr1 && !aStr2) 
     return 0;
@@ -2635,7 +2707,10 @@ PRInt32 CDatabaseEngine::CollateWithLeadingNumbers(collationBuffers *aCollationB
                                                    const NATIVE_CHAR_TYPE *aStr1, 
                                                    PRInt32 *number1Length,
                                                    const NATIVE_CHAR_TYPE *aStr2,
-                                                   PRInt32 *number2Length) {
+                                                   PRInt32 *number2Length)
+{
+  LOG("CDatabaseEngine[0x%.8x] - CollateWithLeadingNumbers", this);
+
   PRBool hasLeadingNumberA = PR_FALSE;
   PRBool hasLeadingNumberB = PR_FALSE;
   
@@ -2675,7 +2750,9 @@ PRInt32 CDatabaseEngine::CollateWithLeadingNumbers(collationBuffers *aCollationB
 
 PRInt32 CDatabaseEngine::Collate(collationBuffers *aCollationBuffers,
                                  const NATIVE_CHAR_TYPE *aStr1,
-                                 const NATIVE_CHAR_TYPE *aStr2) {
+                                 const NATIVE_CHAR_TYPE *aStr2)
+{
+  LOG("CDatabaseEngine[0x%.8x] - Collate", this);
 
   const NATIVE_CHAR_TYPE *remainderA = aStr1;
   const NATIVE_CHAR_TYPE *remainderB = aStr2;
@@ -2794,7 +2871,9 @@ PRInt32 CDatabaseEngine::Collate(collationBuffers *aCollationBuffers,
 }
 
 nsresult
-CDatabaseEngine::GetCurrentCollationLocale(nsCString &aCollationLocale) {
+CDatabaseEngine::GetCurrentCollationLocale(nsCString &aCollationLocale)
+{
+  LOG("CDatabaseEngine[0x%.8x] - GetCurrentCollationLocale", this);
 
 #ifdef XP_MACOSX
 
@@ -2871,7 +2950,10 @@ CDatabaseEngine::GetCurrentCollationLocale(nsCString &aCollationLocale) {
   return NS_OK;
 }
 
-NS_IMETHODIMP CDatabaseEngine::GetLocaleCollationID(nsAString &aID) {
+NS_IMETHODIMP CDatabaseEngine::GetLocaleCollationID(nsAString &aID)
+{
+  LOG("CDatabaseEngine[0x%.8x] - GetLocaleCollationID", this);
+
   aID = NS_ConvertASCIItoUTF16(mCollationLocale);
   return NS_OK;
 }
