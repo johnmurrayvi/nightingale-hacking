@@ -94,7 +94,7 @@ function runTest() {
   
   // Media files with the wrong extensions
   files.push(newAppRelativeFile("testharness/metadatamanager/errorcases/mp3-disguised-as.flac"));
-  gErrorExpected++;
+  // gErrorExpected++;
   log("");
   log("##### Adding to retries for mp3-disguised-as-flac case.");
   gRetriesExpected += retries(["taglib", "gstreamer"]);
@@ -102,7 +102,7 @@ function runTest() {
   log("");
 
   files.push(newAppRelativeFile("testharness/metadatamanager/errorcases/mp3-disguised-as.ogg"));
-  gErrorExpected++;
+  // gErrorExpected++;
   log("");
   log("##### Adding to retries for mp3-disguised-as-ogg case.");
   gRetriesExpected += retries(["taglib", "gstreamer"]);
@@ -110,7 +110,7 @@ function runTest() {
   log("");
 
   files.push(newAppRelativeFile("testharness/metadatamanager/errorcases/ogg-disguised-as.m4a"));
-  gErrorExpected++;
+  // gErrorExpected++;
   log("");
   log("##### Adding to retries for ogg-disguised-as-m4a case.");
   gRetriesExpected += retries(["taglib", "gstreamer"]);

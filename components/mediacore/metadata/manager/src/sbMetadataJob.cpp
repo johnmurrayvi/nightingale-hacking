@@ -997,12 +997,14 @@ nsresult sbMetadataJob::HandleFailedItem(sbMetadataJobItem *aJobItem,
       nsCOMPtr<sbIMetadataManager> metadataManager =
         do_GetService("@songbirdnest.com/Songbird/MetadataManager;1", &rv);
       if (NS_FAILED(rv)) {
+        TRACE(("%s[%.8x] - Failed to get MetadataManager.", __FUNCTION__, this));
         break;
       }
 
       nsCString stringURL;
       rv = aJobItem->GetURL(stringURL);
       if (NS_FAILED(rv)) {
+        TRACE(("%s[%.8x] - Failed to get job item URL.", __FUNCTION__, this));
         break;
       }
 
@@ -1012,6 +1014,7 @@ nsresult sbMetadataJob::HandleFailedItem(sbMetadataJobItem *aJobItem,
                                                       unicodeURL,
                                                       getter_AddRefs(handler));
       if(NS_FAILED(rv) || !handler) {
+        TRACE(("%s[%.8x] - Failed to get next handle for media url, or handler DNE.", __FUNCTION__, this));
         break;
       }
 
@@ -1025,6 +1028,7 @@ nsresult sbMetadataJob::HandleFailedItem(sbMetadataJobItem *aJobItem,
 
       // Resubmitted. Return.
       if (NS_SUCCEEDED(rv)) {
+        TRACE(("%s[%.8x] - Job was resubmitted.", __FUNCTION__, this));
         *aWillRetry = PR_TRUE;
 
         // Restart FileMetadataService processors to ensure that our resubmitted
@@ -1034,6 +1038,7 @@ nsresult sbMetadataJob::HandleFailedItem(sbMetadataJobItem *aJobItem,
         nsCOMPtr<sbIFileMetadataService> fileMetadataService = 
           do_GetService("@songbirdnest.com/Songbird/FileMetadataService;1", &rv);
         if (NS_FAILED(rv)) {
+          TRACE(("%s[%.8x] - Failed to get FileMetadataService.", __FUNCTION__, this));
           break;
         }
 
@@ -1042,6 +1047,7 @@ nsresult sbMetadataJob::HandleFailedItem(sbMetadataJobItem *aJobItem,
                         sbIFileMetadataService::BACKGROUND_THREAD_PROCESSOR);
 
         if (NS_FAILED(rv)) {
+          TRACE(("%s[%.8x] - Failed to restart FileMetadataService processors.", __FUNCTION__, this));
           break;
         }
 
@@ -1081,6 +1087,7 @@ nsresult sbMetadataJob::HandleFailedItem(sbMetadataJobItem *aJobItem,
   // as the trackname (this avoids blank rows, and makes it easier 
   // to tell what failed)
   if (mJobType == TYPE_READ) {
+    TRACE(("%s[%.8x] - mJobType == TYPE_READ", __FUNCTION__, this));
     PRInt32 slash = stringURL.RFind(NS_LITERAL_STRING("/"));
     if (slash > 0 && slash < (PRInt32)(stringURL.Length() - 1)) {
       stringURL = nsDependentSubstring(stringURL, slash + 1,
@@ -1091,6 +1098,7 @@ nsresult sbMetadataJob::HandleFailedItem(sbMetadataJobItem *aJobItem,
     rv = aJobItem->GetMediaItem(getter_AddRefs(item));
     NS_ENSURE_SUCCESS(rv, rv);
     
+    TRACE(("%s[%.8x] - Setting item's SB_PROPERTY_TRACKNAME to stringURL", __FUNCTION__, this));
     rv = item->SetProperty(NS_LITERAL_STRING(SB_PROPERTY_TRACKNAME), stringURL);
     NS_ENSURE_SUCCESS(rv, rv);
   }
@@ -1740,6 +1748,7 @@ sbMetadataJob::AppendToPropertiesIfValid(sbIPropertyManager* aPropertyManager,
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (isValid) {
+    TRACE(("%s[%.8x] - [isValid] aID = %s, aValue = %s", __FUNCTION__, this, NS_ConvertUTF16toUTF8(aID).get(), NS_ConvertUTF16toUTF8(aValue).get()));
     rv = aProperties->AppendProperty(aID, aValue);
     NS_ENSURE_SUCCESS(rv, rv);
   }

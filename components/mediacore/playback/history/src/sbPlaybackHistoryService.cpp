@@ -1629,6 +1629,11 @@ sbPlaybackHistoryService::VerifyDataAndCreateNewEntry()
   nsresult rv = mCurrentItem->GetProperty(PROPERTY_DURATION, durationStr);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  // Bail out if durationStr doesn't contain anything (e.g. streaming song)
+  if (durationStr == NS_LITERAL_STRING("")) {
+    return NS_OK;
+  }
+
   PRInt64 duration = nsString_ToInt64(durationStr, &rv);
   duration /= PR_USEC_PER_MSEC;
   NS_ENSURE_SUCCESS(rv, rv);

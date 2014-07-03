@@ -81,7 +81,7 @@ static PRLogModuleInfo* gLog = PR_NewLogModule("TagLibChannelFileIO");
 
 FileName TagLibChannelFileIO::name() const
 {
-    LOG(("1: name\n"));
+    LOG(("TagLibChannelFileIO - 1: name\n"));
 
     /* Fail immediately if restarting channel. */
     if (mChannelRestart)
@@ -151,7 +151,7 @@ ByteVector TagLibChannelFileIO::readBlock(
 void TagLibChannelFileIO::writeBlock(
     const ByteVector            &data)
 {
-    LOG(("1: writeBlock\n"));
+    LOG(("TagLibChannelFileIO - 1: writeBlock\n"));
 }
 
 
@@ -168,7 +168,7 @@ void TagLibChannelFileIO::insert(
     TagLib::ulong               start,
     TagLib::ulong               replace)
 {
-    LOG(("1: insert\n"));
+    LOG(("TagLibChannelFileIO - 1: insert\n"));
 }
 
 
@@ -184,7 +184,7 @@ void TagLibChannelFileIO::removeBlock(
     TagLib::ulong               start,
     TagLib::ulong               length)
 {
-    LOG(("1: removeBlock\n"));
+    LOG(("TagLibChannelFileIO - 1: removeBlock\n"));
 }
 
 
@@ -194,7 +194,7 @@ void TagLibChannelFileIO::removeBlock(
 
 bool TagLibChannelFileIO::readOnly() const
 {
-    LOG(("1: readOnly\n"));
+    LOG(("TagLibChannelFileIO - 1: readOnly\n"));
 
     return (true);
 }
@@ -229,7 +229,7 @@ bool TagLibChannelFileIO::isOpen() const
  */
 bool TagLibChannelFileIO::isReadable()
 {
-    LOG(("1: isReadable"));
+    LOG(("TagLibChannelFileIO - 1: isReadable"));
     return (true);
 }
 
@@ -240,7 +240,7 @@ bool TagLibChannelFileIO::isReadable()
  */
 bool TagLibChannelFileIO::isWritable()
 {
-    LOG(("1: isWritable"));
+    LOG(("TagLibChannelFileIO - 1: isWritable"));
 
     return (false);
 }
@@ -307,7 +307,7 @@ int TagLibChannelFileIO::seek(
 
 void TagLibChannelFileIO::clear()
 {
-    LOG(("1: clear\n"));
+    LOG(("TagLibChannelFileIO - 1: clear\n"));
 }
 
 
@@ -374,7 +374,7 @@ bool TagLibChannelFileIO::closeTempFile( bool overwrite )
 void TagLibChannelFileIO::truncate(
     long                        length)
 {
-    LOG(("1: truncate\n"));
+    LOG(("TagLibChannelFileIO - 1: truncate\n"));
 }
 
 

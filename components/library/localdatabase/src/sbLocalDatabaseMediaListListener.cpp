@@ -504,7 +504,7 @@ sbLocalDatabaseMediaListListener::NotifyListenersItemUpdated(sbIMediaList* aList
   SB_ENSURE_TRUE_VOID(aItem);
   SB_ENSURE_TRUE_VOID(aProperties);
 
-#if 0
+#if 1
   nsAutoString list;
   aList->ToString(list);
   nsAutoString item;
@@ -512,10 +512,9 @@ sbLocalDatabaseMediaListListener::NotifyListenersItemUpdated(sbIMediaList* aList
   nsAutoString props;
   aProperties->ToString(props);
   TRACE(("LocalDatabaseMediaListListener[0x%.8x] - "
-         "NotifyListenersItemUpdated %s %s %d %s", this,
+         "NotifyListenersItemUpdated %s %s %s", this,
          NS_LossyConvertUTF16toASCII(list).get(),
          NS_LossyConvertUTF16toASCII(item).get(),
-         aIndex,
          NS_LossyConvertUTF16toASCII(props).get()));
 #endif
 

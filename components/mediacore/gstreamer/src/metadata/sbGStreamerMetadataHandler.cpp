@@ -114,7 +114,7 @@ sbGStreamerMetadataHandler::~sbGStreamerMetadataHandler()
 nsresult
 sbGStreamerMetadataHandler::Init()
 {
-  TRACE((__FUNCTION__));
+  TRACE(("sbGStreamerMetadataHandler[0x%.8x]::Init", this));
   mLock = nsAutoLock::NewLock("sbGStreamerMetadataHandler::mLock");
   NS_ENSURE_TRUE(mLock, NS_ERROR_OUT_OF_MEMORY);
   
@@ -139,7 +139,7 @@ sbGStreamerMetadataHandler::GetContractID(nsACString &aContractID)
 NS_IMETHODIMP
 sbGStreamerMetadataHandler::GetProps(sbIMutablePropertyArray * *aProps)
 {
-  TRACE((__FUNCTION__));
+  TRACE(("sbGStreamerMetadataHandler[0x%.8x]::GetProps", this));
   NS_ENSURE_ARG_POINTER(aProps);
   *aProps = mProperties;
   NS_ENSURE_STATE(*aProps);
@@ -147,10 +147,11 @@ sbGStreamerMetadataHandler::GetProps(sbIMutablePropertyArray * *aProps)
   NS_ADDREF(*aProps);
   return NS_OK;
 }
+
 NS_IMETHODIMP
 sbGStreamerMetadataHandler::SetProps(sbIMutablePropertyArray * aProps)
 {
-  TRACE((__FUNCTION__));
+  TRACE(("sbGStreamerMetadataHandler[0x%.8x]::SetProps", this));
   // we don't support writing, go away
   return NS_ERROR_NOT_IMPLEMENTED;
 }
@@ -159,7 +160,7 @@ sbGStreamerMetadataHandler::SetProps(sbIMutablePropertyArray * aProps)
 NS_IMETHODIMP
 sbGStreamerMetadataHandler::GetCompleted(PRBool *aCompleted)
 {
-  TRACE((__FUNCTION__));
+  TRACE(("sbGStreamerMetadataHandler[0x%.8x]::GetCompleted", this));
   NS_ENSURE_ARG_POINTER(aCompleted);
   *aCompleted = mCompleted;
   TRACE(("%s: completed? %s", __FUNCTION__, *aCompleted ? "true" : "false"));
@@ -170,7 +171,7 @@ sbGStreamerMetadataHandler::GetCompleted(PRBool *aCompleted)
 NS_IMETHODIMP
 sbGStreamerMetadataHandler::GetRequiresMainThread(PRBool *aRequiresMainThread)
 {
-  TRACE((__FUNCTION__));
+  TRACE(("sbGStreamerMetadataHandler[0x%.8x]::GetRequiresMainThread", this));
   NS_ENSURE_ARG_POINTER(aRequiresMainThread);
   // This handler MUST run on the main thread, since it can kick off
   // http channels and other not-so-threadsafe async tasks.
@@ -182,7 +183,7 @@ sbGStreamerMetadataHandler::GetRequiresMainThread(PRBool *aRequiresMainThread)
 NS_IMETHODIMP
 sbGStreamerMetadataHandler::GetChannel(nsIChannel * *aChannel)
 {
-  TRACE((__FUNCTION__));
+  TRACE(("sbGStreamerMetadataHandler[0x%.8x]::GetChannel", this));
   NS_ENSURE_ARG_POINTER(aChannel);
   NS_IF_ADDREF(*aChannel = mChannel);
   return NS_OK;
@@ -191,7 +192,7 @@ sbGStreamerMetadataHandler::GetChannel(nsIChannel * *aChannel)
 NS_IMETHODIMP
 sbGStreamerMetadataHandler::SetChannel(nsIChannel * aChannel)
 {
-  TRACE((__FUNCTION__));
+  TRACE(("sbGStreamerMetadataHandler[0x%.8x]::SetChannel", this));
   nsresult rv;
   rv = Close();
   NS_ENSURE_SUCCESS(rv, rv);
@@ -214,7 +215,7 @@ sbGStreamerMetadataHandler::SetChannel(nsIChannel * aChannel)
 static PRBool
 HasExtensionInEnumerator(const nsAString& aHaystack, nsIStringEnumerator *aEnum)
 {
-  TRACE((__FUNCTION__));
+  TRACE(("sbGStreamerMetadataHandler <static> HasExtensionInEnumerator"));
   nsresult rv;
 
   while (PR_TRUE) {
@@ -242,7 +243,7 @@ HasExtensionInEnumerator(const nsAString& aHaystack, nsIStringEnumerator *aEnum)
 NS_IMETHODIMP
 sbGStreamerMetadataHandler::Vote(const nsAString & aUrl, PRInt32 *_retval)
 {
-  TRACE((__FUNCTION__));
+  TRACE(("sbGStreamerMetadataHandler[0x%.8x]::Vote", this));
   NS_ENSURE_ARG_POINTER(_retval);
   *_retval = -1;
   
@@ -305,7 +306,7 @@ sbGStreamerMetadataHandler::Vote(const nsAString & aUrl, PRInt32 *_retval)
 NS_IMETHODIMP
 sbGStreamerMetadataHandler::Read(PRInt32 *_retval)
 {
-  TRACE((__FUNCTION__));
+  TRACE(("sbGStreamerMetadataHandler[0x%.8x]::Read", this));
   NS_ENSURE_ARG_POINTER(_retval);
   
   nsresult rv;
@@ -420,7 +421,7 @@ sbGStreamerMetadataHandler::OnChannelData(nsISupports *aChannel)
 NS_IMETHODIMP
 sbGStreamerMetadataHandler::Close()
 {
-  TRACE((__FUNCTION__));
+  TRACE(("sbGStreamerMetadataHandler[0x%.8x]::Close", this));
   GstElement *pipeline = NULL;
   
   { /* scope */
@@ -485,6 +486,7 @@ sbGStreamerMetadataHandler::Close()
 void
 sbGStreamerMetadataHandler::HandleMessage(GstMessage *message)
 {
+  TRACE(("sbGStreamerMetadataHandler[0x%.8x]::HandleMessage", this));
   TRACE(("%s: received message %s", __FUNCTION__,
          message ? GST_MESSAGE_TYPE_NAME(message) : "(null)"));
   nsresult rv;
@@ -597,7 +599,7 @@ sbGStreamerMetadataHandler::on_pad_added(GstElement *decodeBin,
                                          GstPad *newPad,
                                          sbGStreamerMetadataHandler *self)
 {
-  TRACE((__FUNCTION__));
+  TRACE(("sbGStreamerMetadataHandler::on_pad_added"));
   
   sbGstElement queue, sink, pipeline;
   sbGstPad queueSink, oldPad, pad;
@@ -679,7 +681,7 @@ sbGStreamerMetadataHandler::on_pad_caps_changed(GstPad *pad,
                                                 GParamSpec *pspec,
                                                 sbGStreamerMetadataHandler *self)
 {
-  TRACE((__FUNCTION__));
+  TRACE(("sbGStreamerMetadataHandler::on_pad_caps_changed"));
   nsAutoLock lock(self->mLock);
   if (self->mCompleted) {
     NS_WARNING("caps changed after completion (or abort)");
@@ -726,7 +728,7 @@ sbGStreamerMetadataHandler::on_pad_caps_changed(GstPad *pad,
 void
 sbGStreamerMetadataHandler::HandleTagMessage(GstMessage *message)
 {
-  TRACE((__FUNCTION__));
+  TRACE(("sbGStreamerMetadataHandler[0x%.8x]::HandleTagMessage", this));
   GstTagList *tag_list = NULL;
 
   nsAutoLock lock(mLock);
@@ -752,6 +754,8 @@ sbGStreamerMetadataHandler::HandleTagMessage(GstMessage *message)
 nsresult
 sbGStreamerMetadataHandler::FinalizeTags(PRBool aSucceeded)
 {
+  TRACE(("sbGStreamerMetadataHandler[0x%.8x]::FinalizeTags", this));
+  
   TRACE(("%s[%p]", __FUNCTION__, this));
   nsresult rv;
   
@@ -837,7 +841,7 @@ sbGStreamerMetadataHandler::FinalizeTags(PRBool aSucceeded)
 NS_IMETHODIMP
 sbGStreamerMetadataHandler::Notify(nsITimer* aTimer)
 {
-  TRACE((__FUNCTION__));
+  TRACE(("sbGStreamerMetadataHandler[0x%.8x]::Notify", this));
   
   nsresult rv;
   

@@ -152,6 +152,8 @@ NS_IMETHODIMP sbSeekableChannel::Open(
     if (NS_SUCCEEDED(result))
         result = mpChannel->AsyncOpen(this, nsnull);
 
+    DumpChannelData();
+
     return (result);
 }
 

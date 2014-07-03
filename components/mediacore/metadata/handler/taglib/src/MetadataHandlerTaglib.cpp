@@ -264,7 +264,7 @@ NS_IMETHODIMP sbMetadataHandlerTaglib::Vote(
 
         rv = ios->ExtractScheme(NS_ConvertUTF16toUTF8(_url), scheme);
         if (NS_SUCCEEDED(rv)) {
-            rv = ios->GetProtocolHandler(scheme.BeginReading(),
+            rv = ios->GetProtocolHandler((const char *) scheme.BeginReading(),
                                          getter_AddRefs(protocolHandler));
         }
         if (NS_FAILED(rv)) {
@@ -463,6 +463,8 @@ nsresult sbMetadataHandlerTaglib::ReadInternal(
     /* asynchronous read with the metadata channel.  */
     if (NS_SUCCEEDED(result) && !mCompleted)
     {
+        LOG(("sbMetadataHandlerTaglib::ReadInternal - starting async read"));
+
         /* Create a metadata channel. */
         mpSeekableChannel =
             do_CreateInstance("@songbirdnest.com/Songbird/SeekableChannel;1",
@@ -2143,6 +2145,7 @@ void sbMetadataHandlerTaglib::ReadXiphTags(
  nsresult sbMetadataHandlerTaglib::OpenTagFile(TagLib::File *pTagFile)
  {
      NS_ENSURE_ARG_POINTER(pTagFile);
+     LOG(("sbMetadataHandlerTaglib[0x%.8x]::OpenTagFile", this));
 
      /* Get the file path in the proper format for the platform. */
  #if XP_WIN
@@ -2150,10 +2153,15 @@ void sbMetadataHandlerTaglib::ReadXiphTags(
  #else
      nsACString &filePath = mMetadataPath;
  #endif
+     LOG(("sbMetadataHandlerTaglib[0x%.8x]::OpenTagFile -- filePath = %s", this, filePath.BeginReading()));
 
+     LOG(("sbMetadataHandlerTaglib[0x%.8x]::OpenTagFile -- Setting max scan bytes", this));
      pTagFile->setMaxScanBytes(MAX_SCAN_BYTES);
+
+     LOG(("sbMetadataHandlerTaglib[0x%.8x]::OpenTagFile -- Calling pTagFile->open", this));
      pTagFile->open(filePath.BeginReading());
 
+     LOG(("sbMetadataHandlerTaglib[0x%.8x]::OpenTagFile -- Returning", this));
      return NS_OK;
  }
 
@@ -2234,6 +2242,7 @@ nsresult sbMetadataHandlerTaglib::ReadMetadata()
         } else if (fileExt.Equals(NS_LITERAL_CSTRING("mpc"))) {
             isValid = ReadMPCFile();
         } else if (fileExt.Equals(NS_LITERAL_CSTRING("mp3"))) {
+            LOG(("sbMetadataHandlerTaglib:: Trying ReadMPEGFile()"));
             isValid = ReadMPEGFile();
         } else if (fileExt.Equals(NS_LITERAL_CSTRING("m4a")) ||
                    fileExt.Equals(NS_LITERAL_CSTRING("m4r")) ||
@@ -2286,6 +2295,7 @@ nsresult sbMetadataHandlerTaglib::ReadMetadata()
 
     /* If we weren't able to read, make sure we return a failure code */
     if (!isValid) {
+      LOG(("sbMetadataHandlerTaglib:: Not able to read file, returning NS_ERROR_FAILURE"));
       result = NS_ERROR_FAILURE;
     }
 
@@ -2769,15 +2779,25 @@ PRBool sbMetadataHandlerTaglib::ReadMPEGFile()
     PRBool                          isValid = PR_TRUE;
     nsresult                        result = NS_OK;
 
+    LOG(("sbMetadataHandlerTaglib[0x%.8x]::ReadMPEGFile()", this));
+
     pTagFile = new TagLib::MPEG::File();
-    if (!pTagFile)
+    if (!pTagFile) {
+        LOG(("sbMetadataHandlerTaglib[0x%.8x]::ReadMPEGFile - Failed to get pTagFile", this));
         result = NS_ERROR_OUT_OF_MEMORY;
-    if (NS_SUCCEEDED(result))
+    }
+    if (NS_SUCCEEDED(result)) {
+        LOG(("sbMetadataHandlerTaglib[0x%.8x]::ReadMPEGFile - Calling OpenTagFile", this));
         result = OpenTagFile(pTagFile);
-    if (NS_SUCCEEDED(result))
+    }
+    if (NS_SUCCEEDED(result)) {
+        LOG(("sbMetadataHandlerTaglib[0x%.8x]::ReadMPEGFile - Calling pTagFile->read()", this));
         pTagFile->read();
-    if (NS_SUCCEEDED(result))
+    }
+    if (NS_SUCCEEDED(result)) {
+        LOG(("sbMetadataHandlerTaglib[0x%.8x]::ReadMPEGFile - Calling CheckChannelRestart()", this));
         result = CheckChannelRestart();
+    }
 
     /* Guess the charset */
     nsCString charset;
@@ -2788,20 +2808,28 @@ PRBool sbMetadataHandlerTaglib::ReadMPEGFile()
     }
 
     /* Read the base file metadata. */
-    if (NS_SUCCEEDED(result) && isValid)
-        isValid = ReadFile(pTagFile, charset.BeginReading());
+    if (NS_SUCCEEDED(result) && isValid) {
+        LOG(("sbMetadataHandlerTaglib[0x%.8x]::ReadMPEGFile - Trying ReadFile", this));
+        isValid = ReadFile(pTagFile, (const char *) charset.BeginReading());
+    }
 
     /* Read the ID3v2 metadata. */
-    if (NS_SUCCEEDED(result) && isValid)
-        ReadID3v2Tags(pTagFile->ID3v2Tag(), charset.BeginReading());
+    if (NS_SUCCEEDED(result) && isValid) {
+        LOG(("sbMetadataHandlerTaglib[0x%.8x]::ReadMPEGFile - Trying ReadID3v2Tags", this));
+        ReadID3v2Tags(pTagFile->ID3v2Tag(), (const char *) charset.BeginReading());
+    }
 
     /* Read the APE metadata */
-    if (NS_SUCCEEDED(result) && isValid)
+    if (NS_SUCCEEDED(result) && isValid) {
+        LOG(("sbMetadataHandlerTaglib[0x%.8x]::ReadMPEGFile - Trying ReadAPETags", this));
         ReadAPETags(pTagFile->APETag());
+    }
 
     /* File is invalid on any error. */
-    if (NS_FAILED(result))
+    if (NS_FAILED(result)) {
+        LOG(("sbMetadataHandlerTaglib[0x%.8x]::ReadMPEGFile - setting isValid = PR_FALSE", this));
         isValid = PR_FALSE;
+    }
 
     return (isValid);
 }
