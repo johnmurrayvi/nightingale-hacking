@@ -48,7 +48,6 @@
 
 // Songbird imports.
 #include <sbPropertiesCID.h>
-#include <sbProxiedComponentManager.h>
 #include <sbStringUtils.h>
 #include <sbTArrayStringEnumerator.h>
 
@@ -56,6 +55,7 @@
 #include <mozilla/Mutex.h>
 #include <nsIURI.h>
 #include <nsIURL.h>
+#include <nsThreadUtils.h>
 
 
 //------------------------------------------------------------------------------

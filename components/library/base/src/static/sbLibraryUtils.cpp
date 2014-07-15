@@ -31,7 +31,7 @@
 
 #include <nsIFile.h>
 #include <nsIFileURL.h>
-#include <nsIProxyObjectManager.h>
+#include <nsIRunnable.h>
 #include <nsIThread.h>
 #include <nsIURI.h>
 
@@ -41,6 +41,8 @@
 #include <nsNetUtil.h>
 #include <nsStringAPI.h>
 #include <nsThreadUtils.h>
+
+#include <mozilla/Services.h>
 
 #include <sbIDevice.h>
 #include <sbIDeviceManager.h>
@@ -55,7 +57,6 @@
 #include <sbArrayUtils.h>
 #include <sbFileUtils.h>
 #include <sbPropertiesCID.h>
-#include <sbProxiedComponentManager.h>
 #include "sbMediaListEnumSingleItemHelper.h"
 #include <sbStandardProperties.h>
 #include <sbStringUtils.h>
@@ -381,33 +382,37 @@ nsresult sbLibraryUtils::FindOriginalsByID(sbIMediaItem * aMediaItem,
   return NS_OK;
 }
 
-/* static */
-nsresult sbLibraryUtils::GetContentLength(/* in */  sbIMediaItem * aItem,
-                                          /* out */ PRInt64      * _retval)
-{
-  NS_ENSURE_ARG_POINTER(aItem);
 
+namespace {
+
+class GetContentLengthTaskR : public nsRunnable
+{
+public:
+  GetContentLengthTaskR(sbIMediaItem *aItem,
+                        PRInt64 *_retval)
+    : mItem(aItem),
+      mRetval(_retval)
+  { }
+
+  NS_DECL_NSIRUNNABLE
+
+private:
+  sbIMediaItem *mItem;
+  PRInt64 *mRetval;
+};
+
+NS_IMETHODIMP
+GetContentLengthTaskR::Run()
+{
+  nsresult rv;
+  
   PRInt64 contentLength = 0;
-  nsresult rv = aItem->GetContentLength(&contentLength);
+  rv = mItem->GetContentLength(&contentLength);
 
   if(NS_FAILED(rv) || !contentLength) {
+
     // try to get the length from disk
-    nsCOMPtr<sbIMediaItem> item(aItem);
-
-    if (!NS_IsMainThread()) {
-      // Proxy item to get contentURI.
-      // Note that we do *not* call do_GetProxyForObject if we're already on
-      // the main thread - doing that causes us to process the next pending event
-      nsCOMPtr<nsIThread> target;
-      rv = NS_GetMainThread(getter_AddRefs(target));
-
-      rv = do_GetProxyForObject(target,
-                                NS_GET_IID(sbIMediaItem),
-                                aItem,
-                                NS_PROXY_SYNC | NS_PROXY_ALWAYS,
-                                getter_AddRefs(item));
-      NS_ENSURE_SUCCESS(rv, rv);
-    }
+    nsCOMPtr<sbIMediaItem> item(mItem);
 
     nsCOMPtr<nsIURI> contentURI;
     rv = item->GetContentSrc(getter_AddRefs(contentURI));
@@ -426,16 +431,40 @@ nsresult sbLibraryUtils::GetContentLength(/* in */  sbIMediaItem * aItem,
     rv = file->GetFileSize(&contentLength);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    rv = aItem->SetProperty(NS_LITERAL_STRING(SB_PROPERTY_CONTENTLENGTH),
+    rv = mItem->SetProperty(NS_LITERAL_STRING(SB_PROPERTY_CONTENTLENGTH),
                             sbAutoString(contentLength));
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  if (_retval)
-    *_retval = contentLength;
+  if (mRetval)
+    *mRetval = contentLength;
 
   return NS_OK;
 }
+
+}
+
+
+/* static */
+nsresult sbLibraryUtils::GetContentLength(/* in */  sbIMediaItem * aItem,
+                                          /* out */ PRInt64      * _retval)
+{
+  NS_ENSURE_ARG_POINTER(aItem);
+  nsresult rv;
+
+  nsRefPtr<GetContentLengthTaskR> r =
+    new GetContentLengthTaskR(aItem, _retval);
+
+  if (NS_IsMainThread()) {
+    rv = r->Run();
+    NS_ENSURE_SUCCESS(rv, rv);
+  } else {
+    NS_DispatchToMainThread(r);
+  }
+
+  return NS_OK;
+}
+
 
 /* static */
 nsresult sbLibraryUtils::SetContentLength(/* in */  sbIMediaItem * aItem,
@@ -498,31 +527,35 @@ nsresult sbLibraryUtils::GetOriginItem(/* in */ sbIMediaItem*   aItem,
   return NS_OK;
 }
 
-inline
-nsCOMPtr<nsIIOService> GetIOService(nsresult & rv)
-{
-  // Get the IO service.
-  if (NS_IsMainThread()) {
-    return do_GetIOService(&rv);
-  }
-  return do_ProxiedGetService(NS_IOSERVICE_CONTRACTID, &rv);
-}
+namespace {
 
-/* static */
-nsresult sbLibraryUtils::GetContentURI(nsIURI*  aURI,
-                                       nsIURI** _retval,
-                                       nsIIOService * aIOService)
+class GetContentURIRunnable : public nsRunnable
 {
-  NS_ENSURE_ARG_POINTER(aURI);
-  NS_ENSURE_ARG_POINTER(_retval);
+  public:
+    GetContentURIRunnable(nsIURI*  aURI,
+                          nsIURI** _retval,
+                          nsIIOService* aIOService)
+      : mURI(aURI), mRetval(_retval), aIOService(aIOService)
+    { }
 
+  NS_DECL_NSIRUNNABLE
+
+  private:
+    nsIURI* mURI;
+    nsIURI** mRetval;
+    nsIIOService* aIOService;
+};
+
+NS_IMETHODIMP
+GetContentURIRunnable::Run()
+{
   nsresult rv;
-  nsCOMPtr<nsIURI> uri = aURI;
+  nsCOMPtr<nsIURI> uri = mURI;
 
   // Applies only to Windows and Mac
-  bool compatible = PR_TRUE;
+  bool compatible = true;
 #if XP_UNIX && !XP_MACOSX
-  compatible = PR_FALSE;
+  compatible = false;
 #endif
 
   bool isFileScheme;
@@ -534,8 +567,7 @@ nsresult sbLibraryUtils::GetContentURI(nsIURI*  aURI,
     if (aIOService) {
       ioService = aIOService;
     } else {
-      ioService = GetIOService(rv);
-      NS_ENSURE_SUCCESS(rv, rv);
+      ioService = mozilla::services::GetIOService();
     }
 
     nsCAutoString spec;
@@ -585,7 +617,32 @@ nsresult sbLibraryUtils::GetContentURI(nsIURI*  aURI,
   }
 
   // Return results.
-  NS_ADDREF(*_retval = uri);
+  NS_ADDREF(*mRetval = uri);
+
+  return NS_OK;
+}
+
+}
+
+/* static */
+nsresult sbLibraryUtils::GetContentURI(nsIURI*  aURI,
+                                       nsIURI** _retval,
+                                       nsIIOService * aIOService)
+{
+  NS_ENSURE_ARG_POINTER(aURI);
+  NS_ENSURE_ARG_POINTER(_retval);
+
+  nsresult rv;
+
+  nsRefPtr<GetContentURIRunnable> r =
+    new GetContentURIRunnable(aURI, _retval, aIOService);
+
+  if (NS_IsMainThread()) {
+    rv = r->Run();
+    NS_ENSURE_SUCCESS(rv, rv);
+  } else {
+    NS_DispatchToMainThread(r);
+  }
 
   return NS_OK;
 }

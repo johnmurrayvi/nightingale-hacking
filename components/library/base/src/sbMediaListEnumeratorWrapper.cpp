@@ -36,7 +36,6 @@
 #include <mozilla/ReentrantMonitor.h>
 
 // Songbird includes
-#include <sbProxiedComponentManager.h>
 #include <sbStandardProperties.h>
 #include <sbLocalDatabaseMediaItem.h>
 
@@ -66,6 +65,115 @@ sbMediaListEnumeratorWrapper::~sbMediaListEnumeratorWrapper()
 
 }
 
+namespace {
+
+class EnumWrapperListenerProxy : public sbIMediaListEnumeratorWrapperListener
+{
+public:
+  EnumWrapperListenerProxy(nsISimpleEnumerator *aEnumerator,
+                           sbIMediaListEnumeratorWrapperListener *aListener)
+    : mEnumerator(aEnumerator), mListener(aListener)
+  { }
+
+  NS_DECL_ISUPPORTS;
+  NS_DECL_SBIMEDIALISTENUMERATORWRAPPERLISTENER;
+
+  class OnHasMoreElementsRunnable : public nsRunnable
+  {
+  public:
+    OnHasMoreElementsRunnable(sbIMediaListEnumeratorWrapperListener *aListener,
+                              nsISimpleEnumerator *aEnumerator,
+                              bool aHasMore)
+      : mListener(aListener), mEnumerator(aEnumerator), mHasMore(aHasMore)
+    { }
+
+    NS_DECL_NSIRUNNABLE
+
+  private:
+    nsCOMPtr<sbIMediaListEnumeratorWrapperListener> mListener;
+    nsCOMPtr<nsISimpleEnumerator> mEnumerator;
+    bool mHasMore;
+  };
+
+  class OnGetNextRunnable : public nsRunnable
+  {
+  public:
+    OnGetNextRunnable(sbIMediaListEnumeratorWrapperListener *aListener,
+                      nsISimpleEnumerator *aEnumerator,
+                      nsISupports *aNextElement)
+      : mListener(aListener), mEnumerator(aEnumerator), mNextElement(aNextElement)
+    { }
+
+    NS_DECL_NSIRUNNABLE
+
+  private:
+    nsCOMPtr<sbIMediaListEnumeratorWrapperListener> mListener;
+    nsCOMPtr<nsISimpleEnumerator> mEnumerator;
+    nsCOMPtr<nsISupports> mNextElement;
+  };
+
+
+private:
+  nsCOMPtr<nsISimpleEnumerator> mEnumerator;
+  nsCOMPtr<sbIMediaListEnumeratorWrapperListener> mListener;
+};
+
+NS_IMPL_THREADSAFE_ISUPPORTS1(EnumWrapperListenerProxy,
+                              sbIMediaListEnumeratorWrapperListener);
+
+NS_IMETHODIMP
+EnumWrapperListenerProxy::OnHasMoreElements(nsISimpleEnumerator *aEnumerator, bool aHasMore)
+{
+  nsresult rv;
+
+  nsRefPtr<OnHasMoreElementsRunnable> r = 
+    new OnHasMoreElementsRunnable(mListener, aEnumerator, aHasMore);
+
+  if (NS_IsMainThread()) {
+    rv = r->Run();
+    NS_ENSURE_SUCCESS(rv, rv);
+  } else {
+    NS_DispatchToMainThread(r);
+  }
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+EnumWrapperListenerProxy::OnGetNext(nsISimpleEnumerator *aEnumerator, nsISupports *aNextElement)
+{
+  nsresult rv;
+
+  nsRefPtr<OnGetNextRunnable> r = 
+    new OnGetNextRunnable(mListener, aEnumerator, aNextElement);
+
+  if (NS_IsMainThread()) {
+    rv = r->Run();
+    NS_ENSURE_SUCCESS(rv, rv);
+  } else {
+    NS_DispatchToMainThread(r);
+  }
+
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+EnumWrapperListenerProxy::OnHasMoreElementsRunnable::Run()
+{
+  // XXX
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+EnumWrapperListenerProxy::OnGetNextRunnable::Run()
+{
+  // XXX
+  return NS_OK;
+}
+
+}
+
+
 NS_IMETHODIMP
 sbMediaListEnumeratorWrapper::Initialize(
                                 nsISimpleEnumerator * aEnumerator,
@@ -78,16 +186,7 @@ sbMediaListEnumeratorWrapper::Initialize(
   mEnumerator = aEnumerator;
 
   if(aListener) {
-    nsCOMPtr<nsIThread> target;
-    nsresult rv = NS_GetMainThread(getter_AddRefs(target));
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    rv = do_GetProxyForObject(target,
-                              NS_GET_IID(sbIMediaListEnumeratorWrapperListener),
-                              aListener,
-                              NS_PROXY_SYNC | NS_PROXY_ALWAYS,
-                              getter_AddRefs(mListener));
-    NS_ENSURE_SUCCESS(rv, rv);
+    mListener = new EnumWrapperListenerProxy(aEnumerator, aListener);
   }
 
   return NS_OK;

@@ -54,7 +54,6 @@
 #include <sbLibraryUtils.h>
 #include <sbDebugUtils.h>
 #include <sbThreadUtils.h>
-#include <sbProxiedComponentManager.h>
 
 /* for sbILibraryUtils::GetCanonicalPath */
 #if XP_WIN
@@ -797,6 +796,7 @@ sbLibraryManager::HasLibrary(sbILibrary* aLibrary,
   return NS_OK;
 }
 
+
 /**
  * See sbILibraryManager.idl
  */
@@ -806,33 +806,25 @@ sbLibraryManager::AddListener(sbILibraryManagerListener* aListener)
   TRACE("sbLibraryManager[0x%x] - AddListener", this);
   NS_ENSURE_ARG_POINTER(aListener);
 
-  {
-    mozilla::MutexAutoLock lock(mLock);
-
-    if (mListeners.Get(aListener, nsnull)) {
-      NS_WARNING("Trying to add a listener twice!");
-      return NS_OK;
-    }
+  if (!NS_IsMainThread()) {
+    NS_ERROR("sbLibraryManager::AddListener is main thread only.");
+    return NS_ERROR_NOT_SAME_THREAD;
   }
 
-  // Make a proxy for the listener that will always send callbacks to the
-  // current thread.
-  nsCOMPtr<sbILibraryManagerListener> proxy;
-  nsresult rv = do_GetProxyForObject(NS_PROXY_TO_CURRENT_THREAD,
-                                     NS_GET_IID(sbILibraryManagerListener),
-                                     aListener,
-                                     NS_PROXY_SYNC | NS_PROXY_ALWAYS,
-                                     getter_AddRefs(proxy));
-  NS_ENSURE_SUCCESS(rv, rv);
+  nsCOMPtr<nsISupports> canonical = do_QueryInterface(aListener);
 
   mozilla::MutexAutoLock lock(mLock);
+  if (mListeners.GetWeak(canonical)) {
+    NS_WARNING("Trying to add a listener twice!");
+    return NS_OK;
+  }
 
-  // Add the proxy to the hash table, using the listener as the key.
-  bool success = mListeners.Put(aListener, proxy);
-  NS_ENSURE_TRUE(success, NS_ERROR_OUT_OF_MEMORY);
+  // Add the listener to the hash table, using the QI'd nsISupport ptr as the key.
+  mListeners.Put(canonical, aListener);
 
   return NS_OK;
 }
+
 
 /**
  * See sbILibraryManager.idl
@@ -843,14 +835,22 @@ sbLibraryManager::RemoveListener(sbILibraryManagerListener* aListener)
   TRACE("sbLibraryManager[0x%x] - RemoveListener", this);
   NS_ENSURE_ARG_POINTER(aListener);
 
+  if (!NS_IsMainThread()) {
+    NS_ERROR("sbLibraryManager::AddListener is main thread only.");
+    return NS_ERROR_NOT_SAME_THREAD;
+  }
+
   mozilla::MutexAutoLock lock(mLock);
 
+  nsCOMPtr<nsISupports> canonical = do_QueryInterface(aListener);
+
 #ifdef DEBUG
-  if (!mListeners.Get(aListener, nsnull)) {
+  if (!mListeners.GetWeak(canonical)) {
     NS_WARNING("Trying to remove a listener that was never added!");
   }
 #endif
-  mListeners.Remove(aListener);
+
+  mListeners.Remove(canonical);
 
   return NS_OK;
 }

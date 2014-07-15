@@ -39,7 +39,6 @@
 #include <nsCategoryCache.h>
 #include <mozilla/Mutex.h>
 #include <nsCOMPtr.h>
-#include <nsHashKeys.h>
 #include <nsClassHashtable.h>
 #include <nsInterfaceHashtable.h>
 #include <prlock.h>

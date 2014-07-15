@@ -74,6 +74,7 @@ ifneq (,$(filter-out macosx windows,$(SB_PLATFORM)))
 endif
 
 DYNAMIC_LIB_EXTRA_IMPORTS = plds4 \
+                            xul \
                             $(NULL)
 
 DYNAMIC_LIB_STATIC_IMPORTS += \

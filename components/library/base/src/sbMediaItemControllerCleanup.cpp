@@ -45,7 +45,10 @@
 #include <sbIMediaItemController.h>
 
 #include <mozilla/Mutex.h>
+#include <mozilla/Services.h>
+
 #include <nsCOMPtr.h>
+#include <nsComponentManagerUtils.h>
 #include <nsServiceManagerUtils.h>
 #include <nsStringAPI.h>
 #include <nsTextFormatter.h>
@@ -54,7 +57,6 @@
 #include <sbDebugUtils.h>
 #include <sbStandardProperties.h>
 #include <sbStringUtils.h>
-#include <sbProxiedComponentManager.h>
 
 #include <algorithm>
 
@@ -116,6 +118,42 @@ sbMediaItemControllerCleanup::~sbMediaItemControllerCleanup()
   // check that this was called on the main thread :(
 }
 
+
+namespace {
+
+class CategoryNotificationRunnable : public nsRunnable
+{
+public:
+  CategoryNotificationRunnable(nsISupports* aSubject,
+                               const char* aTopic,
+                               const char* aData)
+    : mSubject(aSubject),
+      mTopic(aTopic),
+      mData(aData)
+  { }
+
+  NS_DECL_NSIRUNNABLE
+
+private:
+  nsCOMPtr<nsISupports> mSubject;
+  const char* mTopic;
+  NS_ConvertUTF8toUTF16 mData;
+};
+
+NS_IMETHODIMP
+CategoryNotificationRunnable::Run()
+{
+  nsCOMPtr<nsIObserverService> observerService =
+    mozilla::services::GetObserverService();
+  if (observerService)
+    observerService->NotifyObservers(mSubject, mTopic, mData.get());
+
+  return NS_OK;
+}
+  
+} // anonymous namespace
+
+
 ///// nsIObserver
 /* void observe (in nsISupports aSubject, in string aTopic, in wstring aData); */
 NS_IMETHODIMP
@@ -153,9 +191,7 @@ sbMediaItemControllerCleanup::Observe(nsISupports *aSubject,
       // XXX Need to fix this lock!
       // lock.unlock();
       TRACE("nothing to do, ignoring idle notification");
-      nsCOMPtr<nsIObserverService> obs =
-        do_ProxiedGetService(NS_OBSERVERSERVICE_CONTRACTID, &rv);
-      NS_ENSURE_SUCCESS(rv, rv);
+      nsRefPtr<CategoryNotificationRunnable> r;
       
       nsString notificationData;
       #if PR_LOGGING
@@ -165,10 +201,16 @@ sbMediaItemControllerCleanup::Observe(nsISupports *aSubject,
               K_CLEANUP_IDLE_OBSERVER_TOPIC,
               NS_ConvertUTF16toUTF8(notificationData).get());
       #endif /* PR_LOGGING */
-      rv = obs->NotifyObservers(NS_ISUPPORTS_CAST(nsIObserver*, this),
-                                K_CLEANUP_IDLE_OBSERVER_TOPIC,
-                                notificationData.get());
-      NS_ENSURE_SUCCESS(rv, rv);
+
+      r = new CategoryNotificationRunnable(NS_ISUPPORTS_CAST(nsIObserver*, this),
+                                           K_CLEANUP_IDLE_OBSERVER_TOPIC,
+                                           NS_ConvertUTF16toUTF8(notificationData).get());
+
+      if (NS_IsMainThread()) {
+        r->Run();
+      } else {
+        NS_DispatchToMainThread(r);
+      }
     }
   }
   else if (!strcmp(aTopic, "back")) {
@@ -197,7 +239,6 @@ sbMediaItemControllerCleanup::Observe(nsISupports *aSubject,
     NS_ENSURE_SUCCESS(rv, rv);
     mBackgroundEventTarget = do_GetService(SB_THREADPOOLSERVICE_CONTRACTID, &rv);
     NS_ENSURE_SUCCESS(rv, rv);
-    mozilla::MutexAutoLock lock(mMutex);
   }
   else if (!strcmp(aTopic, SB_LIBRARY_MANAGER_READY_TOPIC)) {
     nsCOMPtr<sbILibraryManager> libManager =
@@ -327,14 +368,18 @@ sbMediaItemControllerCleanup::Run()
           topic.get(),
           NS_ConvertUTF16toUTF8(notificationData).get());
   #endif /* PR_LOGGING */
-  nsCOMPtr<nsIObserverService> obs =
-    do_ProxiedGetService(NS_OBSERVERSERVICE_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-  
-  rv = obs->NotifyObservers(NS_ISUPPORTS_CAST(nsIObserver*, this),
-                            topic.get(),
-                            notificationData.get());
-  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsRefPtr<CategoryNotificationRunnable> r;
+
+  r = new CategoryNotificationRunnable(NS_ISUPPORTS_CAST(nsIObserver*, this),
+                                       topic.get(),
+                                       NS_ConvertUTF16toUTF8(notificationData).get());
+
+  if (NS_IsMainThread()) {
+    r->Run();
+  } else {
+    NS_DispatchToMainThread(r);
+  }
   
   return NS_OK;
 }
