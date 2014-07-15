@@ -34,8 +34,7 @@
 #include <nsNetError.h>
 #include <nsStringAPI.h>
 #include <nsThreadUtils.h>
-
-#include <sbProxiedComponentManager.h>
+#include <mozilla/Services.h>
 
 static inline nsresult
 sbGetFileExtensionFromURI(nsIURI* aURI, nsACString& _retval)
@@ -92,36 +91,50 @@ sbInvalidateFileURLCache(nsIFileURL* aFileURL)
 }
 
 
-/**
- * Return in aIOService the IO service object usable from the current thread.
- * If the current thread is not the main thread, return a main thread proxied
- * IO service object.
- *
- * \param aIOService            Returned IO service.
- */
+namespace {
 
-static inline nsresult
-SB_GetIOService(nsIIOService** aIOService)
+class NewURIRunnable : public nsRunnable
+{
+public:
+  NewURIRunnable(nsIURI**          aURI,
+                 const nsACString& aSpec,
+                 const char*       aCharSet = nsnull,
+                 nsIURI*           aBaseURI = nsnull)
+    : mURI(aURI), mSpec(aSpec), mCharSet(aCharSet), mBaseURI(aBaseURI)
+  { }
+
+  NS_DECL_NSIRUNNABLE
+
+private:
+  nsIURI **mURI;
+  const nsACString& mSpec;
+  const char *mCharSet;
+  nsIURI *mBaseURI;
+};
+
+NS_IMETHODIMP
+NewURIRunnable::Run()
 {
   nsresult rv;
 
-  // Get the IO service.
-  nsCOMPtr<nsIIOService> ioService;
-  if (NS_IsMainThread()) {
-    ioService = do_GetService(NS_IOSERVICE_CONTRACTID, &rv);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-  else {
-    ioService = do_ProxiedGetService(NS_IOSERVICE_CONTRACTID, &rv);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
+  nsCOMPtr<nsIIOService> ioService = mozilla::services::GetIOService();
+
+  // Create the URI.
+  nsCOMPtr<nsIURI> uri;
+  rv = ioService->NewURI(mSpec, mCharSet, mBaseURI, getter_AddRefs(uri));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // Get a main thread URI.
+  nsCOMPtr<nsIURI> mainThreadURI = do_QueryInterface(uri, &rv);
+  NS_ENSURE_SUCCESS(rv, rv);
 
   // Return results.
-  ioService.forget(aIOService);
+  mainThreadURI.forget(mURI);
 
   return NS_OK;
 }
 
+}
 
 /**
  * Return in aURI a new URI, created using the URI spec, character set, and base
@@ -143,22 +156,15 @@ SB_NewURI(nsIURI**          aURI,
 {
   nsresult rv;
 
-  // Get the IO service.
-  nsCOMPtr<nsIIOService> ioService;
-  rv = SB_GetIOService(getter_AddRefs(ioService));
-  NS_ENSURE_SUCCESS(rv, rv);
+  nsRefPtr<NewURIRunnable> r =
+    new NewURIRunnable(aURI, aSpec, aCharSet, aBaseURI);
 
-  // Create the URI.
-  nsCOMPtr<nsIURI> uri;
-  rv = ioService->NewURI(aSpec, aCharSet, aBaseURI, getter_AddRefs(uri));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  // Get a main thread URI.
-  nsCOMPtr<nsIURI> mainThreadURI = do_MainThreadQueryInterface(uri, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  // Return results.
-  mainThreadURI.forget(aURI);
+  if (NS_IsMainThread()) {
+    rv = r->Run();
+    NS_ENSURE_SUCCESS(rv, rv);
+  } else {
+    NS_DispatchToMainThread(r);
+  }
 
   return NS_OK;
 }

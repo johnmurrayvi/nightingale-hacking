@@ -36,9 +36,9 @@
 #include <nsMemory.h>
 #include <nsNetCID.h>
 #include <nsNetUtil.h>
+#include <mozilla/Services.h>
 
 #include <sbMemoryUtils.h>
-#include <sbProxiedComponentManager.h>
 #include <sbURIUtils.h>
 
 /**
@@ -202,33 +202,34 @@ sbConsumeStream(nsIInputStream *stream, PRUint32 maxCount, nsACString &result)
     return rv;
 }
 
-inline
-nsCOMPtr<nsIIOService> GetIOService(nsresult & rv)
+namespace {
+class NewFileURIRunnable : public nsRunnable
 {
-  // Get the IO service.
-  if (NS_IsMainThread()) {
-    return do_GetIOService(&rv);
-  }
-  return do_ProxiedGetService(NS_IOSERVICE_CONTRACTID, &rv);
-}
+public:
+  NewFileURIRunnable(nsIFile* aFile,
+                     nsIURI** aURI)
+    : mFile(aFile), mURI(aURI)
+  { }
 
-nsresult
-sbNewFileURI(nsIFile* aFile,
-             nsIURI** aURI)
+NS_DECL_NSIRUNNABLE
+
+private:
+  nsIFile* mFile;
+  nsIURI** mURI;
+};
+
+NS_IMETHODIMP
+NewFileURIRunnable::Run()
 {
-  NS_ENSURE_ARG_POINTER(aFile);
-  NS_ENSURE_ARG_POINTER(aURI);
-
   nsresult rv;
 
   // Get the IO service.
-  nsCOMPtr<nsIIOService> ioService = GetIOService(rv);
-  NS_ENSURE_SUCCESS(rv, rv);
+  nsCOMPtr<nsIIOService> ioService = mozilla::services::GetIOService();
 
   // Note that NewFileURI is broken on Linux when dealing with
   // file names not in the filesystem charset; see bug 6227
 #if XP_UNIX && !XP_MACOSX
-  nsCOMPtr<nsILocalFile> localFile = do_QueryInterface(aFile, &rv);
+  nsCOMPtr<nsILocalFile> localFile = do_QueryInterface(mFile, &rv);
   if (NS_SUCCEEDED(rv)) {
     // Use the local file persistent descriptor to form a URI spec.
     nsCAutoString descriptor;
@@ -248,7 +249,7 @@ sbNewFileURI(nsIFile* aFile,
       spec.Insert("file://", 0);
 
       // Create the URI.
-      rv = SB_NewURI(aURI, spec);
+      rv = SB_NewURI(mURI, spec);
       NS_ENSURE_SUCCESS(rv, rv);
 
       return NS_OK;
@@ -258,15 +259,40 @@ sbNewFileURI(nsIFile* aFile,
 
   // Get a URI directly from the file.
   nsCOMPtr<nsIURI> uri;
-  rv = ioService->NewFileURI(aFile, getter_AddRefs(uri));
+  rv = ioService->NewFileURI(mFile, getter_AddRefs(uri));
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Get a main thread URI.
-  nsCOMPtr<nsIURI> mainThreadURI = do_MainThreadQueryInterface(uri, &rv);
+  nsCOMPtr<nsIURI> mainThreadURI = do_QueryInterface(uri, &rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // Return results.
-  mainThreadURI.forget(aURI);
+  mainThreadURI.forget(mURI); 
+
+  return NS_OK;
+}
+
+}
+
+
+nsresult
+sbNewFileURI(nsIFile* aFile,
+             nsIURI** aURI)
+{
+  NS_ENSURE_ARG_POINTER(aFile);
+  NS_ENSURE_ARG_POINTER(aURI);
+
+  nsresult rv;
+
+  nsRefPtr<NewFileURIRunnable> r =
+    new NewFileURIRunnable(aFile, aURI);
+
+  if (NS_IsMainThread()) {
+    rv = r->Run();
+    NS_ENSURE_SUCCESS(rv, rv);
+  } else {
+    NS_DispatchToMainThread(r);
+  }
 
   return NS_OK;
 }
