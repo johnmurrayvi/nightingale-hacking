@@ -2861,8 +2861,12 @@ PRBool sbMetadataHandlerTaglib::ReadMP4File()
         result = NS_ERROR_OUT_OF_MEMORY;
     if (NS_SUCCEEDED(result))
         result = OpenTagFile(pTagFile);
-    if (NS_SUCCEEDED(result))
+    if (NS_SUCCEEDED(result)) {
         pTagFile->read();
+        /* Check to see if pTagFile->read() invalidated the file */
+        if (!pTagFile->isValid())
+            result = NS_ERROR_FAILURE;
+    }
     if (NS_SUCCEEDED(result))
         result = CheckChannelRestart();
 
@@ -2965,7 +2969,7 @@ PRBool sbMetadataHandlerTaglib::ReadMP4File()
             break;
           }
         }
-      }        
+      }
     }
 
     /* File is invalid on any error. */
