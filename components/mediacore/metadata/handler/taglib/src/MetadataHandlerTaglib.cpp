@@ -2694,8 +2694,12 @@ PRBool sbMetadataHandlerTaglib::ReadFLACFile()
         result = NS_ERROR_OUT_OF_MEMORY;
     if (NS_SUCCEEDED(result))
         result = OpenTagFile(pTagFile);
-    if (NS_SUCCEEDED(result))
+    if (NS_SUCCEEDED(result)) {
         pTagFile->read();
+        /* Check to see if pTagFile->read() invalidated the file */
+        if (!pTagFile->isValid())
+            result = NS_ERROR_FAILURE;
+    }
     if (NS_SUCCEEDED(result))
         result = CheckChannelRestart();
 
@@ -2734,8 +2738,12 @@ PRBool sbMetadataHandlerTaglib::ReadMPCFile()
         result = NS_ERROR_OUT_OF_MEMORY;
     if (NS_SUCCEEDED(result))
         result = OpenTagFile(pTagFile);
-    if (NS_SUCCEEDED(result))
+    if (NS_SUCCEEDED(result)) {
         pTagFile->read();
+        /* Check to see if pTagFile->read() invalidated the file */
+        if (!pTagFile->isValid())
+            result = NS_ERROR_FAILURE;
+    }
     if (NS_SUCCEEDED(result))
         result = CheckChannelRestart();
 
@@ -2774,8 +2782,12 @@ PRBool sbMetadataHandlerTaglib::ReadMPEGFile()
         result = NS_ERROR_OUT_OF_MEMORY;
     if (NS_SUCCEEDED(result))
         result = OpenTagFile(pTagFile);
-    if (NS_SUCCEEDED(result))
+    if (NS_SUCCEEDED(result)) {
         pTagFile->read();
+        /* Check to see if pTagFile->read() invalidated the file */
+        if (!pTagFile->isValid())
+            result = NS_ERROR_FAILURE;
+    }
     if (NS_SUCCEEDED(result))
         result = CheckChannelRestart();
 
@@ -2826,8 +2838,12 @@ PRBool sbMetadataHandlerTaglib::ReadASFFile()
         result = NS_ERROR_OUT_OF_MEMORY;
     if (NS_SUCCEEDED(result))
         result = OpenTagFile(pTagFile);
-    if (NS_SUCCEEDED(result))
+    if (NS_SUCCEEDED(result)) {
         pTagFile->read();
+        /* Check to see if pTagFile->read() invalidated the file */
+        if (!pTagFile->isValid())
+            result = NS_ERROR_FAILURE;
+    }
     if (NS_SUCCEEDED(result))
         result = CheckChannelRestart();
 
@@ -2999,8 +3015,12 @@ PRBool sbMetadataHandlerTaglib::ReadOGGFile()
         result = NS_ERROR_OUT_OF_MEMORY;
     if (NS_SUCCEEDED(result))
         result = OpenTagFile(pTagFile);
-    if (NS_SUCCEEDED(result))
+    if (NS_SUCCEEDED(result)) {
         pTagFile->read();
+        /* Check to see if pTagFile->read() invalidated the file */
+        if (!pTagFile->isValid())
+            result = NS_ERROR_FAILURE;
+    }
     if (NS_SUCCEEDED(result))
         result = CheckChannelRestart();
 
@@ -3071,8 +3091,12 @@ PRBool sbMetadataHandlerTaglib::ReadOGAFile()
         result = NS_ERROR_OUT_OF_MEMORY;
     if (NS_SUCCEEDED(result))
         result = OpenTagFile(pTagFile);
-    if (NS_SUCCEEDED(result))
+    if (NS_SUCCEEDED(result)) {
         pTagFile->read();
+        /* Check to see if pTagFile->read() invalidated the file */
+        if (!pTagFile->isValid())
+            result = NS_ERROR_FAILURE;
+    }
     if (NS_SUCCEEDED(result))
         result = CheckChannelRestart();
 
