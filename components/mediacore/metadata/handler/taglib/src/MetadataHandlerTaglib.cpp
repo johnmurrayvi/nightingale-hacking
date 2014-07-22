@@ -3093,9 +3093,13 @@ PRBool sbMetadataHandlerTaglib::ReadOGAFile()
         result = OpenTagFile(pTagFile);
     if (NS_SUCCEEDED(result)) {
         pTagFile->read();
-        /* Check to see if pTagFile->read() invalidated the file */
-        if (!pTagFile->isValid())
-            result = NS_ERROR_FAILURE;
+        /* Don't bail out here (by setting result = NS_ERROR_FAILURE, 
+         * like in the other ReadXXXFiles functions) if pTagFile->read() 
+         * invalidated the file. We are only checking for a special 
+         * case of OGG, so the invalidation here doesn't mean the file is 
+         * necessarily corrupt or invalid, but that it didn't fit the 
+         * special case we're trying to find here.
+         */
     }
     if (NS_SUCCEEDED(result))
         result = CheckChannelRestart();
