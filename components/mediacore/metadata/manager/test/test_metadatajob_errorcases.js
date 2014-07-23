@@ -88,15 +88,16 @@ function runTest() {
   filesToRemove.push(corruptFile);
   // corrupt file is not seen as an error
   
+  // These don't end up being errors, since gstreamer ends up reading the data and not the extension.
   // Media files with the wrong extensions
   files.push(newAppRelativeFile("testharness/metadatamanager/errorcases/mp3-disguised-as.flac"));
-  gErrorExpected++;
+  // gErrorExpected++;
   gRetriesExpected += retries(["taglib", "gstreamer"]);
   files.push(newAppRelativeFile("testharness/metadatamanager/errorcases/mp3-disguised-as.ogg"));
-  gErrorExpected++;
+  // gErrorExpected++;
   gRetriesExpected += retries(["taglib", "gstreamer"]);
   files.push(newAppRelativeFile("testharness/metadatamanager/errorcases/ogg-disguised-as.m4a"));
-  gErrorExpected++;
+  // gErrorExpected++;
   gRetriesExpected += retries(["taglib", "gstreamer"]);
 
   // Misc file permissions
