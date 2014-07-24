@@ -1938,6 +1938,7 @@
               this.tabContainer.updateVisibility();
             }
 
+            aListener.QueryInterface(Components.interfaces.nsIWebProgressListener);
             this.mProgressListeners.push(aListener);
           ]]>
         </body>
@@ -2098,6 +2099,8 @@
         <body>
         <![CDATA[
           var oldPosition = aTab._tPos;
+          var linkedBrowser = aTab.linkedBrowser;
+
           if (oldPosition == aIndex)
             return;
 
@@ -2119,6 +2122,7 @@
           // use .item() instead of [] because dragging to the end of the strip goes out of
           // bounds: .item() returns null (so it acts like appendChild), but [] throws
           this.tabContainer.insertBefore(aTab, this.tabs.item(aIndex));
+          aTab.linkedBrowser = linkedBrowser;
           // invalidate cache, because tabContainer is about to change
           this._browsers = null;
 
