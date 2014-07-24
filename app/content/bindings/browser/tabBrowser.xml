@@ -2695,8 +2695,12 @@
       <constructor>
         <![CDATA[
           this.mCurrentBrowser = this.mPanelContainer.childNodes[0].firstChild.firstChild;
+          this.mCurrentBrowser.getTabBrowser = function() {
+            return document.getBindingParent(this.parentNode);
+          };
           this.mCurrentTab = this.tabContainer.firstChild;
-          document.addEventListener("keypress", this, false);
+          /* capture events on process */
+          document.addEventListener("keypress", this, true);
           window.addEventListener("sizemodechange", this, false);
 
           var uniqueId = "panel" + Date.now();
@@ -2706,13 +2710,7 @@
           this.mCurrentTab._fullyOpen = true;
           this.mCurrentTab.linkedBrowser = this.mCurrentBrowser;
 
-          // set up the shared autoscroll popup
-          this._autoScrollPopup = this.mCurrentBrowser._createAutoScrollPopup();
-          this._autoScrollPopup.id = "autoscroller";
-          this.appendChild(this._autoScrollPopup);
-          this.mCurrentBrowser.setAttribute("autoscrollpopup", this._autoScrollPopup.id);
-          this.mCurrentBrowser.droppedLinkHandler = handleDroppedLink;
-          this.updateWindowResizers();
+          this._mFindbar = document.getAnonymousElementByAttribute(this, "id", "FindToolbar");
 
           // Hook up the event listeners to the first browser
           var tabListener = this.mTabProgressListener(this.mCurrentTab, this.mCurrentBrowser, true);
@@ -2759,7 +2757,7 @@
             this.mTabListeners[i].destroy();
             this.mTabListeners[i] = null;
           }
-          document.removeEventListener("keypress", this, false);
+          document.removeEventListener("keypress", this, true);
           window.removeEventListener("sizemodechange", this, false);
         ]]>
       </destructor>
