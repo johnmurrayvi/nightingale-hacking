@@ -2405,6 +2405,7 @@
         </getter>
       </property>
 
+<!-- 
       <property name="docShell"
                 onget="return this.mCurrentBrowser.docShell"
                 readonly="true"/>
@@ -2460,6 +2461,8 @@
       <property name="securityUI"
                 onget="return this.mCurrentBrowser.securityUI;"
                 readonly="true"/>
+ -->
+
 
       <method name="_handleKeyEvent">
         <parameter name="aEvent"/>
