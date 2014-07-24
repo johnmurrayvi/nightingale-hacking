@@ -72,6 +72,9 @@
       <xul:tabbox anonid="tabbox" class="tabbrowser-tabbox"
                   flex="1" eventnode="document" xbl:inherits="handleCtrlPageUpDown"
                   onselect="if (event.target.localName == 'tabpanels') this.parentNode.updateCurrentBrowser();">
+        <xul:vbox id="findbar_box">
+          <xul:findbar browserid="content" id="FindToolbar" />
+        </xul:vbox>
         <xul:tabpanels flex="1" class="plain" selectedIndex="0" anonid="panelcontainer">
           <xul:notificationbox flex="1">
             <xul:stack flex="1" anonid="browserStack">
