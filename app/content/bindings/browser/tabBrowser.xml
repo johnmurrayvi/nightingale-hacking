@@ -138,6 +138,9 @@
       <field name="mIsBusy">
         false
       </field>
+      <field name="mMissedIconCache">
+        null
+      </field>
       <field name="_placesAutocomplete" readonly="true">
         null
       </field>
@@ -678,98 +681,54 @@
         </body>
       </method>
 
-      <method name="setIcon">
-        <parameter name="aTab"/>
+      <method name="addToMissedIconCache">
         <parameter name="aURI"/>
         <body>
           <![CDATA[
-            var browser = this.getBrowserForTab(aTab);
-            browser.mIconURL = aURI instanceof Ci.nsIURI ? aURI.spec : aURI;
+            var entry = this.openCacheEntry(aURI, Components.interfaces.nsICache.ACCESS_READ_WRITE);
+            if (!entry)
+              return;
 
-            if (aURI && this.mFaviconService) {
-              if (!(aURI instanceof Ci.nsIURI))
-                aURI = makeURI(aURI);
-              this.mFaviconService.setAndLoadFaviconForPage(browser.currentURI,
-                                                            aURI, false);
-            }
-
-            if ((browser.mIconURL || "") != aTab.getAttribute("image")) {
-              if (browser.mIconURL)
-                aTab.setAttribute("image", browser.mIconURL);
-              else
-                aTab.removeAttribute("image");
-              this._tabAttrModified(aTab);
-            }
-
-            this._callProgressListeners(browser, "onLinkIconAvailable", [browser.mIconURL]);
+            if (entry.accessGranted == Components.interfaces.nsICache.ACCESS_WRITE)
+              // It's a new entry.  Just write a bit of metadata in to the entry.
+              entry.setMetaDataElement("Icon", "Missed");
+            entry.markValid();
+            entry.close();
           ]]>
         </body>
       </method>
 
-      <method name="getIcon">
-        <parameter name="aTab"/>
+      <method name="openCacheEntry">
+        <parameter name="key"/>
+        <parameter name="access"/>
         <body>
           <![CDATA[
-            let browser = aTab ? this.getBrowserForTab(aTab) : this.selectedBrowser;
-            return browser.mIconURL;
-          ]]>
-        </body>
-      </method>
-
-      <method name="shouldLoadFavIcon">
-        <parameter name="aURI"/>
-        <body>
-          <![CDATA[
-            return (aURI &&
-                    Services.prefs.getBoolPref("browser.chrome.site_icons") &&
-                    Services.prefs.getBoolPref("browser.chrome.favicons") &&
-                    ("schemeIs" in aURI) && (aURI.schemeIs("http") || aURI.schemeIs("https")));
-          ]]>
-        </body>
-      </method>
-
-      <method name="useDefaultIcon">
-        <parameter name="aTab"/>
-        <body>
-          <![CDATA[
-            var browser = this.getBrowserForTab(aTab);
-            var docURIObject = browser.contentDocument.documentURIObject;
-            var icon = null;
-            if (browser.contentDocument instanceof ImageDocument) {
-              if (Services.prefs.getBoolPref("browser.chrome.site_icons")) {
-                let sz = Services.prefs.getIntPref("browser.chrome.image_icons.max_size");
-                try {
-                  let req = browser.contentDocument.imageRequest;
-                  if (req &&
-                      req.image &&
-                      req.image.width <= sz &&
-                      req.image.height <= sz)
-                    icon = browser.currentURI;
-                } catch (e) { }
+            try {
+              if (!this.mMissedIconCache) {
+                var cacheService = Components.classes['@mozilla.org/network/cache-service;1'].getService(Components.interfaces.nsICacheService);
+                this.mMissedIconCache = cacheService.createSession("MissedIconCache", Components.interfaces.nsICache.STORE_ANYWHERE, true);
+                if (!this.mMissedIconCache)
+                  return null;
               }
+              return this.mMissedIconCache.openCacheEntry(key, access, true);
             }
-            // Use documentURIObject in the check for shouldLoadFavIcon so that we
-            // do the right thing with about:-style error pages.  Bug 453442
-            else if (this.shouldLoadFavIcon(docURIObject)) {
-              let url = docURIObject.prePath + "/favicon.ico";
-              if (!this.isFailedIcon(url))
-                icon = url;
+            catch (e) {
+              return null;
             }
-            this.setIcon(aTab, icon);
           ]]>
         </body>
       </method>
 
-      <method name="isFailedIcon">
-        <parameter name="aURI"/>
+      <method name="isIconKnownMissing">
+        <parameter name="key"/>
         <body>
           <![CDATA[
-            if (this.mFaviconService) {
-              if (!(aURI instanceof Ci.nsIURI))
-                aURI = makeURI(aURI);
-              return this.mFaviconService.isFailedFavicon(aURI);
+            var e = this.openCacheEntry(key, Components.interfaces.nsICache.ACCESS_READ);
+            if (e) {
+                e.close();
+                return true;
             }
-            return null;
+            return false;
           ]]>
         </body>
       </method>
