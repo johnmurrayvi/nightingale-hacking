@@ -308,8 +308,12 @@
         <parameter name="aDocument"/>
         <body>
           <![CDATA[
-            var tab = this._getTabForContentWindow(aDocument.defaultView);
-            return tab ? tab._tPos : -1;
+            for (var i = 0; i < this.mPanelContainer.childNodes.length; i++) {
+              if (this.getBrowserAtIndex(i).contentDocument == aDocument) {
+                return i;
+              }
+            }
+            return -1;
           ]]>
         </body>
       </method>
