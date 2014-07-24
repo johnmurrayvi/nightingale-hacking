@@ -105,14 +105,6 @@
         Components.classes["@mozilla.org/docshell/urifixup;1"]
                   .getService(Components.interfaces.nsIURIFixup);
       </field>
-      <field name="mFaviconService" readonly="true">
-        Components.classes["@mozilla.org/browser/favicon-service;1"]
-                  .getService(Components.interfaces.nsIFaviconService);
-      </field>
-      <field name="_placesAutocomplete" readonly="true">
-         Components.classes["@mozilla.org/autocomplete/search;1?name=history"]
-                   .getService(Components.interfaces.mozIPlacesAutoComplete);
-      </field>
       <field name="mTabBox" readonly="true">
         document.getAnonymousElementByAttribute(this, "anonid", "tabbox");
       </field>
@@ -146,12 +138,15 @@
       <field name="mIsBusy">
         false
       </field>
+      <field name="_placesAutocomplete" readonly="true">
+        null
+      </field>
+      <field name="mFaviconService">
+        null
+      </field>
       <field name="arrowKeysShouldWrap" readonly="true">
-#ifdef XP_MACOSX
-        true
-#else
-        false
-#endif
+        /* true for Mac, false for everyone else */
+        window.navigator.platform.match(/^Mac/) == 'Mac'
       </field>
       <field name="mAddProgressListenerWasCalled">
         false
