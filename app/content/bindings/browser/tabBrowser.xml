@@ -53,6 +53,8 @@
 <!DOCTYPE bindings [
 <!ENTITY % tabBrowserDTD SYSTEM "chrome://browser/locale/tabbrowser.dtd" >
 %tabBrowserDTD;
+<!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd">
+%globalDTD;
 ]>
 
 <bindings id="tabBrowserBindings"
@@ -62,7 +64,7 @@
 
   <binding id="tabbrowser">
     <resources>
-      <stylesheet src="chrome://browser/content/tabbrowser.css"/>
+      <stylesheet src="chrome://global/skin/browser.css"/>
     </resources>
 
     <content>
