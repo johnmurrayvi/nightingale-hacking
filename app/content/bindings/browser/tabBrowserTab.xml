@@ -62,11 +62,8 @@
           xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
           xmlns:xbl="http://www.mozilla.org/xbl">
 
-  <binding id="tabbrowser-tab" display="xul:hbox"
+  <binding id="tabbrowser-tab" display="xul:box"
            extends="chrome://global/content/bindings/tabbox.xml#tab">
-    <resources>
-      <stylesheet src="chrome://browser/content/tabbrowser.css"/>
-    </resources>
 
     <content context="tabContextMenu" closetabtext="&closeTab.label;">
       <xul:stack class="tab-stack" flex="1">
