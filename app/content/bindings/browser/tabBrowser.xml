@@ -534,11 +534,8 @@
                 // set to zero, if the document load ends without an
                 // onLocationChange, this counter gets decremented
                 // (so we keep it while switching tabs after failed loads)
-                // We need to add 2 because loadURIWithFlags may have
-                // cancelled a pending load which would have cleared
-                // its anchor scroll detection temporary increment.
                 if (aWebProgress.DOMWindow == this.mBrowser.contentWindow)
-                  this.mBrowser.userTypedClear += 2;
+                  this.mBrowser.userTypedClear++;
 
                 if (!this.mBlank) {
                   if (!(aStateFlags & nsIWebProgressListener.STATE_RESTORING)) {
@@ -555,13 +552,11 @@
                 if (aWebProgress.DOMWindow == this.mBrowser.contentWindow) {
                   // The document is done loading, we no longer want the
                   // value cleared.
-                  if (this.mBrowser.userTypedClear > 1)
-                    this.mBrowser.userTypedClear -= 2;
-                  else if (this.mBrowser.userTypedClear > 0)
+                  if (this.mBrowser.userTypedClear > 0)
                     this.mBrowser.userTypedClear--;
 
                   if (!this.mBrowser.mIconURL)
-                    this.mTabBrowser.useDefaultIcon(this.mTab);
+                    this.mTab.useDefaultIcon();
                 }
 
                 if (this.mBlank)
@@ -624,19 +619,14 @@
 
                 // Clear out the missing plugins list since it's related to the
                 // previous location.
-                this.mBrowser.missingPlugins = null;
+                this.mTab.missingPlugins = null;
 
                 // Don't clear the favicon if this onLocationChange was
                 // triggered by a pushState or a replaceState.  See bug 550565.
                 if (aWebProgress.isLoadingDocument &&
                     !(this.mBrowser.docShell.loadType & Ci.nsIDocShell.LOAD_CMD_PUSHSTATE))
-                  this.mBrowser.mIconURL = null;
+                  this.mTab.setIcon(null);
 
-                let autocomplete = this.mTabBrowser._placesAutocomplete;
-                if (this.mBrowser.registeredOpenURI) {
-                  autocomplete.unregisterOpenPage(this.mBrowser.registeredOpenURI);
-                  delete this.mBrowser.registeredOpenURI;
-                }
                 if (aLocation.spec != "about:blank") {
                   autocomplete.registerOpenPage(aLocation);
                   this.mBrowser.registeredOpenURI = aLocation;
@@ -650,6 +640,9 @@
 
               if (topLevel)
                 this.mBrowser.lastURI = aLocation;
+
+              // restore the site-specific zoom value
+              FullZoom.onLocationChange(aLocation);
             },
 
             onStatusChange: function (aWebProgress, aRequest, aStatus, aMessage) {
@@ -674,7 +667,6 @@
 
             QueryInterface: function (aIID) {
               if (aIID.equals(Components.interfaces.nsIWebProgressListener) ||
-                  aIID.equals(Components.interfaces.nsIWebProgressListener2) ||
                   aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
                   aIID.equals(Components.interfaces.nsISupports))
                 return this;
