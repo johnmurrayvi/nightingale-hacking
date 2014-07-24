@@ -833,8 +833,7 @@
             }
 
             var updatePageReport = false;
-            if (!oldBrowser ||
-                (oldBrowser.pageReport && !newBrowser.pageReport) ||
+            if ((oldBrowser.pageReport && !newBrowser.pageReport) ||
                 (!oldBrowser.pageReport && newBrowser.pageReport))
               updatePageReport = true;
 
@@ -851,6 +850,10 @@
 
             // Update the URL bar.
             var loc = this.mCurrentBrowser.currentURI;
+
+            // Update the busy state before notifying progress listeners.
+            var prevIsBusy = this.mIsBusy;
+            this.mIsBusy = this.mCurrentTab.hasAttribute("busy");
 
             var webProgress = this.mCurrentBrowser.webProgress;
             var securityUI = this.mCurrentBrowser.securityUI;
@@ -880,11 +883,10 @@
               this.mCurrentTab.removeAttribute("titlechanged");
             }
 
-            // If the new tab is busy, and our current state is not busy, then
+            // If the new tab is busy, and our previous state was not busy, then
             // we need to fire a start to all progress listeners.
             const nsIWebProgressListener = Components.interfaces.nsIWebProgressListener;
-            if (this.mCurrentTab.hasAttribute("busy") && !this.mIsBusy) {
-              this.mIsBusy = true;
+            if (this.mCurrentTab.hasAttribute("busy") && !prevIsBusy) {
               this._callProgressListeners(null, "onStateChange",
                                           [webProgress, null,
                                            nsIWebProgressListener.STATE_START |
@@ -892,10 +894,9 @@
                                           true, false);
             }
 
-            // If the new tab is not busy, and our current state is busy, then
+            // If the new tab is not busy, and our previous state was busy, then
             // we need to fire a stop to all progress listeners.
-            if (!this.mCurrentTab.hasAttribute("busy") && this.mIsBusy) {
-              this.mIsBusy = false;
+            if (!this.mCurrentTab.hasAttribute("busy") && prevIsBusy) {
               this._callProgressListeners(null, "onStateChange",
                                           [webProgress, null,
                                            nsIWebProgressListener.STATE_STOP |
