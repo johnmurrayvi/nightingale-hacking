@@ -2527,6 +2527,11 @@
             return;
           }
 
+          if (aEvent.originalTarget.localName == "input") {
+            // Don't process keys for input elements!
+            return;
+          }
+
           if (aEvent.altKey)
             return;
 
@@ -2547,30 +2552,102 @@
             }
           }
 
-#ifdef XP_MACOSX
-          if (!aEvent.metaKey)
-            return;
-
-          var offset = 1;
-          switch (aEvent.charCode) {
+          var processKeyEvent = false;
+          var isMac = window.navigator.platform.match(/^Mac/) == 'Mac';          
+          if (isMac && 'metaKey' in aEvent && aEvent.metaKey) {
+            var offset = 1;
+            switch (aEvent.charCode) {
+            // Fallthrough to handle when the text direction is left-to-right 
             case '}'.charCodeAt(0):
-              offset = -1;
+              offset *= -1;
             case '{'.charCodeAt(0):
-              if (window.getComputedStyle(this, null).direction == "ltr")
-                offset *= -1;
-              this.tabContainer.advanceSelectedTab(offset, true);
+              if (window.getComputedStyle(this.tabbrowser, null).direction == "ltr")
+              offset *= -1;
+
+              this.tabbrowser.mTabContainer.advanceSelectedTab(offset, true);
               aEvent.stopPropagation();
               aEvent.preventDefault();
+              return;
+            }
+            if ('shiftKey' in aEvent && aEvent.shiftKey)
+              return;
+
+            processKeyEvent = true;
           }
-#else
-          if (aEvent.ctrlKey && !aEvent.shiftKey && !aEvent.metaKey &&
-              aEvent.keyCode == KeyEvent.DOM_VK_F4 &&
-              this.mTabBox.handleCtrlPageUpDown) {
-            this.removeCurrentTab({animate: true});
-            aEvent.stopPropagation();
-            aEvent.preventDefault();
+          else {
+            if (('ctrlKey' in aEvent && aEvent.ctrlKey) &&
+                !('shiftKey' in aEvent && aEvent.shiftKey) &&
+                !('metaKey' in aEvent && aEvent.metaKey)) 
+            {
+              if (aEvent.keyCode == KeyEvent.DOM_VK_F4 &&
+                  this.tabbrowser.mTabBox.handleCtrlPageUpDown) {
+                this.tabbrowser.removeCurrentTab();
+
+                aEvent.stopPropagation();
+                aEvent.preventDefault();
+                return;
+              }
+
+              processKeyEvent = true;
+            }
+            else if (!('ctrlKey' in aEvent && aEvent.ctrlKey) &&
+                     !('shiftKey' in aEvent && aEvent.shiftKey) &&
+                     !('metaKey' in aEvent && aEvent.metaKey)) {
+              /*
+               * We have to disable the find bar by eating the key event
+               * since there is no programmatic way of telling it to disable
+               * itself.
+               */
+              if ((aEvent.charCode == "/".charCodeAt(0) ||
+                  aEvent.charCode == "'".charCodeAt(0)) &&
+                  this.tabbrowser.shouldDisableFindAgainForSelectedTab())
+              {
+                if (window.gSearchHandler && 
+                    window.gSearchHandler.getSearchBar) {
+                  var searchBar = window.gSearchHandler.getSearchBar();
+                  if (searchBar) {
+                    searchBar.select();
+                    searchBar.focus();
+                  }
+                }
+                
+                aEvent.stopPropagation();
+                aEvent.preventDefault();
+                return;
+              }
+            }
           }
-#endif
+
+          if (processKeyEvent) {
+            if (aEvent.target.localName == "tabbrowser" ||
+                aEvent.target.localName == "sb-tabbrowser") {
+              switch (aEvent.keyCode) {
+                case KeyEvent.DOM_VK_UP:
+                  this.tabbrowser.moveTabBackward();
+                  break;
+                case KeyEvent.DOM_VK_DOWN:
+                  this.tabbrowser.moveTabForward();
+                  break;
+                case KeyEvent.DOM_VK_RIGHT:
+                case KeyEvent.DOM_VK_LEFT:
+                  this.tabbrowser.moveTabOver(aEvent);
+                  break;
+                case KeyEvent.DOM_VK_HOME:
+                  this.tabbrowser.moveTabToStart();
+                  break;
+                case KeyEvent.DOM_VK_END:
+                  this.tabbrowser.moveTabToEnd();
+                  break;
+                default:
+                  // Stop the keypress event for the above keyboard
+                  // shortcuts only.
+                  return;
+              }
+              aEvent.stopPropagation();
+              aEvent.preventDefault();
+            }
+          }
+        }
         ]]></body>
       </method>
 
