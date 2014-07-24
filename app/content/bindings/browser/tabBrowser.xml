@@ -1277,8 +1277,9 @@
 
             t.setAttribute("crop", "end");
             t.setAttribute("validate", "never");
-            t.setAttribute("onerror", "this.removeAttribute('image');");
+            t.setAttribute("onerror", this.mTabs[0].getAttribute("onerror"));
             t.className = "tabbrowser-tab";
+            t.mTabBrowser = this;
 
             this.tabContainer._unlockTabSizing();
 
@@ -1313,6 +1314,9 @@
             var b = document.createElementNS(
               "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
                                              "browser");
+            b.getTabBrowser = function() {
+              return document.getBindingParent(this.parentNode);
+            };
             b.setAttribute("type", "content-targetable");
             b.setAttribute("message", "true");
             b.setAttribute("contextmenu", this.getAttribute("contentcontextmenu"));
@@ -1330,7 +1334,6 @@
 
             if (this.hasAttribute("autocompletepopup"))
               b.setAttribute("autocompletepopup", this.getAttribute("autocompletepopup"));
-            b.setAttribute("autoscrollpopup", this._autoScrollPopup.id);
 
             // Create the browserStack container
             var stack = document.createElementNS(
