@@ -2221,6 +2221,42 @@
         </body>
       </method>
 
+      <method name="onFindCommand">
+        <body>
+          <![CDATA[
+            this._mFindbar.onFindCommand();
+          ]]>
+        </body>
+      </method>
+
+      <method name="onFindAgainCommand">
+        <body>
+          <![CDATA[
+            this._mFindbar.onFindAgainCommand();
+          ]]>
+        </body>
+      </method>
+      
+      <method name="showFindbar">
+        <body>
+          <![CDATA[
+            this._mFindbar.removeAttribute("hidden");
+          ]]>
+        </body>
+      </method>
+
+      <method name="closeFindbar">
+        <body>
+          <![CDATA[
+            this._mFindbar.setAttribute("hidden", "true");
+          ]]>
+        </body>
+      </method>
+      
+      <property name="isFindbarHidden"
+                onget="return this._mFindbar.getAttribute('hidden');"
+                readonly="true" />
+
       <!-- BEGIN FORWARDED BROWSER PROPERTIES.  IF YOU ADD A PROPERTY TO THE BROWSER ELEMENT
            MAKE SURE TO ADD IT HERE AS WELL. -->
       <property name="canGoBack"
