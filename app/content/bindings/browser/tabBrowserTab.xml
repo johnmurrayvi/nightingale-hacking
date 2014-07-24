@@ -112,6 +112,133 @@
       <field name="mCorrespondingMenuitem">null</field>
       <field name="_fullyOpen">false</field>
       <field name="closing">false</field>
+
+      <!-- for drag-and-drop -->
+      <method name="getTransferData">
+        <parameter name="aEvent"/>
+        <parameter name="aXferData"/>
+        <parameter name="aDragAction"/>
+        <body>
+        <![CDATA[
+          var browser = this.linkedBrowser;
+          var URI = browser ? browser.currentURI : null;
+          if (URI) {
+            aXferData.data.addDataForFlavour("text/x-moz-url", URI.spec + "\n" + this.label);
+            aXferData.data.addDataForFlavour("text/unicode", URI.spec);
+            aXferData.data.addDataForFlavour("text/html", '<a href="' + URI.spec + '">' + this.label + '</a>');
+          } else {
+            aXferData.data.addDataForFlavour("text/unicode", "about:blank");
+          }
+        ]]>
+        </body>
+      </method>
+
+      <property name="mPrefs" readonly="true"
+                onget="return Services.prefs;"/>
+
+      <field name="_tabbrowser">null</field>
+      <property name="mTabBrowser">
+        <getter>
+        <![CDATA[
+          if (!this._tabbrowser) {
+          var tabs = document.getBindingParent(this);
+          this._tabbrowser = tabs &&
+                             (tabs.tabBrowser ||
+                              document.getBindingParent(tabs));
+          }
+          return this._tabbrowser;
+        ]]>
+        </getter>
+        <setter>
+          return this._tabbrowser = val;
+        </setter>
+      </property>
+      
+      <field name="mFaviconService">null</field>
+
+      <!-- public icon methods -->
+      <method name="setIcon">
+        <parameter name="aURI"/>
+        <body>
+          <![CDATA[
+            var browser = this.getBrowserForTab(aTab);
+            browser.mIconURL = aURI instanceof Ci.nsIURI ? aURI.spec : aURI;
+
+            if (aURI && this.mFaviconService) {
+              if (!(aURI instanceof Ci.nsIURI))
+                aURI = makeURI(aURI);
+              this.mFaviconService.setAndLoadFaviconForPage(browser.currentURI,
+                                                            aURI, false);
+            }
+
+            if ((browser.mIconURL || "") != aTab.getAttribute("image")) {
+              if (browser.mIconURL)
+                aTab.setAttribute("image", browser.mIconURL);
+              else
+                aTab.removeAttribute("image");
+              this._tabAttrModified(aTab);
+            }
+
+            this._callProgressListeners(browser, "onLinkIconAvailable", [browser.mIconURL]);
+          ]]>
+        </body>
+      </method>
+
+      <method name="updateIcon">
+        <body>
+          <![CDATA[
+            var browser = this.mTabBrowser.getBrowserForTab(this);
+            if (!this.hasAttribute("busy") && browser && browser.mIconURL)
+              this.setAttribute("image", browser.mIconURL);
+            else
+              this.removeAttribute("image");
+          ]]>
+        </body>
+      </method>
+      
+      <!-- private icon methods -->
+      <method name="shouldLoadFavIcon">
+        <parameter name="aURI"/>
+        <body>
+          <![CDATA[
+            return (aURI &&
+                    Services.prefs.getBoolPref("browser.chrome.site_icons") &&
+                    Services.prefs.getBoolPref("browser.chrome.favicons") &&
+                    ("schemeIs" in aURI) && (aURI.schemeIs("http") || aURI.schemeIs("https")));
+          ]]>
+        </body>
+      </method>
+      <method name="useDefaultIcon">
+        <body>
+          <![CDATA[
+            var browser = this.getBrowserForTab(aTab);
+            var docURIObject = browser.contentDocument.documentURIObject;
+            var icon = null;
+            if (browser.contentDocument instanceof ImageDocument) {
+              if (Services.prefs.getBoolPref("browser.chrome.site_icons")) {
+                let sz = Services.prefs.getIntPref("browser.chrome.image_icons.max_size");
+                try {
+                  let req = browser.contentDocument.imageRequest;
+                  if (req &&
+                      req.image &&
+                      req.image.width <= sz &&
+                      req.image.height <= sz)
+                    icon = browser.currentURI;
+                } catch (e) { }
+              }
+            }
+            // Use documentURIObject in the check for shouldLoadFavIcon so that we
+            // do the right thing with about:-style error pages.  Bug 453442
+            else if (this.shouldLoadFavIcon(docURIObject)) {
+              let url = docURIObject.prePath + "/favicon.ico";
+              if (!this.isFailedIcon(url))
+                icon = url;
+            }
+            this.setIcon(aTab, icon);
+          ]]>
+        </body>
+      </method>
+
     </implementation>
 
     <handlers>
