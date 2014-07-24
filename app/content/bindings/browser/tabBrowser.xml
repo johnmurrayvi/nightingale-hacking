@@ -2817,6 +2817,8 @@
     </implementation>
 
     <handlers>
+      <handler event="DOMLinkAdded" phase="capturing" action="this.onLinkAdded(event);"/>
+
       <handler event="DOMWindowClose" phase="capturing">
         <![CDATA[
           if (!event.isTrusted)
