@@ -1714,9 +1714,6 @@
             // XBL implementation of nsIObserver still works.
             browser.destroy();
 
-            if (browser == this.mCurrentBrowser)
-              this.mCurrentBrowser = null;
-
             var wasPinned = aTab.pinned;
 
             // Invalidate browsers cache, as the tab is removed from the
