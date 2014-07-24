@@ -2658,7 +2658,7 @@
       <property name="userTypedValue"
                 onget="return this.mCurrentBrowser.userTypedValue;"
                 onset="return this.mCurrentBrowser.userTypedValue = val;"/>
-
+<!-- 
       <method name="createTooltip">
         <parameter name="event"/>
         <body><![CDATA[
@@ -2673,6 +2673,7 @@
                                              tab.getAttribute("label"));
         ]]></body>
       </method>
+ -->
 
       <method name="handleEvent">
         <parameter name="aEvent"/>
