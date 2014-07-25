@@ -182,6 +182,9 @@
         document.getAnonymousElementByAttribute(this, "anonid", "arrowscrollbox");
       </field>
 
+      <!-- public property: the tabbrowser this tab strip is attached to -->
+      <property name="tabBrowser" onget="return document.getBindingParent(this)" readonly="true"/>
+
       <field name="_prefObserver"><![CDATA[({
         tabContainer: this,
 
@@ -284,7 +287,8 @@
 
       <method name="_handleTabSelect">
         <body><![CDATA[
-          this.mTabstrip.ensureElementIsVisible(this.selectedItem);
+          <!-- this.mTabstrip.ensureElementIsVisible(this.selectedItem); -->
+          this.mTabstrip.scrollBoxObject.ensureElementIsVisible(this.selectedItem);
         ]]></body>
       </method>
 
@@ -626,6 +630,168 @@
         <![CDATA[
           return !aTab.closing;
         ]]>
+        </body>
+      </method>
+
+      <!-- Drag and drop observer API (overrides tabs-draggable) -->
+      <method name="canDrop">
+        <parameter name="aEvent"/>
+        <parameter name="aDragSession"/>
+        <body>
+          <![CDATA[
+            if (aEvent.getPreventDefault())
+                return false;
+        
+            if (aDragSession.sourceNode &&
+                aDragSession.sourceNode.parentNode == this)
+            {
+              // dragging from another tab in the same tabstrip
+              var boxObject = aDragSession.sourceNode.boxObject;
+              if (aEvent.screenX < boxObject.screenX ||
+                  aEvent.screenX > (boxObject.screenX + boxObject.width))
+                return true;
+            }
+            
+            // check flavours
+            var flavourSet = this.getSupportedFlavours();
+            for (var flavour in flavourSet.flavourTable)
+            {
+              if (aDragSession.isDataFlavorSupported(flavour))
+                return true;
+            }
+            return false;
+          ]]>
+        </body>
+      </method>
+
+      <method name="onDrop">
+        <parameter name="aEvent"/>
+        <parameter name="aXferData"/>
+        <parameter name="aDragSession"/>
+        <body>
+          <![CDATA[
+            if (aDragSession.sourceNode && aDragSession.sourceNode.parentNode == this) {
+              var newIndex = this._getNewIndex(aEvent);
+              var oldIndex = 0;
+              for (; oldIndex < this.childNodes.length; ++oldIndex) {
+                if (this.childNodes[oldIndex] == aDragSession.sourceNode)
+                  break;
+              }
+
+              if (newIndex > oldIndex)
+                newIndex--;
+              if (newIndex != oldIndex) {
+                this.moveTabTo(this.childNodes[oldIndex], newIndex);
+                return true;
+              }
+            } else {
+              var url = transferUtils.retrieveURLFromData(aXferData.data, aXferData.flavour.contentType);
+
+              // valid urls don't contain spaces ' '; if we have a space it isn't a valid url.
+              // Also disallow dropping javascript: or data: urls--bail out
+              if (!url || !url.length || url.indexOf(" ", 0) != -1 ||
+                  /^\s*(javascript|data):/.test(url))
+                return false;
+
+              this.tabBrowser.dragDropSecurityCheck(aEvent, aDragSession, url);
+
+              var bgLoad = true;
+              try {
+                bgLoad = this.mPrefs.getBoolPref("browser.tabs.loadInBackground");
+              }
+              catch (e) { }
+
+              if (aEvent.shiftKey)
+                bgLoad = !bgLoad;
+
+              if (document.getBindingParent(aEvent.originalTarget).localName != "tab") {
+                // We're adding a new tab.
+                this.tabBrowser.loadOneTab(getShortcutOrURI(url), null, null, null, bgLoad, false);
+                return true;
+              }
+              else {
+                // Load in an existing tab.
+                var tab = aEvent.target;
+                try {
+                  if (typeof(getShortcutOrURI) == "function") {
+                    url = getShortcutOrURI(url);
+                  }
+                  this.tabBrowser.getBrowserForTab(tab).loadURI(url);
+                  if (this.selectedItem != tab && !bgLoad)
+                    this.selectedItem = tab;
+                  return true;
+                } catch(ex) {
+                  // Just ignore invalid urls
+                }
+              }
+            }
+            return false;
+          ]]>
+        </body>
+      </method>
+
+      <method name="moveTabTo">
+        <parameter name="aTab"/>
+        <parameter name="aIndex"/>
+        <body>
+        <![CDATA[
+          // override the tabstrip moveTabTo
+          return this.tabBrowser.moveTabTo(aTab, aIndex);
+        ]]>
+        </body>
+      </method>
+
+      <method name="getSupportedFlavours">
+        <body>
+        <![CDATA[
+          var flavourSet = new FlavourSet();
+          flavourSet.appendFlavour("text/x-moz-url");
+          flavourSet.appendFlavour("text/unicode");
+          flavourSet.appendFlavour("application/x-moz-file", "nsIFile");
+          return flavourSet;
+        ]]>
+        </body>
+      </method>
+
+      <method name="createTooltip">
+        <parameter name="event"/>
+        <body>
+          <![CDATA[
+            event.stopPropagation();
+            var tn = document.tooltipNode;
+            if (tn.localName != "tab")
+              return false; // Not a tab, so cancel the tooltip
+            if ("mOverCloseButton" in tn && tn.mOverCloseButton) {
+              event.target.setAttribute("label", tn.getAttribute("closetabtext"));
+              return true;
+            }
+            if (tn.hasAttribute("label")) {
+              event.target.setAttribute("label", tn.getAttribute("label"));
+              return true;
+            }
+            return false;
+          ]]>
+        </body>
+      </method>
+      
+      <method name="updatePopupMenu">
+        <!-- update the per-tab context menu -->
+        <parameter name="aPopupMenu"/>
+        <body>
+          <![CDATA[
+            this.mContextTab = document.popupNode;
+            var disabled = this.childNodes.length < 2;
+            var menuItems = aPopupMenu.getElementsByAttribute("tbattr", "tabbrowser-multiple");
+            for (var i = 0; i < menuItems.length; i++)
+              menuItems[i].disabled = disabled;
+
+            // Disable the "Close Tab" context menu item for the media tab.
+            if (this.mContextTab == this.firstChild) {
+              var closeMenu =
+                aPopupMenu.getElementsByAttribute("id", "sb_context_closeTab");
+              closeMenu[0].setAttribute("disabled", "true");
+            }
+          ]]>
         </body>
       </method>
 
