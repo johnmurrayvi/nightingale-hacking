@@ -103,10 +103,12 @@
 
 
   <binding id="tabbrowser-tabs"
-           extends="chrome://global/content/bindings/tabbox.xml#tabs">
+           extends="chrome://songbird/content/bindings/browser/tabbox-draggable.xml#tabs-draggable">
+<!--           extends="chrome://global/content/bindings/tabbox.xml#tabs"> 
     <resources>
       <stylesheet src="chrome://browser/content/tabbrowser.css"/>
-    </resources>
+    </resources> 
+  -->
 
     <content>
       <xul:hbox align="end">
