@@ -82,9 +82,6 @@
 
     <handlers>
       <handler event="underflow" phase="capturing"><![CDATA[
-        if (event.detail == 0)
-          return; // Ignore vertical events
-
         var tabs = document.getBindingParent(this);
         tabs.removeAttribute("overflow");
 
@@ -97,9 +94,6 @@
         tabs._positionPinnedTabs();
       ]]></handler>
       <handler event="overflow"><![CDATA[
-        if (event.detail == 0)
-          return; // Ignore vertical events
-
         var tabs = document.getBindingParent(this);
         tabs.setAttribute("overflow", "true");
         tabs._positionPinnedTabs();
