@@ -1030,6 +1030,9 @@
       <method name="_menuItemOnCommand">
         <parameter name="aEvent"/>
         <body><![CDATA[
+          // note, the tab may not be valid (if after we built the popup
+          // the tab was closed.  but selectedItem setter handles that
+          // gracefully.
           gBrowser.selectedTab = aEvent.target.tab;
         ]]></body>
       </method>
@@ -1070,14 +1073,14 @@
             case "TabOpen":
               this._createTabMenuItem(aEvent.originalTarget);
               break;
-            case "scroll":
+<!--             case "scroll":
               this._updateTabsVisibilityStatus();
-              break;
+              break; -->
           }
         ]]></body>
       </method>
 
-      <method name="_updateTabsVisibilityStatus">
+<!--       <method name="_updateTabsVisibilityStatus">
         <body><![CDATA[
           var tabContainer = gBrowser.tabContainer;
           // We don't want menu item decoration unless there is overflow.
@@ -1100,7 +1103,7 @@
           }
         ]]></body>
       </method>
-
+ -->
       <method name="_createTabMenuItem">
         <parameter name="aTab"/>
         <body><![CDATA[
@@ -1108,7 +1111,8 @@
             "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
             "menuitem");
 
-          menuItem.setAttribute("class", "menuitem-iconic alltabs-item menuitem-with-favicon");
+          <!-- menuItem.setAttribute("class", "menuitem-iconic alltabs-item menuitem-with-favicon"); -->
+          menuItem.setAttribute("class", "menuitem-iconic alltabs-item");
 
           this._setMenuitemAttributes(menuItem, aTab);
 
@@ -1137,6 +1141,8 @@
             aMenuitem.setAttribute("image", aTab.getAttribute("image"));
             aMenuitem.removeAttribute("busy");
           }
+          if (aTab.hasAttribute("properties"))
+            aMenuItem.setAttribute("properties", aTab.getAttribute("properties"));
 
           if (aTab.hasAttribute("pending"))
             aMenuitem.setAttribute("pending", aTab.getAttribute("pending"));
@@ -1156,6 +1162,10 @@
       <![CDATA[
         // set up the menu popup
         var tabcontainer = gBrowser.tabContainer;
+        var tabbrowser = document.getBindingParent(tabcontainer);
+        if ("tabBrowser" in tabcontainer) {
+          tabbrowser = tabcontainer.tabBrowser;
+        }
         let tabs = gBrowser.visibleTabs;
 
         // Listen for changes in the tab bar.
@@ -1167,7 +1177,6 @@
         for (var i = 0; i < tabs.length; i++) {
           this._createTabMenuItem(tabs[i]);
         }
-        this._updateTabsVisibilityStatus();
       ]]></handler>
 
       <handler event="popuphidden">
@@ -1182,10 +1191,21 @@
           }
         }
         var tabcontainer = gBrowser.tabContainer;
-        tabcontainer.mTabstrip.removeEventListener("scroll", this, false);
+        var tabbrowser = null;
+        var tabs = tabcontainer;
+        if ("tabBrowser" in tabs) {
+          // tabs is a <tabs>
+          tabbrowser = tabs.tabBrowser;
+        } else {
+          tabbrowser = document.getBindingParent(tabs);
+        }
+        tabbrowser.removeEventListener("TabOpen", this, false);
+        tabbrowser.removeEventListener("TabAttrModified", this, false);
+        tabbrowser.removeEventListener("TabClose", this, false);
+<!--
         tabcontainer.removeEventListener("TabOpen", this, false);
         tabcontainer.removeEventListener("TabAttrModified", this, false);
-        tabcontainer.removeEventListener("TabClose", this, false);
+        tabcontainer.removeEventListener("TabClose", this, false); -->
       ]]></handler>
 
       <handler event="DOMMenuItemActive">
