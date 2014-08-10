@@ -92,22 +92,25 @@ ifdef MEDIA_CORE_GST #{
                     iconv \
                     $(NULL)
 
-   GETTEXT_NAMES = gettextlib \
-                   gettextpo \
-                   gettextsrc \
-                   intl \
+   # GETTEXT_NAMES = gettextlib \
+   #                 gettextpo \
+   #                 gettextsrc \
+   #                 intl \
+   #                 $(NULL)
+
+   GETTEXT_NAMES = intl \
                    $(NULL)
 
    GSTREAMER_NAMES = gstreamer \
                      gstbase \
                      gstcontroller \
-                     gstdataprotocol \
+                     # gstdataprotocol \
                      gstnet \
                      $(NULL)
 
    GST_PLUGINS_BASE_LIBS_NAMES = gstapp \
                                  gstaudio \
-                                 gstcdda \
+                                 # gstcdda \
                                  gstfft \
                                  gstinterfaces \
                                  gstnetbuffer \
@@ -140,7 +143,6 @@ ifdef MEDIA_CORE_GST #{
                 $(NULL)
 
    GST_PLUGINS_CORE_NAMES = gstcoreelements \
-                            gstcoreindexers \
                             $(NULL)
 
    GST_PLUGINS_BASE_NAMES = gstapp \
@@ -149,13 +151,17 @@ ifdef MEDIA_CORE_GST #{
                             gstaudiorate \
                             gstaudioresample \
                             gstaudiotestsrc \
-                            gstdecodebin \
-                            gstdecodebin2 \
-                            gstffmpegcolorspace \
-                            gstgdp \
+                            # gstdecodebin \
+                            # gstdecodebin2 \
+                            gstencodebin \
+                            # gstffmpegcolorspace \
+                            # gstgdp \
                             gstogg \
-                            gstplaybin \
-                            gstqueue2 \
+                            # gstplaybin \
+                            gstplayback \
+                            # gstqueue2 \
+                            gstsubparse \
+                            gsttcp \
                             gsttheora \
                             gsttypefindfunctions \
                             gstvideorate \
@@ -177,20 +183,27 @@ ifdef MEDIA_CORE_GST #{
                             gsteffectv \
                             gstequalizer \
                             gstflac \
+                            gstflv \
+                            gstflxdec \
                             gstgoom \
                             gsticydemux \
                             gstid3demux \
+                            gstimagefreeze \
+                            gstinterleave \
+                            gstisomp4 \
                             gstjpeg \
                             gstlevel \
                             gstmatroska \
                             gstmulaw \
                             gstmultifile \
                             gstmultipart \
-                            gstqtdemux \
+                            gstnavigationtest \
+                            # gstqtdemux \
                             gstreplaygain \
                             gstrtp \
                             gstrtpmanager \
                             gstrtsp \
+                            gstshapewipe \
                             gstsmpte \
                             gstspectrum \
                             gstudp \
@@ -199,28 +212,31 @@ ifdef MEDIA_CORE_GST #{
                             gstvideocrop \
                             gstvideoflip \
                             gstvideomixer \
+                            gstwaveformsink \
                             gstwavenc \
                             gstwavparse \
+                            gstwy4menc \
                             $(NULL)
 
    GST_PLUGINS_UGLY_NAMES = gstasf \
-                            gstmpegaudioparse \
+                            # gstmpegaudioparse \
+                            gstxingmux \
                             $(NULL)
 
-   GST_PLUGINS_BAD_NAMES = gstaiffparse \
+   GST_PLUGINS_BAD_NAMES = gstaiff \
+                           # gstaiffparse \
                            gstadpcmdec \
                            gstadpcmenc \
                            gstid3tag \
                            gstqtmux \
                            gstsdpelem \
                            gstselector \
-                           gstmozilla \
-                           gstmpeg4videoparse \
+                           # gstmpeg4videoparse \
                            $(NULL)
 
    # Include asfmux only if it's present in the vendor binaries.
    # It's not open source, so it might not be.
-   ASFMUX_NAME = $(DEPS_DIR)/gst-plugins-bad/$(SB_CONFIGURATION)/lib/gstreamer-0.10/$(LIB_PREFIX)gstasfmux$(DLL_SUFFIX)
+   ASFMUX_NAME = $(DEPS_DIR)/gst-plugins-bad/$(SB_CONFIGURATION)/lib/gstreamer-1.0/$(LIB_PREFIX)gstasfmux$(DLL_SUFFIX)
 
    ifneq (,$(wildcard $(ASFMUX_NAME)))
       GST_PLUGINS_BAD_NAMES += gstasfmux
@@ -230,12 +246,13 @@ ifdef MEDIA_CORE_GST #{
       GST_PLUGINS_GOOD_NAMES += gstdirectsoundsink \
                                 $(NULL)
 
-      GST_PLUGINS_BAD_NAMES += gstacmmp3dec \
-                               gstdmoenc \
-                               gstqtaudiowrapper \
-                               gstqtvideowrapper \
-                               gstdshowdecwrapper \
-                               gstdshowvideosink \
+      GST_PLUGINS_BAD_NAMES +=  \
+                               # gstacmmp3dec \
+                               # gstdmoenc \
+                               # gstqtaudiowrapper \
+                               # gstqtvideowrapper \
+                               # gstdshowdecwrapper \
+                               # gstdshowvideosink \
                                $(NULL)
 
       GLIB = $(addprefix $(DEPS_DIR)/glib/$(SB_CONFIGURATION)/bin/lib, \
@@ -275,27 +292,27 @@ ifdef MEDIA_CORE_GST #{
              $(addsuffix $(DLL_SUFFIX), $(FLAC_VERSIONED_NAMES)))
 
       JPEG_VERSIONED_NAMES = $(join $(JPEG_NAMES), -7)
-      JPEG = $(addprefix $(DEPS_DIR)/libjpeg/$(SB_CONFIGURATION)/bin/, \
+      JPEG = $(addprefix $(DEPS_DIR)/libjpeg-turbo/$(SB_CONFIGURATION)/bin/, \
              $(addsuffix $(DLL_SUFFIX), $(JPEG_VERSIONED_NAMES)))
 
       GST_PLUGINS_CORE = \
-       $(addprefix $(DEPS_DIR)/gstreamer/$(SB_CONFIGURATION)/lib/gstreamer-0.10/, \
+       $(addprefix $(DEPS_DIR)/gstreamer/$(SB_CONFIGURATION)/lib/gstreamer-1.0/, \
        $(addsuffix $(DLL_SUFFIX), $(GST_PLUGINS_CORE_NAMES)))
 
       GST_PLUGINS_BASE = \
-       $(addprefix $(DEPS_DIR)/gst-plugins-base/$(SB_CONFIGURATION)/lib/gstreamer-0.10/, \
+       $(addprefix $(DEPS_DIR)/gst-plugins-base/$(SB_CONFIGURATION)/lib/gstreamer-1.0/, \
        $(addsuffix $(DLL_SUFFIX), $(GST_PLUGINS_BASE_NAMES)))
 
       GST_PLUGINS_GOOD = \
-       $(addprefix $(DEPS_DIR)/gst-plugins-good/$(SB_CONFIGURATION)/lib/gstreamer-0.10/, \
+       $(addprefix $(DEPS_DIR)/gst-plugins-good/$(SB_CONFIGURATION)/lib/gstreamer-1.0/, \
        $(addsuffix $(DLL_SUFFIX), $(GST_PLUGINS_GOOD_NAMES)))
 
       GST_PLUGINS_UGLY = \
-       $(addprefix $(DEPS_DIR)/gst-plugins-ugly/$(SB_CONFIGURATION)/lib/gstreamer-0.10/, \
+       $(addprefix $(DEPS_DIR)/gst-plugins-ugly/$(SB_CONFIGURATION)/lib/gstreamer-1.0/, \
        $(addsuffix $(DLL_SUFFIX), $(GST_PLUGINS_UGLY_NAMES)))
 
       GST_PLUGINS_BAD = \
-       $(addprefix $(DEPS_DIR)/gst-plugins-bad/$(SB_CONFIGURATION)/lib/gstreamer-0.10/, \
+       $(addprefix $(DEPS_DIR)/gst-plugins-bad/$(SB_CONFIGURATION)/lib/gstreamer-1.0/, \
        $(addsuffix $(DLL_SUFFIX), $(GST_PLUGINS_BAD_NAMES)))
 
       SONGBIRD_LIB += $(GLIB) \
@@ -362,23 +379,23 @@ ifdef MEDIA_CORE_GST #{
        $(addsuffix $(DLL_SUFFIX), $(JPEG_NAMES)))
 
       GST_PLUGINS_CORE = \
-       $(addprefix $(DEPS_DIR)/gstreamer/$(SB_CONFIGURATION)/lib/gstreamer-0.10/lib, \
+       $(addprefix $(DEPS_DIR)/gstreamer/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
        $(addsuffix .so, $(GST_PLUGINS_CORE_NAMES)))
 
       GST_PLUGINS_BASE = \
-       $(addprefix $(DEPS_DIR)/gst-plugins-base/$(SB_CONFIGURATION)/lib/gstreamer-0.10/lib, \
+       $(addprefix $(DEPS_DIR)/gst-plugins-base/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
        $(addsuffix .so, $(GST_PLUGINS_BASE_NAMES)))
 
       GST_PLUGINS_GOOD = \
-       $(addprefix $(DEPS_DIR)/gst-plugins-good/$(SB_CONFIGURATION)/lib/gstreamer-0.10/lib, \
+       $(addprefix $(DEPS_DIR)/gst-plugins-good/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
        $(addsuffix .so, $(GST_PLUGINS_GOOD_NAMES)))
 
       GST_PLUGINS_UGLY = \
-       $(addprefix $(DEPS_DIR)/gst-plugins-ugly/$(SB_CONFIGURATION)/lib/gstreamer-0.10/lib, \
+       $(addprefix $(DEPS_DIR)/gst-plugins-ugly/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
        $(addsuffix .so, $(GST_PLUGINS_UGLY_NAMES)))
 
       GST_PLUGINS_BAD = \
-	   $(addprefix $(DEPS_DIR)/gst-plugins-bad/$(SB_CONFIGURATION)/lib/gstreamer-0.10/lib, \
+	   $(addprefix $(DEPS_DIR)/gst-plugins-bad/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
        $(addsuffix .so, $(GST_PLUGINS_BAD_NAMES)))
 
       SONGBIRD_LIB += $(GLIB) \
@@ -428,23 +445,23 @@ ifdef MEDIA_CORE_GST #{
              $(addsuffix $(DLL_SUFFIX), $(JPEG_NAMES)))
 
       GST_PLUGINS_CORE = \
-       $(addprefix $(DEPS_DIR)/gstreamer/$(SB_CONFIGURATION)/lib/gstreamer-0.10/lib, \
+       $(addprefix $(DEPS_DIR)/gstreamer/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
        $(addsuffix .so, $(GST_PLUGINS_CORE_NAMES)))
 
       GST_PLUGINS_BASE = \
-       $(addprefix $(DEPS_DIR)/gst-plugins-base/$(SB_CONFIGURATION)/lib/gstreamer-0.10/lib, \
+       $(addprefix $(DEPS_DIR)/gst-plugins-base/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
        $(addsuffix .so, $(GST_PLUGINS_BASE_NAMES)))
 
       GST_PLUGINS_GOOD = \
-       $(addprefix $(DEPS_DIR)/gst-plugins-good/$(SB_CONFIGURATION)/lib/gstreamer-0.10/lib, \
+       $(addprefix $(DEPS_DIR)/gst-plugins-good/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
        $(addsuffix .so, $(GST_PLUGINS_GOOD_NAMES)))
 
       GST_PLUGINS_UGLY = \
-       $(addprefix $(DEPS_DIR)/gst-plugins-ugly/$(SB_CONFIGURATION)/lib/gstreamer-0.10/lib, \
+       $(addprefix $(DEPS_DIR)/gst-plugins-ugly/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
        $(addsuffix .so, $(GST_PLUGINS_UGLY_NAMES)))
 
       GST_PLUGINS_BAD = \
-       $(addprefix $(DEPS_DIR)/gst-plugins-bad/$(SB_CONFIGURATION)/lib/gstreamer-0.10/lib, \
+       $(addprefix $(DEPS_DIR)/gst-plugins-bad/$(SB_CONFIGURATION)/lib/gstreamer-1.0/lib, \
        $(addsuffix .so, $(GST_PLUGINS_BAD_NAMES)))
 
       SONGBIRD_LIB += $(GSTREAMER) \
@@ -543,11 +560,11 @@ ifeq (,$(filter-out linux solaris,$(SB_PLATFORM)))
 endif
 ifeq (windows,$(SB_PLATFORM)) #{
 	@for f in $(ADD_MANIFEST_EXES); do \
-      $(call sh_make,$(MSMANIFEST_TOOL) -NOLOGO -MANIFEST "$(DEPS_DIR)/runtime/$(SB_CONFIGURATION)/Microsoft.VC80.CRT.manifest" -OUTPUTRESOURCE:$(call normalizepath, $(SONGBIRD_XULRUNNERDIR))/$$f\;1); \
+      $(call sh_make,$(MSMANIFEST_TOOL) -NOLOGO -MANIFEST "$(DEPS_DIR)/runtime/$(SB_CONFIGURATION)/Microsoft.VC80.$(DEBUG:%=Debug)CRT.manifest" -OUTPUTRESOURCE:$(call normalizepath, $(SONGBIRD_XULRUNNERDIR))/$$f\;1); \
    done
    ifneq (,$(SB_USE_JEMALLOC))
 	   $(MSMANIFEST_TOOL) -NOLOGO -MANIFEST \
-		 "$(DEPS_DIR)/runtime/$(SB_CONFIGURATION)/Microsoft.VC80.CRT.manifest" \
+		 "$(DEPS_DIR)/runtime/$(SB_CONFIGURATION)/Microsoft.VC80.$(DEBUG:%=Debug)CRT.manifest" \
        -OUTPUTRESOURCE:$(SONGBIRD_STUB)\;1
    endif # Not-jemalloc and MSVC with manifest tool
    # On Win32, the stub requires the custom CRT in the same directory now,
