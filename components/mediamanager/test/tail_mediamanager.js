@@ -24,5 +24,7 @@
 //
 */
 
+// Restore the preferences
+restoreMediaManagerPreferences();
 removeTempFolder();
 removeTestLibraries();

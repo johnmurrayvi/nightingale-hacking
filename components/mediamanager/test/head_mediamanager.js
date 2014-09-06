@@ -44,10 +44,15 @@ var SB_NS = "http://songbirdnest.com/data/1.0#";
 var SB_MEDIAFILEMANAGER = "@songbirdnest.com/Songbird/media-manager/file;1";
 var SB_MEDIAMANAGERJOB = "@songbirdnest.com/Songbird/media-manager/job;1";
 
-var SB_MM_PROP_FOLDER = "media-folder";
-var SB_MM_PROP_FMTFILE = "file-format";
-var SB_MM_PROP_FMTDIR = "dir-format";
-
+// Media manager preferences
+var SB_MM_PREF_FOLDER = "songbird.media_management.library.folder";
+var SB_MM_PREF_ENABLED = "songbird.media_management.library.enabled";
+var SB_MM_PREF_COPY = "songbird.media_management.library.copy";
+var SB_MM_PREF_MOVE = "songbird.media_management.library.move";
+var SB_MM_PREF_RENAME = "songbird.media_management.library.rename";
+var SB_MM_PREF_FMTDIR = "songbird.media_management.library.format.dir";
+var SB_MM_PREF_FMTFILE = "songbird.media_management.library.format.file";
+var SB_MM_PADTRACKNUM = "songbird.media_management.library.pad_track_num";
 
 // An array of what our test results should be
 var gResultInformation = [
@@ -98,6 +103,8 @@ var gResultInformation = [
                       Ci.sbIMediaFileManager.MANAGE_RENAME }
 ];
 
+// Keep a copy of the original prefs so we don't screw anything up
+var gOriginalPrefs = null;
 // Test library to use.
 var gTestLibrary;
 // Items we add to the library to test our file management
@@ -107,10 +114,83 @@ var gFileLocation = "testharness/mediamanager/files/";
 
 
 /**
- * Get a property bag containing all the configuration properties we want for
- * these tests.
+ * Save the Media Manager preferences.
  */
-function getMediaManagerProperties () {
+function saveMediaManagerPreferences () {
+  // Setup some defaults
+  gOriginalPrefs = {
+    folder: null,
+    copy: false,
+    move: false,
+    rename: false,
+    formatDir: "",
+    formatFile: "",
+    enabled: false,
+    padTrackNum: false
+  };
+
+  var prefBranch = Cc["@mozilla.org/preferences-service;1"]
+                     .getService(Ci.nsIPrefBranch2);
+
+  // Store the current preferences so we can restore them later
+  if (Application.prefs.has(SB_MM_PREF_FOLDER)) {
+    try {
+      gOriginalPrefs.folder = prefBranch.getComplexValue(SB_MM_PREF_FOLDER,
+                                                         Ci.nsILocalFile);
+    } catch (err) {
+      log("Unable to save folder preference: " + err);
+    }
+  }
+
+  gOriginalPrefs.enabled = Application.prefs.getValue(SB_MM_PREF_ENABLED, false);
+  gOriginalPrefs.copy = Application.prefs.getValue(SB_MM_PREF_COPY, false);
+  gOriginalPrefs.move = Application.prefs.getValue(SB_MM_PREF_MOVE, false);
+  gOriginalPrefs.rename = Application.prefs.getValue(SB_MM_PREF_RENAME, false);
+  gOriginalPrefs.formatDir = Application.prefs.getValue(SB_MM_PREF_FMTDIR, "");
+  gOriginalPrefs.formatFile = Application.prefs.getValue(SB_MM_PREF_FMTFILE, "");
+  gOriginalPrefs.padTrackNum = Application.prefs.getValue(SB_MM_PADTRACKNUM, false);
+}
+
+/**
+ * Restore the Media Manager preferences.
+ * Called in tail_metadatamanager.js
+ */
+function restoreMediaManagerPreferences() {
+  // Don't do anything if we didn't save the prefs
+  if (gOriginalPrefs == null) {
+    log("Not restoring prefs!!!");
+    return;
+  }
+
+  var prefBranch = Cc["@mozilla.org/preferences-service;1"]
+                     .getService(Ci.nsIPrefBranch2);
+
+  if (gOriginalPrefs.folder) {
+    prefBranch.setComplexValue(SB_MM_PREF_FOLDER,
+                               Ci.nsILocalFile,
+                               gOriginalPrefs.folder);
+  }
+  prefBranch.setBoolPref(SB_MM_PREF_ENABLED, gOriginalPrefs.enabled);
+  prefBranch.setBoolPref(SB_MM_PREF_COPY, gOriginalPrefs.copy);
+  prefBranch.setBoolPref(SB_MM_PREF_MOVE, gOriginalPrefs.move);
+  prefBranch.setBoolPref(SB_MM_PREF_RENAME, gOriginalPrefs.rename);
+  prefBranch.setCharPref(SB_MM_PREF_FMTDIR, gOriginalPrefs.formatDir);
+  prefBranch.setCharPref(SB_MM_PREF_FMTFILE, gOriginalPrefs.formatFile);
+  prefBranch.setBoolPref(SB_MM_PADTRACKNUM, gOriginalPrefs.padTrackNum);
+}
+
+/**
+ * Set up what we want the preferences to be, we need to do this since the
+ * Media Manager depends on the preferences to organize.
+ */
+function setupMediaManagerPreferences () {
+  // First thing is to save them if they have not already been saved
+  if (gOriginalPrefs == null) {
+    saveMediaManagerPreferences();
+  }
+
+  var prefBranch = Cc["@mozilla.org/preferences-service;1"]
+                     .getService(Ci.nsIPrefBranch2);
 
   var separator = "/";
   if (getPlatform() == "Windows_NT") {
@@ -121,20 +201,20 @@ function getMediaManagerProperties () {
   // Create the folder
   managedFolder.create(Ci.nsIFile.DIRECTORY_TYPE, 0777);
 
-  var properties = Cc["@mozilla.org/hash-property-bag;1"]
-                     .createInstance(Ci.nsIWritablePropertyBag2);;
-
-  properties.setPropertyAsInterface(SB_MM_PROP_FOLDER, managedFolder);
-  properties.setPropertyAsAString(SB_MM_PROP_FMTFILE, 
-                         SB_NS + "trackNumber," +
-                         " - ," +
-                         SB_NS + "trackName");
-  properties.setPropertyAsAString(SB_MM_PROP_FMTDIR,
+  prefBranch.setComplexValue(SB_MM_PREF_FOLDER, Ci.nsILocalFile, managedFolder);
+  prefBranch.setBoolPref(SB_MM_PREF_ENABLED, false);
+  prefBranch.setBoolPref(SB_MM_PREF_COPY, true);
+  prefBranch.setBoolPref(SB_MM_PREF_MOVE, true);
+  prefBranch.setBoolPref(SB_MM_PREF_RENAME, true);
+  prefBranch.setBoolPref(SB_MM_PADTRACKNUM, true);
+  prefBranch.setCharPref(SB_MM_PREF_FMTDIR,
                          SB_NS + "artistName," +
                          separator + "," +
                          SB_NS + "albumName");
-
-  return properties;
+  prefBranch.setCharPref(SB_MM_PREF_FMTFILE,
+                         SB_NS + "trackNumber," +
+                         " - ," +
+                         SB_NS + "trackName");
 }
 
 /**
