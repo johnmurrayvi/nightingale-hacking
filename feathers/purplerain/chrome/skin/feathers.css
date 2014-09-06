@@ -1471,10 +1471,13 @@ scrollcorner {
   background-image: none !important;
 }
 
-prefpane {
+/* Need to specialcase the manage media prefpane due to the notificationbox */
+prefpane:not(#paneManageMedia) {
   padding: 15px 10px !important;
 }
-
+#media_manage_notification_box_contents {
+  padding: 15px 10px !important;
+}
 prefpane groupbox {
   margin-top: 0px !important;
   margin-bottom: 2px !important;
