@@ -168,18 +168,15 @@ run_configure $(CONFIGSTATUS): $(CONFIGURE) $(SB_DEP_PKG_LIST) $(OBJDIR) $(DISTD
 	cd $(OBJDIR) && \
     $(CONFIGURE) $(CONFIGURE_ARGS)
 
-$(CONFIGURE): $(CONFIGURE_PREREQS)
-	cd $(TOPSRCDIR) && \
-    $(AUTOCONF) && \
-    $(RM) -r $(TOPSRCDIR)/autom4te.cache/ 
-
-songbird_output:
-	@echo $(SONGBIRD_MESSAGE)
+$(CONFIGURE): $(CONFIGURE_PREREQS) run_autoconf
 
 run_autoconf:
 	cd $(TOPSRCDIR) && \
     $(AUTOCONF) && \
-    $(RM) -r $(TOPSRCDIR)/autom4te.cache/ 
+    $(RM) -r $(TOPSRCDIR)/autom4te.cache/
+
+songbird_output:
+	@echo $(SONGBIRD_MESSAGE)
 
 $(OBJDIR) $(DISTDIR):
 	$(MKDIR) $(OBJDIR) $(DISTDIR)
@@ -247,4 +244,11 @@ uninstall-linux:
 	$(RM) $(DESTDIR)$(datarootdir)/applications/nightingale.desktop
 	$(foreach SIZE,$(ICON_SIZES),$(RM) $(DESTDIR)$(icondir)/$(SIZE)x$(SIZE)/apps/nightingale.png ;)
 
-.PHONY : all debug songbird_output run_autoconf run_configure clean clobber depclobber build test install uninstall installdirs install-linux uninstall-linux
+run:
+	$(DISTDIR)/nightingale
+
+documentation:
+	$(MKDIR) $(CURDIR)/documentation/api
+	cd $(CURDIR)/documentation && doxygen $(CURDIR)/documentation/nightingale.doxyfile
+
+.PHONY : all debug songbird_output run_autoconf run_configure clean clobber depclobber build test install uninstall installdirs install-linux uninstall-linux run documentation

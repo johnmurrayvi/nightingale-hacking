@@ -76,7 +76,7 @@ case $OSTYPE in
         depdate="20130316"
         fname="$depdirn-$version-$depdate-$build-final.tar.lzma"
 
-        export CXXFLAGS="-O2 -fomit-frame-pointer -pipe -fpermissive"
+        export CXXFLAGS="-O2 -fomit-frame-pointer -Wno-delete-non-virtual-dtor -Wno-unused-but-set-variable $CXXFLAGS $CPPFLAGS"
 
         echo "linux $arch"
         ( cd dependencies && {
@@ -90,16 +90,13 @@ case $OSTYPE in
                     md5_verify "$fname"
                 fi
                 echo "Need to extract $fname"
-                tar xvf "$fname"
+                tar --checkpoint=.100 -xf "$fname"
+                # insert a newline, since tar doesn't
+                echo
             fi
         } ; )
 
-        # https://en.wikipedia.org/wiki/List_of_Linux_distributions#Debian-based
-        debianbased="buntu|Debian|LMDE|Mint|gNewSense|Fuduntu|Solus|CrunchBang|Peppermint|Deepin|Kali|Trisquel|elementary|Knoppix"
-        # the below needs to be nested...in my testing it won't work otherwise
-        if [[ $(grep -i -E $debianbased /etc/issue) ||
-              $(grep -i -E $debianbased /etc/lsb-release) ||
-              $(grep -i -E $debianbased /etc/os-release) ]] ; then
+        if [ -f /etc/debian_version ] ; then
             grep -q -E 'taglib' nightingale.config || \
             echo -e 'ac_add_options --with-taglib-source=packaged\n' >> nightingale.config
         fi
